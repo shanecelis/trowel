@@ -37,7 +37,7 @@ pub fn run(
             hal::gpio::Pin<Gpio22, hal::gpio::Output<hal::gpio::PushPull>>,
             hal::gpio::Pin<Gpio26, hal::gpio::Output<hal::gpio::PushPull>>,
         >,
-        Rgb565,
+        (),
     >,
 ) -> ! {
     // Grab our singleton objects.
