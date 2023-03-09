@@ -35,7 +35,7 @@ for more information.
 
 ## Simulate on your PC
 
-![maze on the pc simulator](/assets/maze_pc.png)
+![maze on the pc simulator](/assets/maze-pc.png)
 
 ``` sh
 cargo run --example maze
@@ -43,7 +43,7 @@ cargo run --example maze
 
 ## Run on your sprig
 
-![maze on the sprig](/assets/maze_sprig.png)
+![maze on the sprig](/assets/maze-sprig.png)
 
 ``` sh
 cargo run --example maze --target thumbv6m-none-eabi
