@@ -3,8 +3,6 @@
 #![cfg_attr(all(target_arch = "arm", target_os = "none"), no_std)]
 #![cfg_attr(all(target_arch = "arm", target_os = "none"), no_main)]
 
-#[cfg(all(target_arch = "arm", target_os = "none"))]
-use cortex_m_rt::entry;
 use embedded_graphics::{
     draw_target::DrawTarget,
     pixelcolor::{raw::RawU24, Rgb565, Rgb888},
@@ -362,7 +360,7 @@ fn fabsf(x: f32) -> f32 {
     x.abs()
 }
 
-#[cfg_attr(all(target_arch = "arm", target_os = "none"), entry)]
+#[cfg_attr(all(target_arch = "arm", target_os = "none"), cortex_m_rt::entry)]
 fn main() -> ! {
     let mut state: State = State {
         frame: 0,

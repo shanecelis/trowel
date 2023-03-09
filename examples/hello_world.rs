@@ -1,8 +1,7 @@
 // Example of running an ST7735 with an RP2040
-#![no_std]
-#![no_main]
+#![cfg_attr(all(target_arch = "arm", target_os = "none"), no_std)]
+#![cfg_attr(all(target_arch = "arm", target_os = "none"), no_main)]
 
-use cortex_m_rt::entry;
 use embedded_graphics::{
     draw_target::DrawTarget,
     mono_font::{ascii, MonoTextStyle},
@@ -10,26 +9,26 @@ use embedded_graphics::{
     prelude::*,
     text::Text,
 };
-use trowel::{App, AppResult};
+use trowel::{App, AppResult, Buttons};
 
 struct DrawFerris {
     frame: i32, // Frame count
 }
 
-impl<T> App<T, Rgb565> for DrawFerris
+impl<T,E> App<T, E> for DrawFerris
 where
-    T: DrawTarget<Color = Rgb565, Error = ()>,
+    T: DrawTarget<Color = Rgb565, Error = E>,
 {
-    fn init(&mut self) -> AppResult {
+    fn init(&mut self) -> AppResult<E> {
         Ok(())
     }
 
-    fn update(&mut self) -> AppResult {
+    fn update(&mut self, buttons: Buttons) -> AppResult<E> {
         self.frame += 1;
         Ok(())
     }
 
-    fn draw(&mut self, display: &mut T) -> AppResult {
+    fn draw(&mut self, display: &mut T) -> AppResult<E> {
         if self.frame == 1 {
             // Create a new character style
             let style = MonoTextStyle::new(&ascii::FONT_7X13, Rgb565::WHITE);
@@ -40,7 +39,7 @@ where
     }
 }
 
-#[entry]
+#[cfg_attr(all(target_arch = "arm", target_os = "none"), cortex_m_rt::entry)]
 fn main() -> ! {
     trowel::run(&mut DrawFerris { frame: 0 });
 }
