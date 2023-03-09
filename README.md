@@ -36,14 +36,22 @@ for more information.
 ## Simulate on your PC
 
 ``` sh
-cargo run --example raycaster
+cargo run --example maze
 ```
 
 ## Run on your sprig
 
 ``` sh
-cargo run --example raycaster --target thumbv6m-none-eabi
+cargo run --example maze --target thumbv6m-none-eabi
 ```
+
+## Examples
+
+* hello_world
+* maze
+* draw_ferris
+
+## Notes
 
 See the `.cargo/config.toml` for various build settings. You can generate uf2
 files, write directly to the sprig if it's in BOOTSEL mode, or you can use a
