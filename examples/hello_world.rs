@@ -1,4 +1,3 @@
-// Example of running an ST7735 with an RP2040
 #![cfg_attr(all(target_arch = "arm", target_os = "none"), no_std)]
 #![cfg_attr(all(target_arch = "arm", target_os = "none"), no_main)]
 

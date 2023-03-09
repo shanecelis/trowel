@@ -26,7 +26,8 @@ pub fn run(
 
         // window.update(&display);
     let mut buttons;
-    'running: loop {
+    // 'running: loop {
+    loop {
         window.update(&display);
         buttons = Buttons::empty();
         for event in window.events() {
@@ -44,7 +45,7 @@ pub fn run(
                         _ => { }
                     }
                 },
-                SimulatorEvent::Quit => panic!("bye"), //break 'running,
+                SimulatorEvent::Quit => panic!("quit"), //break 'running,
                 _ => { }
             }
         }
