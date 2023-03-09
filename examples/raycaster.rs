@@ -1,5 +1,6 @@
 // Example of running an ST7735 with an RP2040
-#![no_std]
+// #![no_std]
+#![cfg_attr(all(target_arch = "arm", target_os = "none"), no_std)]
 #![cfg_attr(all(target_arch = "arm", target_os = "none"), no_main)]
 
 #[cfg(all(target_arch = "arm", target_os = "none"))]
@@ -55,17 +56,17 @@ const MAP: [u16; 8] = [
     0b1111111111111111,
 ];
 
-impl<T> App<T, Rgb565> for State
+impl<T,E> App<T, E> for State
 where
-    T: DrawTarget<Color = Rgb565, Error = ()>,
+    T: DrawTarget<Color = Rgb565, Error = E>,
 {
-    fn init(&mut self) -> AppResult {
+    fn init(&mut self) -> AppResult<E> {
         // This way the first frame is zero.
         self.frame = -1;
         Ok(())
     }
 
-    fn update(&mut self, buttons: Buttons) -> AppResult {
+    fn update(&mut self, buttons: Buttons) -> AppResult<E> {
         self.frame += 1;
 
         self.update(
@@ -77,7 +78,7 @@ where
         Ok(())
     }
 
-    fn draw(&mut self, display: &mut T) -> AppResult {
+    fn draw(&mut self, display: &mut T) -> AppResult<E> {
         if self.frame % 10 == 0 {
             display.clear(to_color(PALETTE[0]))?;
         }

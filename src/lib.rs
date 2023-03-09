@@ -1,7 +1,7 @@
 #![no_std]
 
 use bitflags::bitflags;
-use embedded_graphics::prelude::DrawTarget;
+use embedded_graphics::{prelude::DrawTarget, pixelcolor::Rgb565};
 
 bitflags! {
     pub struct Buttons: u8 {
@@ -16,18 +16,23 @@ bitflags! {
     }
 }
 
-pub type AppResult = Result<(), ()>;
+pub type AppResult<E> = Result<(), E>;
 
-pub trait App<T, C>
+pub trait App<T, E>
 where
-    T: DrawTarget<Color = C>,
+    T: DrawTarget<Color = Rgb565, Error = E>,
 {
-    fn init(&mut self) -> AppResult;
-    fn update(&mut self, buttons: Buttons) -> AppResult;
-    fn draw(&mut self, display: &mut T) -> AppResult;
+    fn init(&mut self) -> AppResult<E>;
+    fn update(&mut self, buttons: Buttons) -> AppResult<E>;
+    fn draw(&mut self, display: &mut T) -> AppResult<E>;
 }
 
 #[cfg(all(target_arch = "arm", target_os = "none"))]
 mod sprig;
 #[cfg(all(target_arch = "arm", target_os = "none"))]
 pub use sprig::run;
+
+#[cfg(not(all(target_arch = "arm", target_os = "none")))]
+mod pc;
+#[cfg(not(all(target_arch = "arm", target_os = "none")))]
+pub use pc::run;
