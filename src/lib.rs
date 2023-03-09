@@ -26,8 +26,8 @@ use hal::pac;
 
 // }
 
-pub trait App<T>
-  where T : DrawTarget {
+pub trait App<T,C>
+  where T : DrawTarget<Color = C> {
     fn init(&mut self);
     fn update(&mut self);
     fn draw(&mut self, display: &mut T);
@@ -53,7 +53,7 @@ const XTAL_FREQ_HZ: u32 = 12_000_000u32;
 /// SPI transactions, then goes to sleep.
 pub fn run(app: &mut impl App<ST7735<hal::Spi<hal::spi::Enabled, pac::SPI0, 8>,
                                  hal::gpio::Pin<Gpio22, hal::gpio::Output<hal::gpio::PushPull>>,
-                                 hal::gpio::Pin<Gpio26, hal::gpio::Output<hal::gpio::PushPull>>>>) -> !
+                                 hal::gpio::Pin<Gpio26, hal::gpio::Output<hal::gpio::PushPull>>>, Rgb565>) -> !
 {
     // Grab our singleton objects
     let mut pac = pac::Peripherals::take().unwrap();
