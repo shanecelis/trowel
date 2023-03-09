@@ -25,6 +25,7 @@ use micromath::F32Ext;
 const HEIGHT: i32 = 128;
 
 
+// Made the step size bigger since our fps was low.
 // const STEP_SIZE: f32 = 0.045;
 const STEP_SIZE: f32 = 0.09;
 // const FIVE_PI_SQUARED: f32 = 5.0 * (PI * PI);
@@ -33,7 +34,6 @@ const FOV: f32 = PI / 2.7; // The player's field of view.
 const HALF_FOV: f32 = FOV * 0.5; // Half the player's field of view.
 const ANGLE_STEP: f32 = FOV / 160.0; // The angle between each ray.
 // const WALL_HEIGHT: f32 = 100.0; // A magic number.
-// const WALL_HEIGHT: f32 = HEIGHT as f32- 60.0; // A magic number.
 const WALL_HEIGHT: f32 = HEIGHT as f32 - 60.0; // A magic number.
 // const PALETTE : [u32; 4] = [0x2B2D24, 0x606751, 0x949C81, 0x3E74BC];
 const PALETTE : [u32; 4] = [
