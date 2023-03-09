@@ -22,7 +22,7 @@ where
         Ok(())
     }
 
-    fn update(&mut self, buttons: Buttons) -> AppResult<E> {
+    fn update(&mut self, _buttons: Buttons) -> AppResult<E> {
         self.frame += 1;
         Ok(())
     }
