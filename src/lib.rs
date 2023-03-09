@@ -19,18 +19,16 @@ use st7735_lcd::Orientation;
 use fugit::RateExtU32;
 
 // A shorter alias for the Peripheral Access Crate, which provides low-level
-// register access
+// register access.
 use hal::pac;
 
-// pub struct Board {
-
-// }
+pub type AppResult = Result<(),()>;
 
 pub trait App<T,C>
   where T : DrawTarget<Color = C> {
-    fn init(&mut self);
-    fn update(&mut self);
-    fn draw(&mut self, display: &mut T);
+    fn init(&mut self) -> AppResult;
+    fn update(&mut self) -> AppResult;
+    fn draw(&mut self, display: &mut T) -> AppResult;
 }
 
 
@@ -41,28 +39,22 @@ pub trait App<T,C>
 pub static BOOT2: [u8; 256] = rp2040_boot2::BOOT_LOADER_W25Q080;
 
 /// External high-speed crystal on the Raspberry Pi Pico board is 12 MHz. Adjust
-/// if your board has a different frequency
+/// if your board has a different frequency.
 const XTAL_FREQ_HZ: u32 = 12_000_000u32;
 
-/// Entry point to our bare-metal application.
-///
-/// The `#[entry]` macro ensures the Cortex-M start-up code calls this function
-/// as soon as all global variables are initialised.
-///
-/// The function configures the RP2040 peripherals, then performs some example
-/// SPI transactions, then goes to sleep.
+/// The `run` function configures the RP2040 peripherals, then runs the app.
 pub fn run(app: &mut impl App<ST7735<hal::Spi<hal::spi::Enabled, pac::SPI0, 8>,
                                  hal::gpio::Pin<Gpio22, hal::gpio::Output<hal::gpio::PushPull>>,
                                  hal::gpio::Pin<Gpio26, hal::gpio::Output<hal::gpio::PushPull>>>, Rgb565>) -> !
 {
-    // Grab our singleton objects
+    // Grab our singleton objects.
     let mut pac = pac::Peripherals::take().unwrap();
     let core = pac::CorePeripherals::take().unwrap();
 
-    // Set up the watchdog driver - needed by the clock setup code
+    // Set up the watchdog driver--needed by the clock setup code.
     let mut watchdog = hal::Watchdog::new(pac.WATCHDOG);
 
-    // Configure the clocks
+    // Configure the clocks.
     let clocks = hal::clocks::init_clocks_and_plls(
         XTAL_FREQ_HZ,
         pac.XOSC,
@@ -73,14 +65,14 @@ pub fn run(app: &mut impl App<ST7735<hal::Spi<hal::spi::Enabled, pac::SPI0, 8>,
         &mut watchdog,
     )
     .ok()
-    .unwrap();
+    .expect("clock init failed.");
 
     let mut delay = cortex_m::delay::Delay::new(core.SYST, clocks.system_clock.freq().to_Hz());
 
-    // The single-cycle I/O block controls our GPIO pins
+    // The single-cycle I/O block controls our GPIO pins.
     let sio = hal::Sio::new(pac.SIO);
 
-    // Set the pins to their default state
+    // Set the pins to their default state.
     let pins = hal::gpio::Pins::new(
         pac.IO_BANK0,
         pac.PADS_BANK0,
@@ -99,11 +91,11 @@ pub fn run(app: &mut impl App<ST7735<hal::Spi<hal::spi::Enabled, pac::SPI0, 8>,
     let spi = hal::Spi::<_, _, 8>::new(pac.SPI0);
 
     let mut lcd_led = pins.gpio17.into_push_pull_output();
-    let mut led = pins.gpio25.into_push_pull_output();
+    let mut _led = pins.gpio25.into_push_pull_output();
     let dc = pins.gpio22.into_push_pull_output();
     let rst = pins.gpio26.into_push_pull_output();
 
-    // Exchange the uninitialised SPI driver for an initialised one
+    // Exchange the uninitialised SPI driver for an initialised one.
     let spi = spi.init(
         &mut pac.RESETS,
         clocks.peripheral_clock.freq(),
@@ -111,25 +103,23 @@ pub fn run(app: &mut impl App<ST7735<hal::Spi<hal::spi::Enabled, pac::SPI0, 8>,
         &embedded_hal::spi::MODE_0,
     );
 
-
     let mut disp = st7735_lcd::ST7735::new(spi, dc, rst, true, false, 160, 128);
 
     disp.init(&mut delay).unwrap();
     disp.set_orientation(&Orientation::Landscape).unwrap();
     disp.clear(Rgb565::BLACK).unwrap();
 
-
-    // Wait until the background and image have been rendered otherwise
-    // the screen will show random pixels for a brief moment
+    // Wait until the screen cleared otherwise the screen will show random
+    // pixels for a brief moment.
     lcd_led.set_high().unwrap();
-    led.set_high().unwrap();
 
-    app.init();
+    // We could turn on the MCU's led.
+    // led.set_high().unwrap();
+
+    app.init().expect("error initializing");
 
     loop {
-        app.update();
-        app.draw(&mut disp);
+        app.update().expect("error updating");
+        app.draw(&mut disp).expect("error drawing");
     }
 }
-
-// End of file

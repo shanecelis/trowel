@@ -3,10 +3,13 @@
 #![no_main]
 
 use cortex_m_rt::entry;
-use embedded_graphics::image::{Image, ImageRaw, ImageRawLE};
-use embedded_graphics::prelude::*;
-use embedded_graphics::pixelcolor::Rgb565;
-use embedded_graphics::draw_target::DrawTarget;
+use embedded_graphics::{
+    mono_font::{ascii, MonoTextStyle},
+    pixelcolor::Rgb565,
+    draw_target::DrawTarget,
+    prelude::*,
+    text::Text,
+};
 use trowel::{App, AppResult};
 
 struct DrawFerris {
@@ -27,14 +30,10 @@ impl<T> App<T,Rgb565> for DrawFerris
 
     fn draw(&mut self, display: &mut T) -> AppResult {
         if self.frame == 1 {
-            // We only need to draw the image once for it to persist.
+            // Create a new character style
+            let style = MonoTextStyle::new(&ascii::FONT_7X13, Rgb565::WHITE);
 
-            let image_raw: ImageRawLE<Rgb565> =
-                ImageRaw::new(include_bytes!("../assets/ferris.raw"), 86);
-
-            let image: Image<_> = Image::new(&image_raw, Point::new(34, 33));
-
-            image.draw(display)?;
+            Text::new("Hello, World!", Point::new(20, 30), style).draw(display)?;
         }
         Ok(())
     }
