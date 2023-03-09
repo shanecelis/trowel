@@ -3,14 +3,18 @@
 #![no_main]
 
 use cortex_m_rt::entry;
-use embedded_graphics::image::{Image, ImageRaw, ImageRawLE};
-use embedded_graphics::prelude::*;
-use embedded_graphics::pixelcolor::Rgb565;
-use embedded_graphics::draw_target::DrawTarget;
+
+use embedded_graphics::{
+    image::{Image, ImageRaw, ImageRawLE},
+    pixelcolor::Rgb565,
+    draw_target::DrawTarget,
+    prelude::*,
+};
 use trowel::{App, AppResult};
 
 struct DrawFerris {
-    frame : i32,                // Frame count
+    /// Frame count
+    frame : i32,
 }
 
 impl<T> App<T,Rgb565> for DrawFerris

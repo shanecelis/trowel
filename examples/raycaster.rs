@@ -1,74 +1,33 @@
 // Example of running an ST7735 with an RP2040
-
 #![no_std]
 #![no_main]
 
-// The macro for our start-up function
 use cortex_m_rt::entry;
-
-// Ensure we halt the program on panic (if we don't mention this crate it won't
-// be linked)
-use defmt_rtt as _;
-use panic_probe as _;
-
-// Alias for our HAL crate
-use rp2040_hal as hal;
-
-// Some traits we need
-//use cortex_m::prelude::*;
-use embedded_graphics::image::{Image, ImageRaw, ImageRawLE};
-use embedded_graphics::prelude::*;
-use embedded_graphics::pixelcolor::Rgb565;
-use embedded_graphics::pixelcolor::Rgb888;
-use embedded_graphics::pixelcolor::raw::RawU24;
-use embedded_graphics::primitives::PrimitiveStyle;
-use embedded_hal::digital::v2::OutputPin;
-use rp2040_hal::clocks::Clock;
-use st7735_lcd;
-use st7735_lcd::Orientation;
-use fugit::RateExtU32;
-use embedded_hal::digital::v2::InputPin;
 use embedded_graphics::{
-    // mono_font::{ascii::FONT_6X10, MonoTextStyle},
-    // pixelcolor::BinaryColor,
+    pixelcolor::{Rgb565, Rgb888, raw::RawU24},
+    draw_target::DrawTarget,
     prelude::*,
-    primitives::{
-        Circle,
-        // PrimitiveStyle, PrimitiveStyleBuilder, Rectangle, StrokeAlignment, Triangle,
-        Line
-    },
-    // text::{Alignment, Text},
-    // mock_display::MockDisplay,
+    primitives::{Line, PrimitiveStyle},
 };
-
-// A shorter alias for the Peripheral Access Crate, which provides low-level
-// register access
-use hal::pac;
+use trowel::{App, AppResult, Buttons};
 
 use core::{
     // arch::wasm32,
-    f32::consts::{FRAC_PI_2, PI, TAU},
+    f32::consts::{FRAC_PI_2, PI},
     // panic::PanicInfo,
 };
 #[allow(unused_imports)]
 use micromath::F32Ext;
 
-// const DRAW_COLORS: *mut u16 = 0x14 as *mut u16;
-const DRAW_COLORS: *mut u16 = 0b0001_0100 as *mut u16;
-//                              fill_outline
-// const GAMEPAD1: *const u8 = 0x16 as *const u8;
-
-const BUTTON_LEFT: u8 = 16; // 00010000
-const BUTTON_RIGHT: u8 = 32; // 00100000
-const BUTTON_UP: u8 = 64; // 01000000
-const BUTTON_DOWN: u8 = 128; // 10000000
+// The original platform had a 160x160 display. Sprig only has a 160x128
+// display.
 // const HEIGHT: i32 = 160;
 const HEIGHT: i32 = 128;
 
 
 // const STEP_SIZE: f32 = 0.045;
 const STEP_SIZE: f32 = 0.09;
-const FIVE_PI_SQUARED: f32 = 5.0 * (PI * PI);
+// const FIVE_PI_SQUARED: f32 = 5.0 * (PI * PI);
 
 const FOV: f32 = PI / 2.7; // The player's field of view.
 const HALF_FOV: f32 = FOV * 0.5; // Half the player's field of view.
@@ -86,11 +45,6 @@ const PALETTE : [u32; 4] = [
 0x86c06c,
 0x306850,
 0x071821
-
-// #e0f8cf,
-// #86c06c,
-// #306850,
-// #071821
 ];
 
 fn to_color(c : u32) -> Rgb565 {
@@ -108,24 +62,35 @@ const MAP: [u16; 8] = [
     0b1111111111111111,
 ];
 
-static mut STATE: State = State {
-    player_x: 1.5,
-    player_y: 1.5,
-    player_angle: -PI / 2.0,
-};
+impl<T> App<T,Rgb565> for State
+    where T : DrawTarget<Color = Rgb565, Error = ()> {
 
-#[no_mangle]
-unsafe fn update(gamepad: u8, disp: &mut impl DrawTarget<Color = Rgb565>) {
-    STATE.update(
-        gamepad & BUTTON_UP != 0,
-        gamepad & BUTTON_DOWN != 0,
-        gamepad & BUTTON_LEFT != 0,
-        gamepad & BUTTON_RIGHT != 0,
-    );
+    fn init(&mut self) -> AppResult {
+        // This way the first frame is zero.
+        self.frame = -1;
+        Ok(())
+    }
 
+    fn update(&mut self, buttons : Buttons) -> AppResult {
+        self.frame += 1;
+
+        self.update(
+            buttons.contains(Buttons::W),
+            buttons.contains(Buttons::S),
+            buttons.contains(Buttons::A),
+            buttons.contains(Buttons::D),
+        );
+        Ok(())
+    }
+
+    fn draw(&mut self, display: &mut T) -> AppResult {
+
+        if self.frame % 10  == 0 {
+            display.clear(to_color(PALETTE[0]))?;
+        }
     // let _ = disp.clear(to_color(PALETTE[0]));//Rgb565::BLACK);
     // Go through each column on screen and draw walls in the center.
-    for (x, wall) in STATE.get_view().iter().enumerate() {
+    for (x, wall) in self.get_view().iter().enumerate() {
         let (height, shadow) = wall;
 
         // if *shadow {
@@ -141,7 +106,7 @@ unsafe fn update(gamepad: u8, disp: &mut impl DrawTarget<Color = Rgb565>) {
     .into_styled(PrimitiveStyle::with_stroke(
         color,
         1))
-    .draw(disp);
+    .draw(display)?;
     // let _ = Circle::new(Point::new(0, 0), 10)
     //     .into_styled(PrimitiveStyle::with_stroke(Rgb565::BLACK, 1))
     //     .draw(disp);
@@ -149,9 +114,13 @@ unsafe fn update(gamepad: u8, disp: &mut impl DrawTarget<Color = Rgb565>) {
         // oval(0, 0, 10, 10);
         // vline(x as i32, 80 - (height / 2), *height as u32);
     }
+    Ok(())
+}
 }
 
+
 struct State {
+    frame: i32,
     player_x: f32,
     player_y: f32,
     player_angle: f32,
@@ -352,7 +321,7 @@ fn distance(a: f32, b: f32) -> f32 {
     sqrtf((a * a) + (b * b))
 }
 
-fn sinf(mut x: f32) -> f32 {
+fn sinf(x: f32) -> f32 {
     x.sin()
     // let y = x / TAU;
     // let z = y - floorf(y);
@@ -401,148 +370,14 @@ fn fabsf(x: f32) -> f32 {
 }
 
 
-/// The linker will place this boot block at the start of our program image. We
-/// need this to help the ROM bootloader get our code up and running.
-#[link_section = ".boot2"]
-#[used]
-pub static BOOT2: [u8; 256] = rp2040_boot2::BOOT_LOADER_W25Q080;
-
-/// External high-speed crystal on the Raspberry Pi Pico board is 12 MHz. Adjust
-/// if your board has a different frequency
-const XTAL_FREQ_HZ: u32 = 12_000_000u32;
-
-/// Entry point to our bare-metal application.
-///
-/// The `#[entry]` macro ensures the Cortex-M start-up code calls this function
-/// as soon as all global variables are initialised.
-///
-/// The function configures the RP2040 peripherals, then performs some example
-/// SPI transactions, then goes to sleep.
 #[entry]
 fn main() -> ! {
-    // Grab our singleton objects
-    let mut pac = pac::Peripherals::take().unwrap();
-    let core = pac::CorePeripherals::take().unwrap();
 
-    // Set up the watchdog driver - needed by the clock setup code
-    let mut watchdog = hal::Watchdog::new(pac.WATCHDOG);
-
-    // Configure the clocks
-    let clocks = hal::clocks::init_clocks_and_plls(
-        XTAL_FREQ_HZ,
-        pac.XOSC,
-        pac.CLOCKS,
-        pac.PLL_SYS,
-        pac.PLL_USB,
-        &mut pac.RESETS,
-        &mut watchdog,
-    )
-    .ok()
-    .unwrap();
-
-    let mut delay = cortex_m::delay::Delay::new(core.SYST, clocks.system_clock.freq().to_Hz());
-
-    // The single-cycle I/O block controls our GPIO pins
-    let sio = hal::Sio::new(pac.SIO);
-
-    // Set the pins to their default state
-    let pins = hal::gpio::Pins::new(
-        pac.IO_BANK0,
-        pac.PADS_BANK0,
-        sio.gpio_bank0,
-        &mut pac.RESETS,
-    );
-
-    // These are implicitly used by the spi driver if they are in the correct mode
-    // let _spi_sclk = pins.gpio6.into_mode::<hal::gpio::FunctionSpi>();
-    // let _spi_mosi = pins.gpio7.into_mode::<hal::gpio::FunctionSpi>();
-    // let _spi_miso = pins.gpio4.into_mode::<hal::gpio::FunctionSpi>();
-
-    let _spi_sclk = pins.gpio18.into_mode::<hal::gpio::FunctionSpi>();
-    let _spi_mosi = pins.gpio19.into_mode::<hal::gpio::FunctionSpi>();
-    let _spi_miso = pins.gpio16.into_mode::<hal::gpio::FunctionSpi>();
-    let spi = hal::Spi::<_, _, 8>::new(pac.SPI0);
-
-    let mut lcd_led = pins.gpio17.into_push_pull_output();
-    let mut led = pins.gpio25.into_push_pull_output();
-    let dc = pins.gpio22.into_push_pull_output();
-    let rst = pins.gpio26.into_push_pull_output();
-    let w = pins.gpio5.into_pull_up_input();
-    let a = pins.gpio6.into_pull_up_input();
-    let s = pins.gpio7.into_pull_up_input();
-    let d = pins.gpio8.into_pull_up_input();
-
-    // Exchange the uninitialised SPI driver for an initialised one
-    let spi = spi.init(
-        &mut pac.RESETS,
-        clocks.peripheral_clock.freq(),
-        16.MHz(),
-        &embedded_hal::spi::MODE_0,
-    );
-
-
-    let mut disp = st7735_lcd::ST7735::new(spi, dc, rst, true, false, 160, 128);
-
-    disp.init(&mut delay).unwrap();
-    disp.set_orientation(&Orientation::Landscape).unwrap();
-
-    // let _ = disp.clear(to_color(PALETTE[0]));//Rgb565::BLACK);
-    // disp.clear(Rgb565::BLACK).unwrap();
-    // disp.set_offset(0, 25);
-
-    // https://github.com/embedded-graphics/embedded-graphics
-    // let thin_stroke = PrimitiveStyle::with_stroke(BinaryColor::On, 1);
-    // // Draw a triangle.
-    // let yoffset = 0;
-    //     Triangle::new(
-    //         Point::new(16, 16 + yoffset),
-    //         Point::new(16 + 16, 16 + yoffset),
-    //         Point::new(16 + 8, yoffset),
-    //     )
-    //     .into_styled(thin_stroke)
-    //     .draw(&mut disp)?;
-    // Line::new(Point::new(50, 20), Point::new(60, 35))
-    // .into_styled(PrimitiveStyle::with_stroke(Rgb565::RED, 1))
-    // .draw(&mut disp)
-    // .unwrap();
-
-    // let image_raw: ImageRawLE<Rgb565> =
-    //     ImageRaw::new(include_bytes!("../../assets/ferris.raw"), 86);
-
-    // let image: Image<_> = Image::new(&image_raw, Point::new(34, 8));
-
-    // image.draw(&mut disp).unwrap();
-
-    // disp.set_pixel(64, 64, Rgb565::RED.into_storage()).unwrap();
-    
-    // Wait until the background and image have been rendered otherwise
-    // the screen will show random pixels for a brief moment
-    lcd_led.set_high().unwrap();
-    led.set_high().unwrap();
-
-    let mut frame = 0;
-    let mut gamepad: u8;
-    loop {
-        if frame % 10  == 0 {
-            let _ = disp.clear(to_color(PALETTE[0]));
-        }
-        gamepad = 0;
-        if w.is_low().unwrap() {
-            gamepad |= BUTTON_UP;
-        }
-        if a.is_low().unwrap() {
-            gamepad |= BUTTON_LEFT;
-        }
-        if s.is_low().unwrap() {
-            gamepad |= BUTTON_DOWN;
-        }
-        if d.is_low().unwrap() {
-            gamepad |= BUTTON_RIGHT;
-        }
-        unsafe {
-           update(gamepad, &mut disp)
-        }
-        frame += 1;
-    }
+let mut state: State = State {
+    frame: 0,
+    player_x: 1.5,
+    player_y: 1.5,
+    player_angle: -PI / 2.0,
+};
+    trowel::run(&mut state);
 }
-

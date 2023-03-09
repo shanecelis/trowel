@@ -9,25 +9,41 @@ use panic_probe as _;
 use rp2040_hal as hal;
 
 use hal::gpio::bank0::*;
-use embedded_graphics::prelude::*;
-use embedded_graphics::pixelcolor::Rgb565;
-use embedded_graphics::draw_target::DrawTarget;
-use embedded_hal::digital::v2::OutputPin;
+
+use embedded_graphics::{
+    prelude::*,
+    pixelcolor::Rgb565,
+    draw_target::DrawTarget,
+};
+use embedded_hal::digital::v2::{OutputPin, InputPin};
 use rp2040_hal::clocks::Clock;
-use st7735_lcd::ST7735;
-use st7735_lcd::Orientation;
+use st7735_lcd::{ST7735, Orientation};
 use fugit::RateExtU32;
+use bitflags::bitflags;
 
 // A shorter alias for the Peripheral Access Crate, which provides low-level
 // register access.
 use hal::pac;
+
+bitflags! {
+    pub struct Buttons: u8 {
+        const W = 0b00000001;
+        const A = 0b00000010;
+        const S = 0b00000100;
+        const D = 0b00001000;
+        const I = 0b00010000;
+        const J = 0b00100000;
+        const K = 0b01000000;
+        const L = 0b10000000;
+    }
+}
 
 pub type AppResult = Result<(),()>;
 
 pub trait App<T,C>
   where T : DrawTarget<Color = C> {
     fn init(&mut self) -> AppResult;
-    fn update(&mut self) -> AppResult;
+    fn update(&mut self, buttons : Buttons) -> AppResult;
     fn draw(&mut self, display: &mut T) -> AppResult;
 }
 
@@ -95,6 +111,17 @@ pub fn run(app: &mut impl App<ST7735<hal::Spi<hal::spi::Enabled, pac::SPI0, 8>,
     let dc = pins.gpio22.into_push_pull_output();
     let rst = pins.gpio26.into_push_pull_output();
 
+
+    // Setup button pins.
+    let w = pins.gpio5.into_pull_up_input();
+    let a = pins.gpio6.into_pull_up_input();
+    let s = pins.gpio7.into_pull_up_input();
+    let d = pins.gpio8.into_pull_up_input();
+    let i = pins.gpio12.into_pull_up_input();
+    let j = pins.gpio13.into_pull_up_input();
+    let k = pins.gpio14.into_pull_up_input();
+    let l = pins.gpio15.into_pull_up_input();
+
     // Exchange the uninitialised SPI driver for an initialised one.
     let spi = spi.init(
         &mut pac.RESETS,
@@ -118,8 +145,36 @@ pub fn run(app: &mut impl App<ST7735<hal::Spi<hal::spi::Enabled, pac::SPI0, 8>,
 
     app.init().expect("error initializing");
 
+    let mut buttons;
     loop {
-        app.update().expect("error updating");
+        buttons = Buttons::empty();
+
+        if w.is_low().unwrap() {
+            buttons |= Buttons::W;
+        }
+        if a.is_low().unwrap() {
+            buttons |= Buttons::A;
+        }
+        if s.is_low().unwrap() {
+            buttons |= Buttons::S;
+        }
+        if d.is_low().unwrap() {
+            buttons |= Buttons::D;
+        }
+        if i.is_low().unwrap() {
+            buttons |= Buttons::I;
+        }
+        if j.is_low().unwrap() {
+            buttons |= Buttons::J;
+        }
+        if k.is_low().unwrap() {
+            buttons |= Buttons::K;
+        }
+        if l.is_low().unwrap() {
+            buttons |= Buttons::L;
+        }
+
+        app.update(buttons).expect("error updating");
         app.draw(&mut disp).expect("error drawing");
     }
 }
