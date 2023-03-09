@@ -4,18 +4,14 @@
 
 use cortex_m_rt::entry;
 use embedded_graphics::{
-    pixelcolor::{Rgb565, Rgb888, raw::RawU24},
     draw_target::DrawTarget,
+    pixelcolor::{raw::RawU24, Rgb565, Rgb888},
     prelude::*,
     primitives::{Line, PrimitiveStyle},
 };
 use trowel::{App, AppResult, Buttons};
 
-use core::{
-    // arch::wasm32,
-    f32::consts::{FRAC_PI_2, PI},
-    // panic::PanicInfo,
-};
+use core::f32::consts::{FRAC_PI_2, PI};
 #[allow(unused_imports)]
 use micromath::F32Ext;
 
@@ -23,7 +19,6 @@ use micromath::F32Ext;
 // display.
 // const HEIGHT: i32 = 160;
 const HEIGHT: i32 = 128;
-
 
 // Made the step size bigger since our fps was low.
 // const STEP_SIZE: f32 = 0.045;
@@ -33,22 +28,19 @@ const STEP_SIZE: f32 = 0.09;
 const FOV: f32 = PI / 2.7; // The player's field of view.
 const HALF_FOV: f32 = FOV * 0.5; // Half the player's field of view.
 const ANGLE_STEP: f32 = FOV / 160.0; // The angle between each ray.
-// const WALL_HEIGHT: f32 = 100.0; // A magic number.
+                                     // const WALL_HEIGHT: f32 = 100.0; // A magic number.
 const WALL_HEIGHT: f32 = HEIGHT as f32 - 60.0; // A magic number.
-// const PALETTE : [u32; 4] = [0x2B2D24, 0x606751, 0x949C81, 0x3E74BC];
-const PALETTE : [u32; 4] = [
+                                               // const PALETTE : [u32; 4] = [0x2B2D24, 0x606751, 0x949C81, 0x3E74BC];
+const PALETTE: [u32; 4] = [
     // 0xfff6d3,
     // 0xf9a875,
     // 0xeb6b6f,
     // 0x7c3f58,
-0xe0f8cf,
-0x86c06c,
-0x306850,
-0x071821
+    0xe0f8cf, 0x86c06c, 0x306850, 0x071821,
 ];
 
-fn to_color(c : u32) -> Rgb565 {
-  Rgb565::from(Rgb888::from(RawU24::new(c)))
+fn to_color(c: u32) -> Rgb565 {
+    Rgb565::from(Rgb888::from(RawU24::new(c)))
 }
 
 const MAP: [u16; 8] = [
@@ -62,16 +54,17 @@ const MAP: [u16; 8] = [
     0b1111111111111111,
 ];
 
-impl<T> App<T,Rgb565> for State
-    where T : DrawTarget<Color = Rgb565, Error = ()> {
-
+impl<T> App<T, Rgb565> for State
+where
+    T: DrawTarget<Color = Rgb565, Error = ()>,
+{
     fn init(&mut self) -> AppResult {
         // This way the first frame is zero.
         self.frame = -1;
         Ok(())
     }
 
-    fn update(&mut self, buttons : Buttons) -> AppResult {
+    fn update(&mut self, buttons: Buttons) -> AppResult {
         self.frame += 1;
 
         self.update(
@@ -84,40 +77,38 @@ impl<T> App<T,Rgb565> for State
     }
 
     fn draw(&mut self, display: &mut T) -> AppResult {
-
-        if self.frame % 10  == 0 {
+        if self.frame % 10 == 0 {
             display.clear(to_color(PALETTE[0]))?;
         }
-    // let _ = disp.clear(to_color(PALETTE[0]));//Rgb565::BLACK);
-    // Go through each column on screen and draw walls in the center.
-    for (x, wall) in self.get_view().iter().enumerate() {
-        let (height, shadow) = wall;
+        // let _ = disp.clear(to_color(PALETTE[0]));//Rgb565::BLACK);
+        // Go through each column on screen and draw walls in the center.
+        for (x, wall) in self.get_view().iter().enumerate() {
+            let (height, shadow) = wall;
 
-        // if *shadow {
-        //     *DRAW_COLORS = 0x2;
-        // } else {
-        //     *DRAW_COLORS = 0x3;
-        // }
+            // if *shadow {
+            //     *DRAW_COLORS = 0x2;
+            // } else {
+            //     *DRAW_COLORS = 0x3;
+            // }
 
-    let color = to_color(PALETTE[if *shadow { 1 } else { 2 }]);
-    let y = HEIGHT/2 - (height / 2);
-    let _ = Line::new(Point::new(x as i32, y),
-              Point::new(x as i32, y + *height - 1))
-    .into_styled(PrimitiveStyle::with_stroke(
-        color,
-        1))
-    .draw(display)?;
-    // let _ = Circle::new(Point::new(0, 0), 10)
-    //     .into_styled(PrimitiveStyle::with_stroke(Rgb565::BLACK, 1))
-    //     .draw(disp);
+            let color = to_color(PALETTE[if *shadow { 1 } else { 2 }]);
+            let y = HEIGHT / 2 - (height / 2);
+            let _ = Line::new(
+                Point::new(x as i32, y),
+                Point::new(x as i32, y + *height - 1),
+            )
+            .into_styled(PrimitiveStyle::with_stroke(color, 1))
+            .draw(display)?;
+            // let _ = Circle::new(Point::new(0, 0), 10)
+            //     .into_styled(PrimitiveStyle::with_stroke(Rgb565::BLACK, 1))
+            //     .draw(disp);
 
-        // oval(0, 0, 10, 10);
-        // vline(x as i32, 80 - (height / 2), *height as u32);
+            // oval(0, 0, 10, 10);
+            // vline(x as i32, 80 - (height / 2), *height as u32);
+        }
+        Ok(())
     }
-    Ok(())
 }
-}
-
 
 struct State {
     frame: i32,
@@ -369,15 +360,13 @@ fn fabsf(x: f32) -> f32 {
     x.abs()
 }
 
-
 #[entry]
 fn main() -> ! {
-
-let mut state: State = State {
-    frame: 0,
-    player_x: 1.5,
-    player_y: 1.5,
-    player_angle: -PI / 2.0,
-};
+    let mut state: State = State {
+        frame: 0,
+        player_x: 1.5,
+        player_y: 1.5,
+        player_angle: -PI / 2.0,
+    };
     trowel::run(&mut state);
 }

@@ -10,16 +10,12 @@ use rp2040_hal as hal;
 
 use hal::gpio::bank0::*;
 
-use embedded_graphics::{
-    prelude::*,
-    pixelcolor::Rgb565,
-    draw_target::DrawTarget,
-};
-use embedded_hal::digital::v2::{OutputPin, InputPin};
-use rp2040_hal::clocks::Clock;
-use st7735_lcd::{ST7735, Orientation};
-use fugit::RateExtU32;
 use bitflags::bitflags;
+use embedded_graphics::{draw_target::DrawTarget, pixelcolor::Rgb565, prelude::*};
+use embedded_hal::digital::v2::{InputPin, OutputPin};
+use fugit::RateExtU32;
+use rp2040_hal::clocks::Clock;
+use st7735_lcd::{Orientation, ST7735};
 
 // A shorter alias for the Peripheral Access Crate, which provides low-level
 // register access.
@@ -38,15 +34,16 @@ bitflags! {
     }
 }
 
-pub type AppResult = Result<(),()>;
+pub type AppResult = Result<(), ()>;
 
-pub trait App<T,C>
-  where T : DrawTarget<Color = C> {
+pub trait App<T, C>
+where
+    T: DrawTarget<Color = C>,
+{
     fn init(&mut self) -> AppResult;
-    fn update(&mut self, buttons : Buttons) -> AppResult;
+    fn update(&mut self, buttons: Buttons) -> AppResult;
     fn draw(&mut self, display: &mut T) -> AppResult;
 }
-
 
 /// The linker will place this boot block at the start of our program image. We
 /// need this to help the ROM bootloader get our code up and running.
@@ -59,10 +56,16 @@ pub static BOOT2: [u8; 256] = rp2040_boot2::BOOT_LOADER_W25Q080;
 const XTAL_FREQ_HZ: u32 = 12_000_000u32;
 
 /// The `run` function configures the RP2040 peripherals, then runs the app.
-pub fn run(app: &mut impl App<ST7735<hal::Spi<hal::spi::Enabled, pac::SPI0, 8>,
-                                 hal::gpio::Pin<Gpio22, hal::gpio::Output<hal::gpio::PushPull>>,
-                                 hal::gpio::Pin<Gpio26, hal::gpio::Output<hal::gpio::PushPull>>>, Rgb565>) -> !
-{
+pub fn run(
+    app: &mut impl App<
+        ST7735<
+            hal::Spi<hal::spi::Enabled, pac::SPI0, 8>,
+            hal::gpio::Pin<Gpio22, hal::gpio::Output<hal::gpio::PushPull>>,
+            hal::gpio::Pin<Gpio26, hal::gpio::Output<hal::gpio::PushPull>>,
+        >,
+        Rgb565,
+    >,
+) -> ! {
     // Grab our singleton objects.
     let mut pac = pac::Peripherals::take().unwrap();
     let core = pac::CorePeripherals::take().unwrap();
@@ -110,7 +113,6 @@ pub fn run(app: &mut impl App<ST7735<hal::Spi<hal::spi::Enabled, pac::SPI0, 8>,
     let mut _led = pins.gpio25.into_push_pull_output();
     let dc = pins.gpio22.into_push_pull_output();
     let rst = pins.gpio26.into_push_pull_output();
-
 
     // Setup button pins.
     let w = pins.gpio5.into_pull_up_input();

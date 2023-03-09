@@ -5,21 +5,22 @@
 use cortex_m_rt::entry;
 
 use embedded_graphics::{
+    draw_target::DrawTarget,
     image::{Image, ImageRaw, ImageRawLE},
     pixelcolor::Rgb565,
-    draw_target::DrawTarget,
     prelude::*,
 };
 use trowel::{App, AppResult};
 
 struct DrawFerris {
     /// Frame count
-    frame : i32,
+    frame: i32,
 }
 
-impl<T> App<T,Rgb565> for DrawFerris
-    where T : DrawTarget<Color = Rgb565, Error = ()> {
-
+impl<T> App<T, Rgb565> for DrawFerris
+where
+    T: DrawTarget<Color = Rgb565, Error = ()>,
+{
     fn init(&mut self) -> AppResult {
         Ok(())
     }
@@ -46,5 +47,5 @@ impl<T> App<T,Rgb565> for DrawFerris
 
 #[entry]
 fn main() -> ! {
-    trowel::run(&mut DrawFerris { frame : 0 });
+    trowel::run(&mut DrawFerris { frame: 0 });
 }
