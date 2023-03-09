@@ -20,5 +20,5 @@ rustflags = [
   # "-v",
 ]
 
-[build]
-target = "thumbv6m-none-eabi"
+# [build]
+# target = "thumbv6m-none-eabi"

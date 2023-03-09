@@ -1,7 +1,8 @@
 // Example of running an ST7735 with an RP2040
 #![no_std]
-#![no_main]
+#![cfg_attr(all(target_arch = "arm", target_os = "none"), no_main)]
 
+#[cfg(all(target_arch = "arm", target_os = "none"))]
 use cortex_m_rt::entry;
 use embedded_graphics::{
     draw_target::DrawTarget,
@@ -360,7 +361,7 @@ fn fabsf(x: f32) -> f32 {
     x.abs()
 }
 
-#[entry]
+#[cfg_attr(all(target_arch = "arm", target_os = "none"), entry)]
 fn main() -> ! {
     let mut state: State = State {
         frame: 0,
