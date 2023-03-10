@@ -18,25 +18,21 @@ pub fn run(
 ) -> ! {
     let mut display : SimulatorDisplay<Rgb565> = SimulatorDisplay::new(Size::new(160, 128));
 
-    // display.set_orientation(&Orientation::Landscape).unwrap();
     display.clear(Rgb565::BLACK).expect("error clearing display");
-    // display.set_allow_overdraw(true);
-    // display.set_allow_out_of_bounds_drawing(true);
 
     let output_settings = OutputSettingsBuilder::new()
         .theme(BinaryColorTheme::Default)
         .build();
     let mut window = Window::new("Sprig Simulator", &output_settings);
-    // window.show_static(&display);
 
     app.init().expect("error initializing");
 
-        // window.update(&display);
     let mut buttons;
     // 'running: loop {
     loop {
         window.update(&display);
         buttons = Buttons::empty();
+        // BUG: This seems to hang on macOS if window.events() is not called.
         for event in window.events() {
             match event {
                 SimulatorEvent::KeyDown { keycode, .. } => {
