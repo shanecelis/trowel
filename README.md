@@ -107,3 +107,29 @@ Once you have that setup, you can change your runner in the `.cargo/config.toml`
 runner = "probe-run --chip RP2040"
 ```
 
+## Acknowledgments
+
+* Thanks to [Leo McElroy](https://github.com/leomcelroy), [Cedric
+  Hutchings](https://github.com/cedric-h) and
+  [Kognize](https://github.com/kognise) the whole Hack Club team for making the
+  Sprig, making it an open platform in both hardware and software.
+
+* Thanks to [Zach Latta](https://zachlatta.com), [Christina
+  Asquith](https://christinaasquith.com), and the [Hack Club
+  donors](https://hackclub.com/philanthropy/) who have made the Sprig free for
+  teenagers, making it an accessible platform.
+
+* Thanks to the hundreds of Hack Club members who have made [hundreds of
+  games](https://sprig.hackclub.com/gallery) for the Sprig, making it a vibrant
+  platform.
+
+* Thanks to Andrew Christiansen for the rp2040-examples in
+  [st7735-lcd-examples](https://github.com/sajattack/st7735-lcd-examples) that
+  provided a good basis for this project.
+
+* Thanks to Grant Shandy for this [article on
+  raytracing](https://grantshandy.github.io/posts/raycasting/) in rust and the
+  [maze
+  code](https://github.com/grantshandy/wasm4-raycaster/blob/main/src/lib.rs)
+  ported as an example in this project.
+
