@@ -4,7 +4,7 @@
 
    [1]: https://github.com/sajattack/st7735-lcd-examples/blob/master/rp2040-examples/examples/draw_ferris.rs
    [2]: https://github.com/DrewTChrist
-   [3]: https://github.com/shanecelis/trowel/blob/master/examples/draw_ferris.rs
+   [3]: https://github.com/shanecelis/trowel/blob/master/src/sprig.rs
    [4]: https://mastodon.gamedev.place/@shanecelis
    [5]: https://opensource.org/licenses/MIT
    [6]: https://hackclub.com
