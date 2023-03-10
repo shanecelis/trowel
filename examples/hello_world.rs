@@ -14,7 +14,7 @@ struct DrawFerris {
     frame: i32, // Frame count
 }
 
-impl<T,E> App<T, E> for DrawFerris
+impl<T, E> App<T, E> for DrawFerris
 where
     T: DrawTarget<Color = Rgb565, Error = E>,
 {

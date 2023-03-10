@@ -1,5 +1,5 @@
 /* Original code[1] Copyright (c) 2021 Andrew Christiansen[2]
-   Modified code[3] Shane Celis[4] Copyright (c) 2023 Hack Club[6]
+   Modified code[3] by Shane Celis[4] Copyright (c) 2023 Hack Club[6]
    Licensed under the MIT License[5]
 
    [1]: https://github.com/sajattack/st7735-lcd-examples/blob/master/rp2040-examples/examples/draw_ferris.rs
@@ -10,8 +10,8 @@
    [6]: https://hackclub.com
 */
 
-// Ensure we halt the program on panic (if we don't mention this crate it won't
-// be linked)
+// Ensure we halt the program on panic. (If we don't mention this crate it won't
+// be linked.)
 use defmt_rtt as _;
 use panic_probe as _;
 
@@ -27,8 +27,8 @@ use st7735_lcd::{Orientation, ST7735};
 
 // A shorter alias for the Peripheral Access Crate, which provides low-level
 // register access.
-use hal::pac;
 use crate::{App, Buttons};
+use hal::pac;
 
 /// The linker will place this boot block at the start of our program image. We
 /// need this to help the ROM bootloader get our code up and running.
@@ -85,10 +85,6 @@ pub fn run(
     );
 
     // These are implicitly used by the spi driver if they are in the correct mode
-    // let _spi_sclk = pins.gpio6.into_mode::<hal::gpio::FunctionSpi>();
-    // let _spi_mosi = pins.gpio7.into_mode::<hal::gpio::FunctionSpi>();
-    // let _spi_miso = pins.gpio4.into_mode::<hal::gpio::FunctionSpi>();
-
     let _spi_sclk = pins.gpio18.into_mode::<hal::gpio::FunctionSpi>();
     let _spi_mosi = pins.gpio19.into_mode::<hal::gpio::FunctionSpi>();
     let _spi_miso = pins.gpio16.into_mode::<hal::gpio::FunctionSpi>();

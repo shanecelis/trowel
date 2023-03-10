@@ -13,16 +13,16 @@
 #![cfg_attr(all(target_arch = "arm", target_os = "none"), no_std)]
 #![cfg_attr(all(target_arch = "arm", target_os = "none"), no_main)]
 
+use core::f32::consts::{FRAC_PI_2, PI};
 use embedded_graphics::{
     draw_target::DrawTarget,
     pixelcolor::{raw::RawU24, Rgb565, Rgb888},
     prelude::*,
     primitives::{Line, PrimitiveStyle},
 };
-use trowel::{App, AppResult, Buttons};
-use core::f32::consts::{FRAC_PI_2, PI};
 #[allow(unused_imports)]
 use micromath::F32Ext;
+use trowel::{App, AppResult, Buttons};
 
 // The original platform had a 160x160 display. Sprig only has a 160x128
 // display.
@@ -37,11 +37,11 @@ const STEP_SIZE: f32 = 0.09;
 const FOV: f32 = PI / 2.7; // The player's field of view.
 const HALF_FOV: f32 = FOV * 0.5; // Half the player's field of view.
 const ANGLE_STEP: f32 = FOV / 160.0; // The angle between each ray.
-// const WALL_HEIGHT: f32 = 100.0; // A magic number.
-const WALL_HEIGHT: f32 = HEIGHT as f32 - 60.0; // A magic number.
-const PALETTE: [u32; 4] = [
-    0xe0f8cf, 0x86c06c, 0x306850, 0x071821,
-];
+
+// WALL_HEIGHT was 100 for a 160 screen height, so we worked backwards.
+const WALL_HEIGHT: f32 = HEIGHT as f32 - 60.0;
+
+const PALETTE: [u32; 4] = [0xe0f8cf, 0x86c06c, 0x306850, 0x071821];
 
 fn to_color(c: u32) -> Rgb565 {
     Rgb565::from(Rgb888::from(RawU24::new(c)))
@@ -58,7 +58,7 @@ const MAP: [u16; 8] = [
     0b1111111111111111,
 ];
 
-impl<T,E> App<T, E> for State
+impl<T, E> App<T, E> for State
 where
     T: DrawTarget<Color = Rgb565, Error = E>,
 {

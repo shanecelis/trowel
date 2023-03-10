@@ -10,7 +10,7 @@
 #![no_std]
 
 use bitflags::bitflags;
-use embedded_graphics::{prelude::DrawTarget, pixelcolor::Rgb565};
+use embedded_graphics::{pixelcolor::Rgb565, prelude::DrawTarget};
 
 bitflags! {
     pub struct Buttons: u8 {
