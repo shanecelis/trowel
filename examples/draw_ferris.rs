@@ -1,3 +1,15 @@
+/* Original code[1] Copyright (c) 2021 Andrew Christiansen[2]
+   Modified code[3] Shane Celis[4] Copyright (c) 2023 Hack Club[5]
+   Licensed under the MIT License[6]
+
+   [1]: https://github.com/sajattack/st7735-lcd-examples/blob/master/rp2040-examples/examples/draw_ferris.rs
+   [2]: https://github.com/DrewTChrist
+   [3]: https://github.com/shanecelis/trowel/blob/master/examples/draw_ferris.rs
+   [4]: https://mastodon.gamedev.place/@shanecelis
+   [5]: https://hackclub.com
+   [6]: https://opensource.org/licenses/MIT
+*/
+
 #![cfg_attr(all(target_arch = "arm", target_os = "none"), no_std)]
 #![cfg_attr(all(target_arch = "arm", target_os = "none"), no_main)]
 

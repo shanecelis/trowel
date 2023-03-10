@@ -1,5 +1,15 @@
-// Example of running an ST7735 with an RP2040
-// #![no_std]
+/* Original code[1] Copyright (c) 2023 Grant Handy[2]
+   Modified code[3] by Shane Celis[4], Copyright (c) 2023 Hack Club[5]
+   Licensed under the MIT License[6]
+
+   [1]: https://github.com/grantshandy/wasm4-raycaster
+   [2]: https://github.com/grantshandy
+   [3]: https://github.com/shanecelis/trowel/blob/master/examples/maze.rs
+   [4]: https://mastodon.gamedev.place/@shanecelis
+   [5]: https://hackclub.com
+   [6]: https://opensource.org/licenses/MIT
+*/
+
 #![cfg_attr(all(target_arch = "arm", target_os = "none"), no_std)]
 #![cfg_attr(all(target_arch = "arm", target_os = "none"), no_main)]
 

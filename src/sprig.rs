@@ -1,3 +1,14 @@
+/* Original code[1] Copyright (c) 2021 Andrew Christiansen[2]
+   Modified code[3] Shane Celis[4] Copyright (c) 2023 Hack Club[6]
+   Licensed under the MIT License[5]
+
+   [1]: https://github.com/sajattack/st7735-lcd-examples/blob/master/rp2040-examples/examples/draw_ferris.rs
+   [2]: https://github.com/DrewTChrist
+   [3]: https://github.com/shanecelis/trowel/blob/master/examples/draw_ferris.rs
+   [4]: https://mastodon.gamedev.place/@shanecelis
+   [5]: https://opensource.org/licenses/MIT
+   [6]: https://hackclub.com
+*/
 
 // Ensure we halt the program on panic (if we don't mention this crate it won't
 // be linked)

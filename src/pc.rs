@@ -1,5 +1,12 @@
-// Ensure we halt the program on panic (if we don't mention this crate it won't
-// be linked)
+/* Original code[1] by Shane Celis[2] Copyright (c) 2023 Hack Club[3]
+   Licensed under the MIT License[4]
+
+   [1]: https://github.com/shanecelis/trowel
+   [2]: https://mastodon.gamedev.place/@shanecelis
+   [3]: https://hackclub.com
+   [4]: https://opensource.org/licenses/MIT
+*/
+
 use embedded_graphics::{draw_target::DrawTarget, pixelcolor::Rgb565, prelude::*};
 use embedded_graphics_simulator::{BinaryColorTheme, SimulatorDisplay, Window, OutputSettingsBuilder, SimulatorEvent, sdl2::Keycode};
 
