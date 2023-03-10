@@ -1,5 +1,5 @@
 /* Original code[1] Copyright (c) 2021 Andrew Christiansen[2]
-   Modified code[3] Shane Celis[4] Copyright (c) 2023 Hack Club[5]
+   Modified code[3] by Shane Celis[4] Copyright (c) 2023 Hack Club[5]
    Licensed under the MIT License[6]
 
    [1]: https://github.com/sajattack/st7735-lcd-examples/blob/master/rp2040-examples/examples/draw_ferris.rs
