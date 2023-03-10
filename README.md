@@ -72,3 +72,38 @@ debug probe.
 
 * Add a [runty8](https://github.com/jjant/runty8) adapter
 
+## Advanced: Setup probe
+
+If you have an extra pico, you can set one up as a debug probe. It is super
+useful. You can run your code through the debugger. You'll get stacktraces and
+panic messages when your code fails.
+
+### Requirements
+
+* sprig
+* extra pico
+* breadboard
+* wires
+
+### Load probe firmware
+
+The probe needs to have [this
+uf2](https://github.com/raspberrypi/picoprobe/releases/latest/download/picoprobe.uf2)
+installed. 
+
+### Wire the probe to the target sprig
+
+See [this
+page](https://www.raspberrypi.com/documentation/microcontrollers/raspberry-pi-pico.html)
+and the [Getting Started
+Guide](https://datasheets.raspberrypi.com/pico/getting-started-with-pico.pdf)
+for more information.
+
+### Change to use probe-run
+
+Once you have that setup, you can change your runner in the `.cargo/config.toml` file.
+
+``` sh
+runner = "probe-run --chip RP2040"
+```
+
