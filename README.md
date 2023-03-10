@@ -111,8 +111,9 @@ runner = "probe-run --chip RP2040"
 
 * Thanks to [Leo McElroy](https://github.com/leomcelroy), [Cedric
   Hutchings](https://github.com/cedric-h),
-  [Kognize](https://github.com/kognise), and the whole Hack Club team for making
-  the Sprig, making it an open platform in both hardware and software.
+  [Kognize](https://github.com/kognise), and the whole Hack Club team for
+  creating the Sprig and for making it an open platform in both hardware and
+  software.
 
 * Thanks to [Zach Latta](https://zachlatta.com), [Christina
   Asquith](https://christinaasquith.com), and the [Hack Club
