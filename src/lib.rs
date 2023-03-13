@@ -39,12 +39,12 @@ where
 #[cfg(all(target_arch = "arm", target_os = "none"))]
 mod sprig;
 #[cfg(all(target_arch = "arm", target_os = "none"))]
-pub use sprig::run;
+pub use sprig::{run, init_heap};
 
 #[cfg(not(all(target_arch = "arm", target_os = "none")))]
 mod pc;
 #[cfg(not(all(target_arch = "arm", target_os = "none")))]
-pub use pc::run;
+pub use pc::{run, init_heap};
 
 #[cfg(feature = "runty8")]
 pub mod runty8;

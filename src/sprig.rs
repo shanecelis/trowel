@@ -29,6 +29,7 @@ use st7735_lcd::{Orientation, ST7735};
 // register access.
 use crate::{App, Buttons};
 use hal::pac;
+use embedded_alloc::Heap;
 
 /// The linker will place this boot block at the start of our program image. We
 /// need this to help the ROM bootloader get our code up and running.
@@ -39,6 +40,18 @@ pub static BOOT2: [u8; 256] = rp2040_boot2::BOOT_LOADER_W25Q080;
 /// External high-speed crystal on the Raspberry Pi Pico board is 12 MHz. Adjust
 /// if your board has a different frequency.
 const XTAL_FREQ_HZ: u32 = 12_000_000u32;
+
+#[global_allocator]
+static HEAP: Heap = Heap::empty();
+
+pub fn init_heap() {
+    if HEAP.used() == 0 && HEAP.free() == 0 {
+        use core::mem::MaybeUninit;
+        const HEAP_SIZE: usize = 12_000;
+        static mut HEAP_MEM: [MaybeUninit<u8>; HEAP_SIZE] = [MaybeUninit::uninit(); HEAP_SIZE];
+        unsafe { HEAP.init(HEAP_MEM.as_ptr() as usize, HEAP_SIZE) }
+    }
+}
 
 /// The `run` function configures the RP2040 peripherals, then runs the app.
 pub fn run(
@@ -51,6 +64,8 @@ pub fn run(
         (),
     >,
 ) -> ! {
+    init_heap();
+
     // Grab our singleton objects.
     let mut pac = pac::Peripherals::take().unwrap();
     let core = pac::CorePeripherals::take().unwrap();
