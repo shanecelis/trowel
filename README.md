@@ -67,6 +67,8 @@ adapter so _any_ runty8 games can run on the Sprig.
 cargo run --example $example --features runty8 
 ```
 
+![Celeste on the pc simulator](/assets/celeste-pc.png)
+
 ## Notes
 
 See the `.cargo/config.toml` for various build and run settings. You can generate uf2
