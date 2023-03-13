@@ -49,6 +49,24 @@ cargo run --example maze --target thumbv6m-none-eabi
 * maze
 * draw_ferris
 
+``` sh
+cargo run --example $example
+```
+
+### Runty8 Examples
+
+[Runty8](https://github.com/jjant/runty8) is a
+[pico-8](https://www.lexaloffle.com/pico-8.php) clone in rust. Trowel has an
+adapter so _any_ runty8 games can run on the Sprig.
+
+* bresenham 
+* moving-box
+* [celeste](https://celestegame.fandom.com/wiki/Celeste_Classic) (!!!)
+
+``` sh
+cargo run --example $example --features runty8 
+```
+
 ## Notes
 
 See the `.cargo/config.toml` for various build and run settings. You can generate uf2
@@ -57,9 +75,9 @@ debug probe.
 
 ## TODOs
 
-* Add sound support
-* Add SD card read support
-* Buffer the output to increase responsiveness
+* [ ] Add sound support
+* [ ] Add SD card read support
+* [ ] Buffer the output to increase responsiveness
 
 > "The framerate is ok on this. But it's the tip of the iceberg. There's a ton
 > that can be done to improve it. The screen is the big bottleneck, we can get
@@ -70,7 +88,15 @@ debug probe.
 > buffers, that'd give us a table of all the pixels that would need to change.
 > So some neat opportunities there to make it more performant."
 
-* Add a [runty8](https://github.com/jjant/runty8) adapter
+### Runty8 TODOs
+
+* [X] Add a [runty8](https://github.com/jjant/runty8) adapter
+* [X] Make examples run: bresenham, moving-box.
+* [X] Make celeste run (!!!).
+* [X] Add binary serialization support.
+* [ ] Don't make copies upon binary deserialization. (Memory is precious here.)
+* [ ] Add a mouse simulator mode.
+* [ ] Make carts load-able.
 
 ## Advanced: Setup probe
 
@@ -105,6 +131,18 @@ Once you have that setup, you can change your runner in the `.cargo/config.toml`
 
 ``` sh
 runner = "probe-run --chip RP2040"
+```
+
+### Troubleshooting debug probe
+
+Once your debug probe has been flashed and it's plugged in, see if probe-run can
+find it.
+
+``` sh
+$ probe-run --list-probes
+the following probes were found:
+[0]: Picoprobe CMSIS-DAP (VID: 2e8a, PID: 000c, Serial: E66164084367642A, CmsisDap)
+
 ```
 
 ## Acknowledgments
