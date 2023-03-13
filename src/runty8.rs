@@ -1,11 +1,11 @@
 //! Run a standalone Runty8 game natively or in wasm.
 
 use runty8_core as runty;
-use runty::{Input, Pico8, Resources};
+use runty::{Input, Pico8, Resources};//, KeyboardEvent, InputEvent, Key, KeyState};
 
 use embedded_graphics::{
     draw_target::DrawTarget,
-    image::{ImageRaw, ImageRawBE},
+    image::{Image, ImageRaw, ImageRawBE},
     pixelcolor::{Rgb565, Rgb888},
     prelude::*,
 };
@@ -16,7 +16,8 @@ struct RuntyApp<G>
 {
     pico8: Pico8,
     game: G,
-    input: Input
+    input: Input,
+    last_buttons: Buttons
 
 }
 
@@ -29,9 +30,17 @@ impl<G> RuntyApp<G>
             pico8: pico8,
             game: game,
             input: Input::new(),
-
+            last_buttons: Buttons::empty()
         }
     }
+
+    // fn handle_event(&mut self, button: Buttons, buttons: Buttons, key : Key) {
+    //     let down = buttons.contains(button);
+    //     if down { //^ self.last_buttons.contains(button) {
+    //         self.input.on_event(InputEvent::Keyboard(KeyboardEvent { key,
+    //                                                   state: if down { KeyState::Down } else { KeyState::Up } }));
+    //     }
+    // }
 }
 
 impl<T, E, G> App<T, E> for RuntyApp<G>
@@ -45,6 +54,14 @@ where
 
     fn update(&mut self, buttons: Buttons) -> AppResult<E> {
 
+        // self.handle_event(Buttons::W, buttons, Key::W);
+        // self.handle_event(Buttons::A, buttons, Key::A);
+        // self.handle_event(Buttons::S, buttons, Key::S);
+        // self.handle_event(Buttons::D, buttons, Key::D);
+        // self.handle_event(Buttons::I, buttons, Key::I);
+        // self.handle_event(Buttons::J, buttons, Key::J);
+        // self.handle_event(Buttons::K, buttons, Key::K);
+        // self.handle_event(Buttons::L, buttons, Key::L);
         self.input.up = Some(buttons.contains(Buttons::W));
         self.input.left = Some(buttons.contains(Buttons::A));
         self.input.down = Some(buttons.contains(Buttons::S));
@@ -53,6 +70,7 @@ where
         self.input.c = Some(buttons.contains(Buttons::K));
         self.pico8.state.update_input(&self.input);
         self.game.update(&mut self.pico8);
+        self.last_buttons = buttons;
         Ok(())
     }
 
@@ -67,7 +85,10 @@ where
             rgb565s[j + 1] = (x & 0xff) as u8;
         }
         let raw: ImageRawBE<Rgb565> = ImageRaw::new(&rgb565s, 128);
-        raw.draw(display)?;
+
+        let image: Image<_> = Image::new(&raw, Point::new(16, 0));
+        image.draw(display)?;
+        // raw.draw(display)?;
         Ok(())
     }
 }
