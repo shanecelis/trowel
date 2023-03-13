@@ -15,6 +15,8 @@ use embedded_graphics_simulator::{
 
 use crate::{App, Buttons};
 
+pub fn init_heap() { }
+
 /// The `run` function configures the RP2040 peripherals, then runs the app.
 pub fn run(app: &mut impl App<SimulatorDisplay<Rgb565>, core::convert::Infallible>) -> ! {
     let mut display: SimulatorDisplay<Rgb565> = SimulatorDisplay::new(Size::new(160, 128));
@@ -30,11 +32,10 @@ pub fn run(app: &mut impl App<SimulatorDisplay<Rgb565>, core::convert::Infallibl
 
     app.init().expect("error initializing");
 
-    let mut buttons;
+    let mut buttons = Buttons::empty();
     // 'running: loop {
     loop {
         window.update(&display);
-        buttons = Buttons::empty();
         // BUG: This seems to hang on macOS if window.events() is not called.
         for event in window.events() {
             match event {
@@ -47,6 +48,18 @@ pub fn run(app: &mut impl App<SimulatorDisplay<Rgb565>, core::convert::Infallibl
                     Keycode::J => buttons |= Buttons::J,
                     Keycode::K => buttons |= Buttons::K,
                     Keycode::L => buttons |= Buttons::L,
+                    _ => {}
+                },
+
+                SimulatorEvent::KeyUp { keycode, .. } => match keycode {
+                    Keycode::W => buttons &= !Buttons::W,
+                    Keycode::A => buttons &= !Buttons::A,
+                    Keycode::S => buttons &= !Buttons::S,
+                    Keycode::D => buttons &= !Buttons::D,
+                    Keycode::I => buttons &= !Buttons::I,
+                    Keycode::J => buttons &= !Buttons::J,
+                    Keycode::K => buttons &= !Buttons::K,
+                    Keycode::L => buttons &= !Buttons::L,
                     _ => {}
                 },
                 SimulatorEvent::Quit => panic!("quit"), //break 'running,
