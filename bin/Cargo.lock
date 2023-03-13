@@ -3,13 +3,6 @@
 version = 3
 
 [[package]]
-name = "bin"
-version = "0.1.0"
-dependencies = [
- "runty8-core",
-]
-
-[[package]]
 name = "bumpalo"
 version = "3.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -173,6 +166,13 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "trowel-bin"
+version = "0.1.0"
+dependencies = [
+ "runty8-core",
 ]
 
 [[package]]
