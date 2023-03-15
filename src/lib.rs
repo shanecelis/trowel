@@ -41,6 +41,20 @@ mod sprig;
 #[cfg(all(target_arch = "arm", target_os = "none"))]
 pub use sprig::{run, init_heap};
 
+// #[cfg(all(target_arch = "arm", target_os = "none"))]
+// pub mod buffered;
+
+
+pub mod buffered;
+
+// pub mod buffered {
+// #[cfg(all(target_arch = "arm", target_os = "none"))]
+//     pub use sprig_buffered::run;
+
+// #[cfg(not(all(target_arch = "arm", target_os = "none")))]
+//     pub use crate::pc::run;
+// }
+
 #[cfg(not(all(target_arch = "arm", target_os = "none")))]
 mod pc;
 #[cfg(not(all(target_arch = "arm", target_os = "none")))]

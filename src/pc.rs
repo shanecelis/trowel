@@ -17,6 +17,18 @@ use crate::{App, Buttons};
 
 pub fn init_heap() { }
 
+pub mod buffered {
+    pub use crate::pc::run;
+    // use crate::pc::SimulatorDisplay;
+    // use crate::App;
+    // use crate::Rgb565;
+
+    // pub fn runBuffered(app: &mut impl App<SimulatorDisplay<Rgb565>, core::convert::Infallible>) -> ! {
+    //     super::run(app);
+    // }
+
+}
+
 /// The `run` function configures the RP2040 peripherals, then runs the app.
 pub fn run(app: &mut impl App<SimulatorDisplay<Rgb565>, core::convert::Infallible>) -> ! {
     let mut display: SimulatorDisplay<Rgb565> = SimulatorDisplay::new(Size::new(160, 128));

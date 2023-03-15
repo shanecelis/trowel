@@ -18,7 +18,6 @@ struct RuntyApp<G>
     game: G,
     input: Input,
     last_buttons: Buttons
-
 }
 
 impl<G> RuntyApp<G>

@@ -22,7 +22,7 @@ use embedded_graphics::{
 };
 #[allow(unused_imports)]
 use micromath::F32Ext;
-use trowel::{App, AppResult, Buttons};
+use trowel::{App, AppResult, Buttons, buffered::BufferedApp};
 
 // The original platform had a 160x160 display. Sprig only has a 160x128
 // display.
@@ -81,9 +81,7 @@ where
     }
 
     fn draw(&mut self, display: &mut T) -> AppResult<E> {
-        if self.frame % 10 == 0 {
-            display.clear(to_color(PALETTE[0]))?;
-        }
+        display.clear(to_color(PALETTE[0]))?;
         // Go through each column on screen and draw walls in the center.
         for (x, wall) in self.get_view().iter().enumerate() {
             let (height, shadow) = wall;
@@ -358,5 +356,7 @@ fn main() -> ! {
         player_y: 1.5,
         player_angle: -PI / 2.0,
     };
-    trowel::run(&mut state);
+    let mut app = BufferedApp::new(state);
+    // trowel::run(state);
+    trowel::run(&mut app);
 }
