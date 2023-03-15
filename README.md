@@ -77,18 +77,20 @@ debug probe.
 
 ## TODOs
 
-* [ ] Add sound support
-* [ ] Add SD card read support
+* [ ] Add [sound support](https://github.com/TeXitoi/softsynth)
+* [ ] Add [SD card](https://github.com/rust-embedded-community/embedded-sdmmc-rs) support
 * [ ] Buffer the output to increase responsiveness
 
-> "The framerate is ok on this. But it's the tip of the iceberg. There's a ton
-> that can be done to improve it. The screen is the big bottleneck, we can get
-> maybe 10 or 20 fps redrawing the whole thing. But the screen also remembers
-> everything, so if you don't draw to a part of it, you don't need to update it.
-> So if we buffered the output with two framebuffers, we can check them for
-> differences. Pretend we had only a 1-bit display, then we could XOR our
-> buffers, that'd give us a table of all the pixels that would need to change.
-> So some neat opportunities there to make it more performant."
+> "The framerate is not great on this. But it's the tip of the iceberg. There's
+> a ton that can be done to improve it. The screen is the big bottleneck, we can
+> get maybe 10 or 20 fps redrawing the whole thing. But the screen also
+> remembers everything, so if you don't draw to a part of it, you don't need to
+> update it. So if we buffered the output with two framebuffers, we can check
+> them for differences. Pretend we had only a 1-bit display, then we could XOR
+> our buffers, that'd give us a table of all the pixels that would need to
+> change. One could also double the framerate by interlacing, update odd and
+> even rows or columns every other frame. So some neat opportunities there to
+> make it more performant."
 
 ### Runty8 TODOs
 
