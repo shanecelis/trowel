@@ -25,15 +25,19 @@ bitflags! {
     }
 }
 
-pub type AppResult<E> = Result<(), E>;
+#[derive(Debug)]
+pub enum Error {
+    DisplayErr,
+    AppErr
+}
+pub type AppResult = Result<(), Error>;
 
-pub trait App<T, E>
-where
-    T: DrawTarget<Color = Rgb565, Error = E>,
+pub trait App
 {
-    fn init(&mut self) -> AppResult<E>;
-    fn update(&mut self, buttons: Buttons) -> AppResult<E>;
-    fn draw(&mut self, display: &mut T) -> AppResult<E>;
+    fn init(&mut self) -> AppResult;
+    fn update(&mut self, buttons: Buttons) -> AppResult;
+    fn draw<T,E>(&mut self, display: &mut T) -> AppResult
+        where T: DrawTarget<Color = Rgb565, Error = E>;
 }
 
 #[cfg(all(target_arch = "arm", target_os = "none"))]

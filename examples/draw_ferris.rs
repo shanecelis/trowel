@@ -19,27 +19,27 @@ use embedded_graphics::{
     pixelcolor::Rgb565,
     prelude::*,
 };
-use trowel::{App, AppResult, Buttons};
+use trowel::{App, AppResult, Buttons, Error};
 
 struct DrawFerris {
     /// Frame count
     frame: i32,
 }
 
-impl<T, E> App<T, E> for DrawFerris
-where
-    T: DrawTarget<Color = Rgb565, Error = E>,
+impl App for DrawFerris
 {
-    fn init(&mut self) -> AppResult<E> {
+    fn init(&mut self) -> AppResult {
         Ok(())
     }
 
-    fn update(&mut self, _buttons: Buttons) -> AppResult<E> {
+    fn update(&mut self, _buttons: Buttons) -> AppResult {
         self.frame += 1;
         Ok(())
     }
 
-    fn draw(&mut self, display: &mut T) -> AppResult<E> {
+    fn draw<T,E>(&mut self, display: &mut T) -> AppResult
+        where T: DrawTarget<Color = Rgb565, Error = E>,
+    {
         if self.frame == 1 {
             // We only need to draw the image once for it to persist.
 
@@ -48,7 +48,7 @@ where
 
             let image: Image<_> = Image::new(&image_raw, Point::new(34, 33));
 
-            image.draw(display)?;
+            image.draw(display).map_err(|_| Error::DisplayErr)?;
         }
         Ok(())
     }

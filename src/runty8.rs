@@ -9,7 +9,7 @@ use embedded_graphics::{
     pixelcolor::{Rgb565, Rgb888},
     prelude::*,
 };
-use crate::{App, AppResult, Buttons};
+use crate::{App, AppResult, Buttons, Error};
 
 struct RuntyApp<G>
     where G : runty::App + 'static
@@ -42,16 +42,15 @@ impl<G> RuntyApp<G>
     // }
 }
 
-impl<T, E, G> App<T, E> for RuntyApp<G>
+impl<G> App for RuntyApp<G>
 where
     G: runty::App + 'static,
-    T: DrawTarget<Color = Rgb565, Error = E>,
 {
-    fn init(&mut self) -> AppResult<E> {
+    fn init(&mut self) -> AppResult {
         Ok(())
     }
 
-    fn update(&mut self, buttons: Buttons) -> AppResult<E> {
+    fn update(&mut self, buttons: Buttons) -> AppResult {
 
         // self.handle_event(Buttons::W, buttons, Key::W);
         // self.handle_event(Buttons::A, buttons, Key::A);
@@ -73,7 +72,9 @@ where
         Ok(())
     }
 
-    fn draw(&mut self, display: &mut T) -> AppResult<E> {
+    fn draw<T,E>(&mut self, display: &mut T) -> AppResult
+        where T: DrawTarget<Color = Rgb565, Error = E>
+    {
         self.game.draw(&mut self.pico8);
         let mut rgb565s: [u8 ; 128 * 128 * 2 ] = [ 0; 128 * 128 * 2 ];
         let rgb888s = self.pico8.draw_data.buffer();
@@ -86,7 +87,7 @@ where
         let raw: ImageRawBE<Rgb565> = ImageRaw::new(&rgb565s, 128);
 
         let image: Image<_> = Image::new(&raw, Point::new(16, 0));
-        image.draw(display)?;
+        image.draw(display).map_err(|_| Error::DisplayErr)?;
         // raw.draw(display)?;
         Ok(())
     }

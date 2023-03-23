@@ -22,7 +22,7 @@ use embedded_graphics::{
 };
 #[allow(unused_imports)]
 use micromath::F32Ext;
-use trowel::{App, AppResult, Buttons, buffered::BufferedApp};
+use trowel::{App, AppResult, Buttons, buffered::BufferedApp, Error};
 
 // The original platform had a 160x160 display. Sprig only has a 160x128
 // display.
@@ -58,17 +58,15 @@ const MAP: [u16; 8] = [
     0b1111111111111111,
 ];
 
-impl<T, E> App<T, E> for State
-where
-    T: DrawTarget<Color = Rgb565, Error = E>,
+impl App for State
 {
-    fn init(&mut self) -> AppResult<E> {
+    fn init(&mut self) -> AppResult {
         // This way the first frame is zero.
         self.frame = -1;
         Ok(())
     }
 
-    fn update(&mut self, buttons: Buttons) -> AppResult<E> {
+    fn update(&mut self, buttons: Buttons) -> AppResult {
         self.frame += 1;
 
         self.update(
@@ -80,8 +78,11 @@ where
         Ok(())
     }
 
-    fn draw(&mut self, display: &mut T) -> AppResult<E> {
-        display.clear(to_color(PALETTE[0]))?;
+    fn draw<T,E>(&mut self, display: &mut T) -> AppResult
+        where T: DrawTarget<Color = Rgb565, Error = E>,
+    {
+        display.clear(to_color(PALETTE[0]))
+               .map_err(|_| Error::DisplayErr)?;
         // Go through each column on screen and draw walls in the center.
         for (x, wall) in self.get_view().iter().enumerate() {
             let (height, shadow) = wall;
@@ -93,7 +94,8 @@ where
                 Point::new(x as i32, y + *height - 1),
             )
             .into_styled(PrimitiveStyle::with_stroke(color, 1))
-            .draw(display)?;
+            .draw(display)
+            .map_err(|_| Error::DisplayErr)?;
         }
         Ok(())
     }

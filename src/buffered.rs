@@ -1,8 +1,7 @@
 
 use embedded_graphics::{
     draw_target::DrawTarget,
-    image::{Image, ImageRaw, ImageRawBE},
-    pixelcolor::{Rgb565, Rgb888},
+    pixelcolor::Rgb565,
     prelude::*,
 };
 use crate::{App, AppResult, Buttons};
@@ -26,58 +25,59 @@ impl FrameBufferBackend for Buffer {
 }
 
 pub struct BufferedApp<A>
-    where A : App<FrameBuf<Rgb565, Buffer>,
-              core::convert::Infallible>
+    where A : App
+    // <FrameBuf<Rgb565, Buffer>,
+    //           core::convert::Infallible>
 {
-    frameBuf : FrameBuf<Rgb565, Buffer>,
+    frame_buf : FrameBuf<Rgb565, Buffer>,
     // buffer : Buffer,
     app : A
 }
 
 
 impl<A> BufferedApp<A>
-    where A : App<FrameBuf<Rgb565, Buffer>,
-              core::convert::Infallible>
+    where A : App
+    // <FrameBuf<Rgb565, Buffer>,
+    //           core::convert::Infallible>
 {
     pub fn new(app: A) -> Self {
         let data = Buffer([Rgb565::BLACK; 20480]);
         BufferedApp {
             // buffer: data,
-            frameBuf: FrameBuf::new(data, 160, 128),
+            frame_buf: FrameBuf::new(data, 160, 128),
             app
         }
     }
 }
 
-impl<T, E, A> App<T, E> for BufferedApp<A>
+impl<A> App for BufferedApp<A>
 where
-    T : DrawTarget<Color = Rgb565, Error = E>,
-    A : App<FrameBuf<Rgb565, Buffer>, core::convert::Infallible>
+    A : App
 {
-    fn init(&mut self) -> AppResult<E> {
+    fn init(&mut self) -> AppResult {
         self.app.init();
         Ok(())
     }
 
-    fn update(&mut self, buttons: Buttons) -> AppResult<E> {
+    fn update(&mut self, buttons: Buttons) -> AppResult {
         self.app.update(buttons);
         Ok(())
     }
 
-    fn draw(&mut self, display: &mut T) -> AppResult<E> {
-        self.app.draw(&mut self.frameBuf);
+    fn draw<T,E>(&mut self, display: &mut T) -> AppResult
+        where T : DrawTarget<Color = Rgb565, Error = E> {
+        self.app.draw(&mut self.frame_buf);
 
-        display.draw_iter(self.frameBuf.into_iter());
+        display.draw_iter(self.frame_buf.into_iter());
         Ok(())
     }
 }
 
 pub fn run<TheirApp,T,E,MyApp>(app : TheirApp) -> !
 where T: DrawTarget<Color = Rgb565, Error = E>,
-      TheirApp: App<FrameBuf<Rgb565, Buffer>,
-              core::convert::Infallible>,
-      MyApp: App<T,E>
+      TheirApp: App,
+      MyApp: App,
 {
-    let mut bufferedApp: BufferedApp<TheirApp> = BufferedApp::new(app);
-    super::run(&mut bufferedApp);
+    let mut buffered_app: BufferedApp<TheirApp> = BufferedApp::new(app);
+    super::run(&mut buffered_app);
 }

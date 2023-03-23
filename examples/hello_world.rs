@@ -8,31 +8,32 @@ use embedded_graphics::{
     prelude::*,
     text::Text,
 };
-use trowel::{App, AppResult, Buttons};
+use trowel::{App, AppResult, Buttons, Error};
 
 struct DrawFerris {
     frame: i32, // Frame count
 }
 
-impl<T, E> App<T, E> for DrawFerris
-where
-    T: DrawTarget<Color = Rgb565, Error = E>,
+impl App for DrawFerris
 {
-    fn init(&mut self) -> AppResult<E> {
+    fn init(&mut self) -> AppResult {
         Ok(())
     }
 
-    fn update(&mut self, _buttons: Buttons) -> AppResult<E> {
+    fn update(&mut self, _buttons: Buttons) -> AppResult {
         self.frame += 1;
         Ok(())
     }
 
-    fn draw(&mut self, display: &mut T) -> AppResult<E> {
+    fn draw<T, E>(&mut self, display: &mut T) -> AppResult
+        where T: DrawTarget<Color = Rgb565, Error = E>,
+    {
         if self.frame == 1 {
             // Create a new character style
             let style = MonoTextStyle::new(&ascii::FONT_7X13, Rgb565::WHITE);
 
-            Text::new("Hello, World!", Point::new(20, 30), style).draw(display)?;
+            Text::new("Hello, World!", Point::new(20, 30), style).draw(display)
+                .map_err(|_| Error::DisplayErr)?;
         }
         Ok(())
     }

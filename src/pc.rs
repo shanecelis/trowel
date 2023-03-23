@@ -30,7 +30,7 @@ pub mod buffered {
 }
 
 /// The `run` function configures the RP2040 peripherals, then runs the app.
-pub fn run(app: &mut impl App<SimulatorDisplay<Rgb565>, core::convert::Infallible>) -> ! {
+pub fn run(app: &mut impl App) -> ! {
     let mut display: SimulatorDisplay<Rgb565> = SimulatorDisplay::new(Size::new(160, 128));
 
     display
