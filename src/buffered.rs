@@ -59,19 +59,18 @@ impl<A> App for BufferedApp<A>
     where A : App {
 
     fn init(&mut self) -> AppResult {
-        self.app.init();
-        Ok(())
+        self.app.init()
     }
 
     fn update(&mut self, buttons: Buttons) -> AppResult {
-        self.app.update(buttons);
+        self.app.update(buttons)?;
         self.frame += 1;
         Ok(())
     }
 
     fn draw<T,E>(&mut self, display: &mut T) -> AppResult
         where T : DrawTarget<Color = Rgb565, Error = E> {
-        self.app.draw(&mut self.frame_buf);
+        self.app.draw(&mut self.frame_buf)?;
 
         match self.interlace {
             None => display.draw_iter(self.frame_buf.into_iter())
@@ -101,6 +100,6 @@ where T: DrawTarget<Color = Rgb565, Error = E>,
       TheirApp: App,
       MyApp: App,
 {
-    let mut buffered_app: BufferedApp<TheirApp> = BufferedApp::new(app);
+    let buffered_app: BufferedApp<TheirApp> = BufferedApp::new(app);
     super::run(buffered_app);
 }

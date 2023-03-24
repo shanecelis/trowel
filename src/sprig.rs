@@ -17,12 +17,10 @@ use panic_probe as _;
 
 use rp2040_hal as hal;
 
-use hal::gpio::bank0::*;
-
 use embedded_graphics::{draw_target::DrawTarget, pixelcolor::Rgb565, prelude::*};
 use embedded_hal::digital::v2::{InputPin, OutputPin};
 use fugit::RateExtU32;
-use rp2040_hal::{clocks::Clock, timer::{Instant, Alarm0, monotonic::Monotonic}};
+use rp2040_hal::{clocks::Clock, timer::{Alarm0, monotonic::Monotonic}};
 use st7735_lcd::{Orientation, ST7735};
 use rtic_monotonic::Monotonic as RticMonotonic;
 
@@ -33,7 +31,7 @@ use hal::pac;
 use embedded_alloc::Heap;
 use embedded_time::{fraction::Fraction, Clock as EClock, clock::Error, Instant as EInstant};
 
-use embedded_graphics::{text::Text, mono_font::{MonoTextStyle, ascii::FONT_7X13}};
+use embedded_graphics::{text::{Text, Alignment}, mono_font::{MonoTextStyle, MonoTextStyleBuilder, ascii::FONT_7X13}};
 use embedded_fps::FPS;
 
 /// The linker will place this boot block at the start of our program image. We
@@ -41,9 +39,7 @@ use embedded_fps::FPS;
 #[link_section = ".boot2"]
 #[used]
 pub static BOOT2: [u8; 256] = rp2040_boot2::BOOT_LOADER_W25Q080;
-use alloc::rc::Rc;
 use core::cell::RefCell;
-
 
 /// External high-speed crystal on the Raspberry Pi Pico board is 12 MHz. Adjust
 /// if your board has a different frequency.
@@ -51,6 +47,8 @@ const XTAL_FREQ_HZ: u32 = 12_000_000u32;
 
 #[global_allocator]
 static HEAP: Heap = Heap::empty();
+
+static mut MONOTONIC_CLOCK: Option<MonotonicClock> = None;
 
 pub fn init_heap() {
     if HEAP.used() == 0 && HEAP.free() == 0 {
@@ -61,35 +59,38 @@ pub fn init_heap() {
     }
 }
 
-type MonotonicA = Monotonic<Alarm0>;
+type Monotonic0 = Monotonic<Alarm0>;
 
-struct MonotonicClock {
-    monotonic: RefCell<Rc<MonotonicA>>,
-    tick : u64,
-}
-
-    // monotonic : Monotonic
+struct MonotonicClock(RefCell<Monotonic0>);
 impl MonotonicClock {
-    fn new(mut monotonic : Rc<MonotonicA>) -> Self {
-        // let m : dyn RticMonotonic<Instant = Instant, Duration = fugit::MicrosDurationU64> = dyn monotonic;
-        let tick = Rc::get_mut(&mut monotonic).expect("ack").now().ticks();
-        Self {
-            monotonic: monotonic.into(),
-            tick
-        }
+    fn new(monotonic : Monotonic0) -> Self {
 // https://docs.rs/rp2040-hal/latest/rp2040_hal/timer/monotonic/struct.Monotonic.html
+        Self(monotonic.into())
     }
 }
 
 type MFPS = FPS<100, MonotonicClock>;
 
-struct FpsApp {
+pub struct FpsApp {
     fps_counter : MFPS,
+    style : MonoTextStyle<'static, Rgb565>,
 }
 
 impl FpsApp {
-    fn new(fps_counter: MFPS) -> Self {
-        Self { fps_counter }
+    pub fn new() -> Result<Self, ()> {
+        match unsafe { MONOTONIC_CLOCK.take() } {
+            Some(mc) => {
+
+                let style = MonoTextStyleBuilder::new()
+                    .font(&FONT_7X13)
+                    .text_color(Rgb565::WHITE)
+                    .background_color(Rgb565::BLACK)
+                    .build();
+              let fps_counter = FPS::<100, _>::new(mc);
+              Ok(Self { fps_counter, style })
+            },
+            None => Err(())
+        }
     }
 
 }
@@ -100,18 +101,18 @@ impl App for FpsApp
         Ok(())
     }
 
-    fn update(&mut self, buttons: Buttons) -> AppResult {
+    fn update(&mut self, _buttons: Buttons) -> AppResult {
         Ok(())
     }
 
     fn draw<T,E>(&mut self, display: &mut T) -> AppResult
         where T : DrawTarget<Color = Rgb565, Error = E> {
 
-        let character_style = MonoTextStyle::new(&FONT_7X13, Rgb565::WHITE);
-        let fps_position = Point::new(5, 15);
+        // let character_style = MonoTextStyle::new(&FONT_7X13, Rgb565::WHITE);
+        let fps_position = Point::new(155, 15);
 
         let fps = self.fps_counter.tick();
-        Text::new(&format!("FPS: {fps}"), fps_position, character_style)
+        Text::with_alignment(&format!("FPS: {fps}"), fps_position, self.style, Alignment::Right)
             .draw(display)
             .map_err(|_| crate::Error::DisplayErr)?;
         Ok(())
@@ -121,27 +122,16 @@ impl App for FpsApp
 
 // https://docs.rs/embedded-time/0.12.1/embedded_time/clock/trait.Clock.html
 impl EClock for MonotonicClock {
-    // type T = MonotonicA::Instant::NOM;
+    // type T = Monotonic0::Instant::NOM;
     type T = u64;
 
     const SCALING_FACTOR: Fraction = Fraction::new(1, 1_000_000);
 
     fn try_now(&self) -> Result<EInstant<Self>, Error> {
-        // let lock = core::pin::Pin::new(&mut self.monotonic).get_mut();
-        let mut cel = self.monotonic.borrow_mut();
-        let lock = Rc::get_mut(&mut cel);
-        match lock {
-            Some(m) => Ok(EInstant::<MonotonicClock>::new(m.now().ticks())),
-            None => Err(Error::Unspecified)
+        match self.0.try_borrow_mut() {
+            Ok(mut m) => Ok(EInstant::<MonotonicClock>::new(m.now().ticks())),
+            Err(_) => Err(Error::Unspecified)
         }
-        // let m = core::pin::Pin::new(&mut self.monotonic).get_mut();
-            // Ok(EInstant { ticks: m.now().ticks() })
-
-                      //MonotonicClock::new(Rc::clone(self.monotonic)) })
-        // Err(Error::Unspecified)
-        // Err()
-        // let instant = self.monotonic.now();
-
     }
 }
 
@@ -155,8 +145,15 @@ impl EClock for MonotonicClock {
 //     >
 /// The `run` function configures the RP2040 peripherals, then runs the app.
 pub fn run(
-    app: &mut impl App,
+    app: impl App,
 ) -> ! {
+    run_with(move || app);
+}
+
+
+pub fn run_with<F,A>(app_maker: F) -> !
+        where F : FnOnce() -> A, A : App
+    {
     init_heap();
 
     // Grab our singleton objects.
@@ -222,7 +219,7 @@ pub fn run(
         &embedded_hal::spi::MODE_0,
     );
 
-    let mut disp = st7735_lcd::ST7735::new(spi, dc, rst, true, false, 160, 128);
+    let mut disp = ST7735::new(spi, dc, rst, true, false, 160, 128);
 
     disp.init(&mut delay).unwrap();
     disp.set_orientation(&Orientation::Landscape).unwrap();
@@ -232,6 +229,8 @@ pub fn run(
     // let mut alarm = hal::Timer::new(pac.TIMER, &mut pac.RESETS);
     let alarm = timer.alarm_0().unwrap();
     let monotonic = Monotonic::new(timer, alarm);
+    let monotonic_clock = MonotonicClock::new(monotonic);
+    unsafe { MONOTONIC_CLOCK = Some(monotonic_clock); }
 
     // Wait until the screen cleared otherwise the screen will show random
     // pixels for a brief moment.
@@ -239,12 +238,15 @@ pub fn run(
 
     // We could turn on the MCU's led.
     // led.set_high().unwrap();
+    let mut app = app_maker();
 
     app.init().expect("error initializing");
 
-    let mut fps_counter = FPS::<100, _>::new(MonotonicClock::new(Rc::new(monotonic).into()));
-    let character_style = MonoTextStyle::new(&FONT_7X13, Rgb565::WHITE);
-    let fps_position = Point::new(5, 15);
+    // let mut fps_app = FpsApp::new().expect("error init fps app");
+
+    // let mut fps_counter =
+    // let character_style = MonoTextStyle::new(&FONT_7X13, Rgb565::WHITE);
+    // let fps_position = Point::new(5, 15);
 
     let mut buttons;
     loop {
@@ -277,7 +279,8 @@ pub fn run(
 
         app.update(buttons).expect("error updating");
         app.draw(&mut disp).expect("error drawing");
-        let fps = fps_counter.tick();
-        Text::new(&format!("FPS: {fps}"), fps_position, character_style).draw(&mut disp).expect("error on fps");
+        // fps_app.draw(&mut disp).expect("error fps");
+        // let fps = fps_counter.tick();
+        // Text::new(&format!("FPS: {fps}"), fps_position, character_style).draw(&mut disp).expect("error on fps");
     }
 }

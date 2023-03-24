@@ -56,5 +56,5 @@ impl App for DrawFerris
 
 #[cfg_attr(all(target_arch = "arm", target_os = "none"), cortex_m_rt::entry)]
 fn main() -> ! {
-    trowel::run(&mut DrawFerris { frame: 0 });
+    trowel::run(DrawFerris { frame: 0 });
 }

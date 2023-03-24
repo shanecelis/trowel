@@ -354,7 +354,7 @@ fn fabsf(x: f32) -> f32 {
 fn main() -> ! {
     // trowel::run(state);
     trowel::run_with(|| {
-        let mut state: State = State {
+        let state: State = State {
             frame: 0,
             player_x: 1.5,
             player_y: 1.5,

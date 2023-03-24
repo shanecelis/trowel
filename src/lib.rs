@@ -40,10 +40,53 @@ pub trait App
         where T: DrawTarget<Color = Rgb565, Error = E>;
 }
 
+pub struct JoinApps<A,B>
+  where A : App, B : App {
+    a : A,
+    b : B
+}
+
+impl<A,B> App for JoinApps<A,B>
+  where A : App, B : App {
+
+    fn init(&mut self) -> AppResult {
+        self.a.init()?;
+        self.b.init()
+    }
+
+    fn update(&mut self, buttons: Buttons) -> AppResult {
+        self.a.update(buttons)?;
+        self.b.update(buttons)
+    }
+
+    fn draw<T,E>(&mut self, display: &mut T) -> AppResult
+        where T : DrawTarget<Color = Rgb565, Error = E> {
+        self.a.draw(display)?;
+        self.b.draw(display)
+    }
+}
+
+pub trait AppExt where Self : App + Sized {
+    fn join<B : App>(self, b: B) -> JoinApps<Self,B> {
+        JoinApps { a: self, b }
+    }
+}
+
+impl<A : App> AppExt for A {
+
+    // fn join<B : App>(self, b: B) -> JoinApps<Self,B> where Self : App + Sized; {
+    //     JoinApps { self, b }
+    // }
+}
+
+
+
+#[macro_use]
+extern crate alloc;
 #[cfg(all(target_arch = "arm", target_os = "none"))]
 mod sprig;
 #[cfg(all(target_arch = "arm", target_os = "none"))]
-pub use sprig::{run, init_heap};
+pub use sprig::{run, run_with, init_heap, FpsApp};
 
 // #[cfg(all(target_arch = "arm", target_os = "none"))]
 // pub mod buffered;
