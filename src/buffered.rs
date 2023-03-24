@@ -56,9 +56,8 @@ impl<A> BufferedApp<A>
 }
 
 impl<A> App for BufferedApp<A>
-where
-    A : App
-{
+    where A : App {
+
     fn init(&mut self) -> AppResult {
         self.app.init();
         Ok(())
@@ -103,5 +102,5 @@ where T: DrawTarget<Color = Rgb565, Error = E>,
       MyApp: App,
 {
     let mut buffered_app: BufferedApp<TheirApp> = BufferedApp::new(app);
-    super::run(&mut buffered_app);
+    super::run(buffered_app);
 }
