@@ -29,10 +29,6 @@ use rtic_monotonic::Monotonic as RticMonotonic;
 use crate::{App, Buttons, AppResult};
 use hal::pac;
 use embedded_alloc::Heap;
-use embedded_time::{fraction::Fraction, Clock as EClock, clock::Error, Instant as EInstant};
-
-use embedded_graphics::{text::{Text, Alignment}, mono_font::{MonoTextStyle, MonoTextStyleBuilder, ascii::FONT_7X13}};
-use embedded_fps::FPS;
 
 /// The linker will place this boot block at the start of our program image. We
 /// need this to help the ROM bootloader get our code up and running.
@@ -40,6 +36,7 @@ use embedded_fps::FPS;
 #[used]
 pub static BOOT2: [u8; 256] = rp2040_boot2::BOOT_LOADER_W25Q080;
 use core::cell::RefCell;
+use embedded_time::{fraction::Fraction, Clock, Instant as EInstant};
 
 /// External high-speed crystal on the Raspberry Pi Pico board is 12 MHz. Adjust
 /// if your board has a different frequency.
@@ -69,57 +66,6 @@ impl MonotonicClock {
     }
 }
 
-type MFPS = FPS<100, MonotonicClock>;
-
-pub struct FpsApp {
-    fps_counter : MFPS,
-    style : MonoTextStyle<'static, Rgb565>,
-}
-
-impl FpsApp {
-    pub fn new() -> Result<Self, ()> {
-        match unsafe { MONOTONIC_CLOCK.take() } {
-            Some(mc) => {
-
-                let style = MonoTextStyleBuilder::new()
-                    .font(&FONT_7X13)
-                    .text_color(Rgb565::WHITE)
-                    .background_color(Rgb565::BLACK)
-                    .build();
-              let fps_counter = FPS::<100, _>::new(mc);
-              Ok(Self { fps_counter, style })
-            },
-            None => Err(())
-        }
-    }
-
-}
-
-impl App for FpsApp
-{
-    fn init(&mut self) -> AppResult {
-        Ok(())
-    }
-
-    fn update(&mut self, _buttons: Buttons) -> AppResult {
-        Ok(())
-    }
-
-    fn draw<T,E>(&mut self, display: &mut T) -> AppResult
-        where T : DrawTarget<Color = Rgb565, Error = E> {
-
-        // let character_style = MonoTextStyle::new(&FONT_7X13, Rgb565::WHITE);
-        let fps_position = Point::new(155, 15);
-
-        let fps = self.fps_counter.tick();
-        Text::with_alignment(&format!("FPS: {fps}"), fps_position, self.style, Alignment::Right)
-            .draw(display)
-            .map_err(|_| crate::Error::DisplayErr)?;
-        Ok(())
-                                                                        // .expect("error on fps");
-    }
-}
-
 // https://docs.rs/embedded-time/0.12.1/embedded_time/clock/trait.Clock.html
 impl EClock for MonotonicClock {
     // type T = Monotonic0::Instant::NOM;
@@ -132,6 +78,12 @@ impl EClock for MonotonicClock {
             Ok(mut m) => Ok(EInstant::<MonotonicClock>::new(m.now().ticks())),
             Err(_) => Err(Error::Unspecified)
         }
+    }
+}
+
+impl Default for FpsApp {
+    fn default() -> Self {
+        FpsApp::new(unsafe { MONOTONIC_CLOCK.take() }.expect("could not get clock"))
     }
 }
 

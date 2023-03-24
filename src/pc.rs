@@ -15,6 +15,7 @@ use embedded_graphics_simulator::{
 
 use embedded_graphics::{text::Text, mono_font::{MonoTextStyle, ascii::FONT_7X13}};
 use embedded_fps::{FPS, StdClock};
+use super::FpsApp;
 
 
 use crate::{App, Buttons};
@@ -31,6 +32,12 @@ pub mod buffered {
     //     super::run(app);
     // }
 
+}
+
+impl Default for FpsApp<StdClock> {
+    fn default() -> Self {
+        FpsApp::new(StdClock::default())
+    }
 }
 
 /// The `run` function configures the RP2040 peripherals, then runs the app.

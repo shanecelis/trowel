@@ -360,7 +360,7 @@ fn main() -> ! {
             player_y: 1.5,
             player_angle: -PI / 2.0,
         };
-        let mut app = BufferedApp::new(state.join(FpsApp::new().expect("fps problem")));
+        let mut app = BufferedApp::new(state.join(FpsApp::default()));
         app.interlace = Some(2);
         app
     })
