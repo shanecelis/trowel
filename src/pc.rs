@@ -13,10 +13,8 @@ use embedded_graphics_simulator::{
     Window,
 };
 
-use embedded_graphics::{text::Text, mono_font::{MonoTextStyle, ascii::FONT_7X13}};
-use embedded_fps::{FPS, StdClock};
+use embedded_fps::StdClock;
 use super::FpsApp;
-
 
 use crate::{App, Buttons};
 
@@ -24,14 +22,6 @@ pub fn init_heap() { }
 
 pub mod buffered {
     pub use crate::pc::run;
-    // use crate::pc::SimulatorDisplay;
-    // use crate::App;
-    // use crate::Rgb565;
-
-    // pub fn runBuffered(app: &mut impl App<SimulatorDisplay<Rgb565>, core::convert::Infallible>) -> ! {
-    //     super::run(app);
-    // }
-
 }
 
 impl Default for FpsApp<StdClock> {
@@ -63,9 +53,6 @@ pub fn run_with<F,A>(app_maker: F) -> !
     app.init().expect("error initializing");
 
     let mut buttons = Buttons::empty();
-    let mut fps_counter = FPS::<100, _>::new(StdClock::default());
-    let character_style = MonoTextStyle::new(&FONT_7X13, Rgb565::WHITE);
-    let fps_position = Point::new(5, 15);
     // 'running: loop {
     loop {
         window.update(&display);
@@ -102,8 +89,6 @@ pub fn run_with<F,A>(app_maker: F) -> !
 
         app.update(buttons).expect("error updating");
         app.draw(&mut display).expect("error drawing");
-        let fps = fps_counter.tick();
-        Text::new(&format!("FPS: {fps}"), fps_position, character_style).draw(&mut display).expect("error on fps");
         window.update(&display);
     }
 }

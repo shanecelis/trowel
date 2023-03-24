@@ -26,7 +26,7 @@ use rtic_monotonic::Monotonic as RticMonotonic;
 
 // A shorter alias for the Peripheral Access Crate, which provides low-level
 // register access.
-use crate::{App, Buttons, AppResult};
+use crate::{App, Buttons, AppResult, FpsApp};
 use hal::pac;
 use embedded_alloc::Heap;
 

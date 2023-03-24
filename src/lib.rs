@@ -89,7 +89,6 @@ mod sprig;
 pub use sprig::{run, run_with, init_heap};
 
 mod fps;
-
 pub use fps::FpsApp;
 
 // #[cfg(all(target_arch = "arm", target_os = "none"))]
