@@ -13,6 +13,10 @@ use embedded_graphics_simulator::{
     Window,
 };
 
+use embedded_graphics::{text::Text, mono_font::{MonoTextStyle, ascii::FONT_7X13}};
+use embedded_fps::{FPS, StdClock};
+
+
 use crate::{App, Buttons};
 
 pub fn init_heap() { }
@@ -45,6 +49,9 @@ pub fn run(app: &mut impl App) -> ! {
     app.init().expect("error initializing");
 
     let mut buttons = Buttons::empty();
+    let mut fps_counter = FPS::<100, _>::new(StdClock::default());
+    let character_style = MonoTextStyle::new(&FONT_7X13, Rgb565::WHITE);
+    let fps_position = Point::new(5, 15);
     // 'running: loop {
     loop {
         window.update(&display);
@@ -81,6 +88,8 @@ pub fn run(app: &mut impl App) -> ! {
 
         app.update(buttons).expect("error updating");
         app.draw(&mut display).expect("error drawing");
+        let fps = fps_counter.tick();
+        Text::new(&format!("FPS: {fps}"), fps_position, character_style).draw(&mut display).expect("error on fps");
         window.update(&display);
     }
 }

@@ -12,10 +12,14 @@ micromath = "2.0.0"
 runty8-core = { git = "https://github.com/shanecelis/runty8.git", branch = "feature-no-std", optional = true, default-features = false }
 embedded-alloc = "0.5.0"
 embedded-graphics-framebuf = "0.2.0"
+embedded-time = "0.12.1"
+rtic-monotonic = "1.0.0"
 [target.'cfg(not(all(target_arch = "arm", target_os = "none")))'.dependencies]
 embedded-graphics-simulator = "0.4.1"
+embedded-fps = { version = "0.1.0", features=["std"] }
 
 [target.'cfg(all(target_arch = "arm", target_os = "none"))'.dependencies]
+embedded-fps = "0.1.0"
 cortex-m = "0.7.3"
 cortex-m-rt = "0.7.0"
 embedded-hal = { version = "0.2.5", features=["unproven"] }
@@ -26,7 +30,7 @@ defmt-rtt = "0.3.0"
 panic-probe = { version = "0.3.0", features = ["print-defmt"] }
 
 # If you're not going to use a Board Support Package you'll need these:
-rp2040-hal = { git = "https://github.com/rp-rs/rp-hal", branch="main", features=["rt", "critical-section-impl", "disable-intrinsics"] }
+rp2040-hal = { git = "https://github.com/rp-rs/rp-hal", branch="main", features=["rt", "critical-section-impl", "disable-intrinsics", "rtic-monotonic"] }
 # rp2040-hal = { version = "0.8.0", features=["rt", "critical-section-impl"] }
 rp2040-boot2 = { git = "https://github.com/rp-rs/rp2040-boot2-rs", branch="main" }
 st7735-lcd = "0.8"

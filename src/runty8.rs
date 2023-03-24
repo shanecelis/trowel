@@ -87,9 +87,7 @@ where
         let raw: ImageRawBE<Rgb565> = ImageRaw::new(&rgb565s, 128);
 
         let image: Image<_> = Image::new(&raw, Point::new(16, 0));
-        image.draw(display).map_err(|_| Error::DisplayErr)?;
-        // raw.draw(display)?;
-        Ok(())
+        image.draw(display).map_err(|_| Error::DisplayErr)
     }
 }
 
