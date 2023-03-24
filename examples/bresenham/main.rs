@@ -9,6 +9,7 @@ use runty8::{App, Button, Pico8, Resources};
 extern crate alloc;
 #[cfg(all(target_arch = "arm", target_os = "none"))]
 use alloc::vec::Vec;
+#[cfg(all(target_arch = "arm", target_os = "none"))]
 use micromath::F32Ext;
 
 #[cfg_attr(all(target_arch = "arm", target_os = "none"), cortex_m_rt::entry)]

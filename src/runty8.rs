@@ -92,7 +92,7 @@ where
 }
 
 pub fn run<Game: runty::App + 'static>(resources: Resources) -> ! {
-    let mut game: RuntyApp<Game> = RuntyApp::new(resources);
-    super::run(&mut game);
+    let game: RuntyApp<Game> = RuntyApp::new(resources);
+    super::run(game);
 }
 

@@ -105,7 +105,7 @@ pub mod buffered;
 #[cfg(not(all(target_arch = "arm", target_os = "none")))]
 mod pc;
 #[cfg(not(all(target_arch = "arm", target_os = "none")))]
-pub use pc::{run, init_heap};
+pub use pc::{run, run_with, init_heap};
 
 #[cfg(feature = "runty8")]
 pub mod runty8;

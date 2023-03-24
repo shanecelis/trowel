@@ -95,11 +95,11 @@ impl<A> App for BufferedApp<A>
     }
 }
 
-pub fn run<TheirApp,T,E,MyApp>(app : TheirApp) -> !
-where T: DrawTarget<Color = Rgb565, Error = E>,
-      TheirApp: App,
-      MyApp: App,
-{
-    let buffered_app: BufferedApp<TheirApp> = BufferedApp::new(app);
-    super::run(buffered_app);
-}
+// pub fn run<TheirApp,T,E,MyApp>(app : TheirApp) -> !
+// where T: DrawTarget<Color = Rgb565, Error = E>,
+//       TheirApp: App,
+//       MyApp: App,
+// {
+//     let buffered_app: BufferedApp<TheirApp> = BufferedApp::new(app);
+//     super::run(buffered_app);
+// }

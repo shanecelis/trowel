@@ -34,7 +34,13 @@ pub mod buffered {
 }
 
 /// The `run` function configures the RP2040 peripherals, then runs the app.
-pub fn run(app: &mut impl App) -> ! {
+pub fn run(app: impl App) -> ! {
+    run_with(move || app);
+}
+
+pub fn run_with<F,A>(app_maker: F) -> !
+        where F : FnOnce() -> A, A : App
+    {
     let mut display: SimulatorDisplay<Rgb565> = SimulatorDisplay::new(Size::new(160, 128));
 
     display
@@ -45,6 +51,7 @@ pub fn run(app: &mut impl App) -> ! {
         .theme(BinaryColorTheme::Default)
         .build();
     let mut window = Window::new("Sprig Simulator", &output_settings);
+    let mut app = app_maker();
 
     app.init().expect("error initializing");
 

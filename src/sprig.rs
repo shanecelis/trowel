@@ -144,9 +144,7 @@ impl EClock for MonotonicClock {
 //         (),
 //     >
 /// The `run` function configures the RP2040 peripherals, then runs the app.
-pub fn run(
-    app: impl App,
-) -> ! {
+pub fn run(app: impl App) -> ! {
     run_with(move || app);
 }
 
