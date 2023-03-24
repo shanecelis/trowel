@@ -359,6 +359,7 @@ fn main() -> ! {
         player_angle: -PI / 2.0,
     };
     let mut app = BufferedApp::new(state);
+    app.interlace = Some(3);
     // trowel::run(state);
     trowel::run(&mut app);
 }

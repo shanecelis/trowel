@@ -2,12 +2,13 @@
 use embedded_graphics::{
     draw_target::DrawTarget,
     pixelcolor::Rgb565,
+    primitives::Rectangle,
     prelude::*,
 };
-use crate::{App, AppResult, Buttons};
+use crate::{App, AppResult, Buttons, Error};
 use embedded_graphics_framebuf::{FrameBuf, backends::FrameBufferBackend};
 
-pub struct Buffer([Rgb565; 20480]);
+pub struct Buffer(pub [Rgb565; 20480]);
 
 impl FrameBufferBackend for Buffer {
     type Color = Rgb565;
@@ -31,7 +32,9 @@ pub struct BufferedApp<A>
 {
     frame_buf : FrameBuf<Rgb565, Buffer>,
     // buffer : Buffer,
-    app : A
+    app : A,
+    pub interlace : Option<u8>,
+    frame : u32,
 }
 
 
@@ -45,7 +48,9 @@ impl<A> BufferedApp<A>
         BufferedApp {
             // buffer: data,
             frame_buf: FrameBuf::new(data, 160, 128),
-            app
+            app,
+            interlace: None,
+            frame: 0,
         }
     }
 }
@@ -61,6 +66,7 @@ where
 
     fn update(&mut self, buttons: Buttons) -> AppResult {
         self.app.update(buttons);
+        self.frame += 1;
         Ok(())
     }
 
@@ -68,8 +74,26 @@ where
         where T : DrawTarget<Color = Rgb565, Error = E> {
         self.app.draw(&mut self.frame_buf);
 
-        display.draw_iter(self.frame_buf.into_iter());
-        Ok(())
+        match self.interlace {
+            None => display.draw_iter(self.frame_buf.into_iter())
+                           .map_err(|_| Error::DisplayErr),
+            Some(k) => {
+               let mut buf : [Rgb565; 160] = [Rgb565::BLACK; 160];
+               for (jj, row) in self.frame_buf.data.0.chunks(160).enumerate() {
+                   let j = jj as u8;
+               // for j in 0..128 {
+                   if (j % k) as u32 == self.frame % k as u32 {
+                       buf.copy_from_slice(row);
+                       display.fill_contiguous(&Rectangle { top_left: Point { x:0, y:j as i32 },
+                                                            size: Size { width: 160, height: 1 } },
+                                               // self.frame_buf.data.0[start..end])?;
+                                               buf)
+                           .map_err(|_| Error::DisplayErr)?;
+                   }
+               }
+               Ok(())
+            }
+        }
     }
 }
 
