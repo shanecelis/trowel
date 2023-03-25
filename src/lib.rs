@@ -72,21 +72,14 @@ pub trait AppExt where Self : App + Sized {
     }
 }
 
-impl<A : App> AppExt for A {
-
-    // fn join<B : App>(self, b: B) -> JoinApps<Self,B> where Self : App + Sized; {
-    //     JoinApps { self, b }
-    // }
-}
-
-
+impl<A : App> AppExt for A {}
 
 #[macro_use]
 extern crate alloc;
 #[cfg(all(target_arch = "arm", target_os = "none"))]
 mod sprig;
 #[cfg(all(target_arch = "arm", target_os = "none"))]
-pub use sprig::{run, run_with, init_heap};
+pub use sprig::{run, run_with, init_heap, FpsApp0};
 
 mod fps;
 pub use fps::FpsApp;

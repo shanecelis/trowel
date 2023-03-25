@@ -26,9 +26,11 @@ use rtic_monotonic::Monotonic as RticMonotonic;
 
 // A shorter alias for the Peripheral Access Crate, which provides low-level
 // register access.
-use crate::{App, Buttons, AppResult, FpsApp};
+use crate::{App, Buttons, FpsApp, AppExt};
 use hal::pac;
 use embedded_alloc::Heap;
+use core::option::Option;
+use try_default::TryDefault;
 
 /// The linker will place this boot block at the start of our program image. We
 /// need this to help the ROM bootloader get our code up and running.
@@ -36,7 +38,7 @@ use embedded_alloc::Heap;
 #[used]
 pub static BOOT2: [u8; 256] = rp2040_boot2::BOOT_LOADER_W25Q080;
 use core::cell::RefCell;
-use embedded_time::{fraction::Fraction, Clock, Instant as EInstant};
+use embedded_time::{fraction::Fraction, Clock as EClock, clock::Error, Instant as EInstant};
 
 /// External high-speed crystal on the Raspberry Pi Pico board is 12 MHz. Adjust
 /// if your board has a different frequency.
@@ -58,7 +60,7 @@ pub fn init_heap() {
 
 type Monotonic0 = Monotonic<Alarm0>;
 
-struct MonotonicClock(RefCell<Monotonic0>);
+pub struct MonotonicClock(RefCell<Monotonic0>);
 impl MonotonicClock {
     fn new(monotonic : Monotonic0) -> Self {
 // https://docs.rs/rp2040-hal/latest/rp2040_hal/timer/monotonic/struct.Monotonic.html
@@ -81,29 +83,41 @@ impl EClock for MonotonicClock {
     }
 }
 
-impl Default for FpsApp {
-    fn default() -> Self {
-        FpsApp::new(unsafe { MONOTONIC_CLOCK.take() }.expect("could not get clock"))
+impl TryDefault<FpsApp<MonotonicClock>> for FpsApp<MonotonicClock> {
+    fn try_default() -> Option<Self> {
+        unsafe { MONOTONIC_CLOCK.take() }.map(|clock| FpsApp::new(clock))
+        // if let Option(clock) =
+        //     Some(FpsApp::new(clock))
+        // } else {
+        //     None
+        // }
     }
 }
 
-// <
-//         ST7735<
-//             hal::Spi<hal::spi::Enabled, pac::SPI0, 8>,
-//             hal::gpio::Pin<Gpio22, hal::gpio::Output<hal::gpio::PushPull>>,
-//             hal::gpio::Pin<Gpio26, hal::gpio::Output<hal::gpio::PushPull>>,
-//         >,
-//         (),
-//     >
+pub type FpsApp0 = FpsApp<MonotonicClock>;
+
 /// The `run` function configures the RP2040 peripherals, then runs the app.
 pub fn run(app: impl App) -> ! {
     run_with(move || app);
 }
 
-
 pub fn run_with<F,A>(app_maker: F) -> !
-        where F : FnOnce() -> A, A : App
-    {
+        where F : FnOnce() -> A,
+              A : App {
+
+    if Some("1") == option_env!("SHOW_FPS") {
+        if let Some(fps_app) = FpsApp::try_default() {
+            _run_with(move || app_maker().join(fps_app));
+        }
+    }
+    _run_with(app_maker);
+}
+
+
+fn _run_with<F,A>(app_maker: F) -> !
+        where F : FnOnce() -> A,
+              A : App {
+
     init_heap();
 
     // Grab our singleton objects.
@@ -189,7 +203,6 @@ pub fn run_with<F,A>(app_maker: F) -> !
     // We could turn on the MCU's led.
     // led.set_high().unwrap();
     let mut app = app_maker();
-
     app.init().expect("error initializing");
 
     // let mut fps_app = FpsApp::new().expect("error init fps app");

@@ -18,6 +18,7 @@ pub struct FpsApp<C> where C : Clock {
     style : MonoTextStyle<'static, Rgb565>,
 }
 
+
 impl<C> FpsApp<C> where C : Clock {
 
     pub fn new(clock: C) -> Self {

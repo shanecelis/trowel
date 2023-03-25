@@ -23,6 +23,7 @@ use embedded_graphics::{
 #[allow(unused_imports)]
 use micromath::F32Ext;
 use trowel::{App, AppResult, Buttons, buffered::BufferedApp, Error, FpsApp, AppExt};
+use try_default::TryDefault;
 
 // The original platform had a 160x160 display. Sprig only has a 160x128
 // display.
@@ -352,7 +353,6 @@ fn fabsf(x: f32) -> f32 {
 
 #[cfg_attr(all(target_arch = "arm", target_os = "none"), cortex_m_rt::entry)]
 fn main() -> ! {
-    // trowel::run(state);
     trowel::run_with(|| {
         let state: State = State {
             frame: 0,
@@ -360,8 +360,12 @@ fn main() -> ! {
             player_y: 1.5,
             player_angle: -PI / 2.0,
         };
-        let mut app = BufferedApp::new(state.join(FpsApp::default()));
-        app.interlace = Some(2);
+        let fps_app = FpsApp::try_default().expect("Could not create fps app");
+        let mut app = BufferedApp::new(state.join(fps_app));
+        app.interlace = None;
+        // These are just demo/debug buttons.
+        app.increase_button = Some(Buttons::I);
+        app.decrease_button = Some(Buttons::K);
         app
     })
 }

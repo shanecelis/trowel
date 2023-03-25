@@ -25,23 +25,20 @@ impl FrameBufferBackend for Buffer {
     }
 }
 
-pub struct BufferedApp<A>
-    where A : App
-    // <FrameBuf<Rgb565, Buffer>,
-    //           core::convert::Infallible>
+pub struct BufferedApp<A> where A : App
 {
     frame_buf : FrameBuf<Rgb565, Buffer>,
     // buffer : Buffer,
     app : A,
     pub interlace : Option<u8>,
     frame : u32,
+    last_buttons : Buttons,
+    pub increase_button : Option<Buttons>,
+    pub decrease_button : Option<Buttons>,
 }
 
 
-impl<A> BufferedApp<A>
-    where A : App
-    // <FrameBuf<Rgb565, Buffer>,
-    //           core::convert::Infallible>
+impl<A> BufferedApp<A> where A : App
 {
     pub fn new(app: A) -> Self {
         let data = Buffer([Rgb565::BLACK; 20480]);
@@ -51,8 +48,28 @@ impl<A> BufferedApp<A>
             app,
             interlace: None,
             frame: 0,
+            last_buttons: Buttons::empty(),
+            increase_button: None,
+            decrease_button: None,
         }
     }
+
+    fn increase(&mut self) {
+        self.interlace = match self.interlace {
+            Some(n) => Some(n + 1),
+            None => Some(2),
+        }
+        // self.interlace = Some(self.interlace.or(0) + 1)
+    }
+
+    fn decrease(&mut self) {
+        self.interlace = match self.interlace {
+            Some(2) => None,
+            Some(n) => Some(n - 1),
+            None => None,
+        }
+    }
+
 }
 
 impl<A> App for BufferedApp<A>
@@ -65,6 +82,18 @@ impl<A> App for BufferedApp<A>
     fn update(&mut self, buttons: Buttons) -> AppResult {
         self.app.update(buttons)?;
         self.frame += 1;
+        if let Some(inc_b) = self.increase_button {
+          if buttons.contains(inc_b) && ! self.last_buttons.contains(inc_b) {
+            self.increase()
+          }
+        }
+
+        if let Some(dec_b) = self.decrease_button {
+          if buttons.contains(dec_b) && ! self.last_buttons.contains(dec_b) {
+            self.decrease()
+          }
+        }
+        self.last_buttons = buttons;
         Ok(())
     }
 
