@@ -101,6 +101,7 @@ debug probe.
 * [ ] Don't make copies upon binary deserialization. (Memory is precious here.)
 * [ ] Add a mouse simulator mode.
 * [ ] Make carts load-able.
+* [ ] Add more optimizations for rendering ([ideas](https://lupyuen.github.io/articles/optimising-pinetimes-display-driver-with-rust-and-mynewt))
 
 ## Advanced: Setup probe
 

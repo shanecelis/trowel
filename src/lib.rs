@@ -84,24 +84,15 @@ pub use sprig::{run, run_with, init_heap, FpsApp0};
 mod fps;
 pub use fps::FpsApp;
 
-// #[cfg(all(target_arch = "arm", target_os = "none"))]
-// pub mod buffered;
-
-
 pub mod buffered;
 
-// pub mod buffered {
-// #[cfg(all(target_arch = "arm", target_os = "none"))]
-//     pub use sprig_buffered::run;
-
-// #[cfg(not(all(target_arch = "arm", target_os = "none")))]
-//     pub use crate::pc::run;
-// }
-
-#[cfg(not(all(target_arch = "arm", target_os = "none")))]
+#[cfg(any(target_family = "unix", target_family = "windows"))]
 mod pc;
-#[cfg(not(all(target_arch = "arm", target_os = "none")))]
+#[cfg(any(target_family = "unix", target_family = "windows"))]
 pub use pc::{run, run_with, init_heap};
 
 #[cfg(feature = "runty8")]
 pub mod runty8;
+
+#[cfg(target_family = "wasm")]
+pub mod wasm;

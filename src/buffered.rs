@@ -25,9 +25,9 @@ impl FrameBufferBackend for Buffer {
     }
 }
 
-pub struct BufferedApp<A> where A : App
+pub struct BufferedApp<A,B=Buffer, C=Rgb565> where A : App, B : FrameBufferBackend<Color = C>, C : PixelColor
 {
-    frame_buf : FrameBuf<Rgb565, Buffer>,
+    frame_buf : FrameBuf<C, B>,
     // buffer : Buffer,
     app : A,
     pub interlace : Option<u8>,
