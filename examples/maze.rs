@@ -352,7 +352,9 @@ fn fabsf(x: f32) -> f32 {
 }
 
 #[cfg_attr(all(target_arch = "arm", target_os = "none"), cortex_m_rt::entry)]
-fn main() -> ! {
+#[cfg_attr(target_family = "wasm", wasm_bindgen::prelude::wasm_bindgen(start))]
+// fn main() -> ! {
+pub fn main() {
     trowel::run_with(|| {
         let state: State = State {
             frame: 0,
@@ -360,8 +362,9 @@ fn main() -> ! {
             player_y: 1.5,
             player_angle: -PI / 2.0,
         };
-        let fps_app = FpsApp::try_default().expect("Could not create fps app");
-        let mut app = BufferedApp::new(state.join(fps_app));
+        // let fps_app = FpsApp::try_default().expect("Could not create fps app");
+        // let mut app = BufferedApp::new(state.join(fps_app));
+        let mut app = BufferedApp::new(state);
         app.interlace = None;
         // These are just demo/debug buttons.
         app.increase_button = Some(Buttons::I);

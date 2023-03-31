@@ -21,6 +21,11 @@ rustflags = [
   # "-v",
 ]
 
+# This doesn't work for a lib which the wasm files are.
+# [target.'cfg(target_family = "wasm")']
+# runner = "wasm-bindgen --out-dir html/wasm --target web"
+
+
 # Uncomment these two lines to build for sprig by default.
 # [build]
 # target = "thumbv6m-none-eabi"

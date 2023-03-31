@@ -7,8 +7,7 @@
    [4]: https://opensource.org/licenses/MIT
 */
 
-#![no_std]
-
+#![cfg_attr(all(target_arch = "arm", target_os = "none"), no_std)]
 use bitflags::bitflags;
 use embedded_graphics::{pixelcolor::Rgb565, prelude::DrawTarget};
 
@@ -79,7 +78,7 @@ extern crate alloc;
 #[cfg(all(target_arch = "arm", target_os = "none"))]
 mod sprig;
 #[cfg(all(target_arch = "arm", target_os = "none"))]
-pub use sprig::{run, run_with, init_heap, FpsApp0};
+pub use sprig::{run, run_with, init_heap};
 
 mod fps;
 pub use fps::FpsApp;
@@ -95,4 +94,6 @@ pub use pc::{run, run_with, init_heap};
 pub mod runty8;
 
 #[cfg(target_family = "wasm")]
-pub mod wasm;
+mod wasm;
+#[cfg(target_family = "wasm")]
+pub use wasm::{run_with};

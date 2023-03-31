@@ -41,9 +41,24 @@ st7735-lcd = "0.8"
 fugit = "0.3.6"
 
 [target.'cfg(target_family = "wasm")'.dependencies]
-embedded-fps = "0.1.0"
+embedded-fps = { version = "0.1.0", features=["std"] }
 wasm-bindgen = "0.2"
-console_error_panic_hook = { version = "0.1.1", optional = true }
+console_error_panic_hook = { version = "0.1.1" , optional = true }
+[target.'cfg(target_family = "wasm")'.dependencies.web-sys]
+version = "0.3.4"
+features = [
+  'CanvasRenderingContext2d',
+  'CssStyleDeclaration',
+  'Document',
+  'Element',
+  'EventTarget',
+  'HtmlCanvasElement',
+  'HtmlElement',
+  'MouseEvent',
+  'KeyboardEvent',
+  'Node',
+  'Window',
+]
 
 [dependencies.embedded-graphics]
 version = "0.7"
@@ -120,3 +135,7 @@ required-features = ["runty8"]
 [[example]]
 name = "celeste"
 required-features = ["runty8"]
+
+[[example]]
+name = "maze"
+crate-type = ["cdylib"]
