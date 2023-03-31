@@ -14,7 +14,7 @@ const SCREEN_WIDTH: usize = 160;
 const SCREEN_HEIGHT: usize = 128;
 
 use crate::{App, Buttons};
-use web_sys::Window;
+use web_sys::{Window, ImageData};
 
 /*
  * 1. What is going on here?
@@ -61,7 +61,9 @@ impl FrameBufferBackend for WasmBuffer {
 }
 
 
-use wasm_bindgen::prelude::*;
+use wasm_bindgen::{
+    prelude::*,
+    Clamped};
 
 use embedded_fps::StdClock;
 use crate::FpsApp;
@@ -141,7 +143,7 @@ fn setup<A>(mut app : A) -> Result<(), JsValue> where A : App + 'static {
         .unwrap()
         .dyn_into::<web_sys::CanvasRenderingContext2d>()?;
     let buttons = Rc::new(RefCell::new(Buttons::empty()));
-    let context = Rc::new(context);
+    // let context = Rc::new(context);
     let body = Rc::new(body);
     {
         let buttons = buttons.clone();
@@ -235,6 +237,12 @@ fn setup<A>(mut app : A) -> Result<(), JsValue> where A : App + 'static {
     let g = f.clone();
 
     *g.borrow_mut() = Some(Closure::wrap(Box::new(move || {
+
+        app.update(buttons.borrow().clone());
+        app.draw(&mut display);
+        let image = ImageData::new_with_u8_clamped_array_and_sh(Clamped(&mut display.data.0), 160, 128).expect("Unable to make image data");
+        context.put_image_data(&image, 0., 0.);
+
 
         // Schedule ourself for another requestAnimationFrame callback.
         // let b : RefCell<Option<Closure<dyn FnMut()>>>= *f;
