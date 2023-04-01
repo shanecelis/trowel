@@ -1,9 +1,9 @@
 [package]
-authors = ["Andrew Christiansen <andrewtaylorchristiansen@gmail.com>"]
+authors = ["Shane Celis <shane.celis@gmail.com>"]
 edition = "2021"
 readme = "README.md"
 name = "trowel"
-version = "0.1.0"
+version = "1.0.0"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
