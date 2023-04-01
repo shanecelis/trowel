@@ -124,10 +124,10 @@ fn setup<A>(mut app : A) -> Result<(), JsValue> where A : App + 'static {
     let body = document.body().expect("document should have a body");
 
     // Manufacture the element we're gonna append.
-    let val = document.create_element("p")?;
-    val.set_inner_html("Hello from Rust!");
+    // let val = document.create_element("p")?;
+    // val.set_inner_html("Hello from Rust!");
 
-    body.append_child(&val)?;
+    // body.append_child(&val)?;
     let canvas = document
         .create_element("canvas")?
         .dyn_into::<web_sys::HtmlCanvasElement>()?;
