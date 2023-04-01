@@ -23,13 +23,17 @@ use micromath::F32Ext;
 #[cfg(all(target_arch = "arm", target_os = "none"))]
 use crate::alloc::string::ToString;
 
-#[cfg_attr(all(target_arch = "arm", target_os = "none"), cortex_m_rt::entry)]
-fn main() -> ! {
-    trowel::init_heap();
+fn main() {
     let resources = runty8::load_assets_bin!("examples/celeste").unwrap();
 
     // runty8::debug_run::<GameState>(resources).unwrap();
     trowel::runty8::run::<GameState>(resources);
+}
+
+#[cfg_attr(all(target_arch = "arm", target_os = "none"), cortex_m_rt::entry)]
+fn entry() -> ! {
+    main();
+    loop { }
 }
 
 struct GameState {

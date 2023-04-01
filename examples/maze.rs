@@ -351,10 +351,7 @@ fn fabsf(x: f32) -> f32 {
     x.abs()
 }
 
-#[cfg_attr(all(target_arch = "arm", target_os = "none"), cortex_m_rt::entry)]
-#[cfg_attr(target_family = "wasm", wasm_bindgen::prelude::wasm_bindgen(start))]
-// fn main() -> ! {
-pub fn main() {
+fn main() {
     trowel::run_with(|| {
         let state: State = State {
             frame: 0,
@@ -371,4 +368,10 @@ pub fn main() {
         app.decrease_button = Some(Buttons::K);
         app
     })
+}
+
+#[cfg_attr(all(target_arch = "arm", target_os = "none"), cortex_m_rt::entry)]
+fn entry() -> ! {
+    main();
+    loop { }
 }

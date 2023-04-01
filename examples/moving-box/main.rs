@@ -9,10 +9,15 @@ use core::cmp;
 #[macro_use]
 extern crate alloc;
 
-#[cfg_attr(all(target_arch = "arm", target_os = "none"), cortex_m_rt::entry)]
-fn main() -> ! {
+fn main() {
     let resources = Resources::default();
     trowel::runty8::run::<ExampleApp>(resources);
+}
+
+#[cfg_attr(all(target_arch = "arm", target_os = "none"), cortex_m_rt::entry)]
+fn entry() -> ! {
+    main();
+    loop { }
 }
 
 pub struct ExampleApp {

@@ -12,11 +12,16 @@ use alloc::vec::Vec;
 #[cfg(all(target_arch = "arm", target_os = "none"))]
 use micromath::F32Ext;
 
-#[cfg_attr(all(target_arch = "arm", target_os = "none"), cortex_m_rt::entry)]
-fn main() -> ! {
+fn main() {
     let resources = Resources::default();//runty8::load_assets!("examples/bresenham").unwrap();
 
     trowel::runty8::run::<MyThing>(resources);
+}
+
+#[cfg_attr(all(target_arch = "arm", target_os = "none"), cortex_m_rt::entry)]
+fn entry() -> ! {
+    main();
+    loop { }
 }
 
 struct MyThing {
