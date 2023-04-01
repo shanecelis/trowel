@@ -49,15 +49,6 @@ static HEAP: Heap = Heap::empty();
 
 static mut MONOTONIC_CLOCK: Option<MonotonicClock> = None;
 
-pub fn init_heap() {
-    if HEAP.used() == 0 && HEAP.free() == 0 {
-        use core::mem::MaybeUninit;
-        const HEAP_SIZE: usize = 12_000;
-        static mut HEAP_MEM: [MaybeUninit<u8>; HEAP_SIZE] = [MaybeUninit::uninit(); HEAP_SIZE];
-        unsafe { HEAP.init(HEAP_MEM.as_ptr() as usize, HEAP_SIZE) }
-    }
-}
-
 type Monotonic0 = Monotonic<Alarm0>;
 
 pub struct MonotonicClock(RefCell<Monotonic0>);
@@ -97,28 +88,30 @@ impl TryDefault<FpsApp<MonotonicClock>> for FpsApp<MonotonicClock> {
 pub type FpsApp0 = FpsApp<MonotonicClock>;
 
 /// The `run` function configures the RP2040 peripherals, then runs the app.
-pub fn run(app: impl App) -> ! {
-    run_with(move || app);
-}
-
-pub fn run_with<F,A>(app_maker: F) -> !
+pub fn run_with<F,A>(app_maker: F) -> ()
         where F : FnOnce() -> A,
               A : App {
+    {
+        use core::mem::MaybeUninit;
+        const HEAP_SIZE: usize = 12_000;
+        static mut HEAP_MEM: [MaybeUninit<u8>; HEAP_SIZE] = [MaybeUninit::uninit(); HEAP_SIZE];
+        unsafe { HEAP.init(HEAP_MEM.as_ptr() as usize, HEAP_SIZE) }
+    }
 
     if Some("1") == option_env!("SHOW_FPS") {
         if let Some(fps_app) = FpsApp::try_default() {
             _run_with(move || app_maker().join(fps_app));
         }
+    } else {
+        _run_with(app_maker);
     }
-    _run_with(app_maker);
 }
 
 
-fn _run_with<F,A>(app_maker: F) -> !
+fn _run_with<F,A>(app_maker: F) -> ()
         where F : FnOnce() -> A,
               A : App {
 
-    init_heap();
 
     // Grab our singleton objects.
     let mut pac = pac::Peripherals::take().unwrap();
@@ -245,5 +238,6 @@ fn _run_with<F,A>(app_maker: F) -> !
         // fps_app.draw(&mut disp).expect("error fps");
         // let fps = fps_counter.tick();
         // Text::new(&format!("FPS: {fps}"), fps_position, character_style).draw(&mut disp).expect("error on fps");
-    }
+    };
 }
+
