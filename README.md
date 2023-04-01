@@ -11,13 +11,16 @@ rust on your computer.
 
 ## Setup rust for cross platform development
 
+Run these commands in a Unix shell or `cmd.exe` on Windows.
+
 ``` sh
-$ rustup target add thumbv6m-none-eabi
-$ cargo install cargo-binutils
-$ rustup component add llvm-tools-preview
-$ cargo install elf2uf2-rs
-$ cargo install probe-run
-$ cargo install flip-link
+rustup target add thumbv6m-none-eabi
+cargo install cargo-binutils
+rustup component add llvm-tools-preview
+cargo install elf2uf2-rs
+cargo install probe-run
+cargo install flip-link
+cargo install wasm-server-runner
 ```
 
 ### Ancillary Dependencies
@@ -26,6 +29,13 @@ For the most part `cargo` will handle all the dependencies. However, the rust
 `sdl2` crate does require SDL2 to be installed for the PC simulator. Follow
 [these instructions](https://crates.io/crates/sdl2) for your operating system to
 install SDL2.
+
+## Clone the repository
+
+``` sh
+git clone https://github.com/shanecelis/trowel.git
+cd trowel
+```
 
 ## Simulate on your PC
 
@@ -40,7 +50,13 @@ cargo run --example maze
 ![maze on the sprig](/assets/maze-sprig.png)
 
 ``` sh
-cargo run --example maze --target thumbv6m-none-eabi
+cargo run-sprig --example maze
+```
+
+## Run as wasm
+
+``` sh
+cargo run-wasm --example maze
 ```
 
 ## Examples
@@ -64,7 +80,7 @@ adapter so _any_ runty8 games can run on the Sprig.
 * [celeste](https://celestegame.fandom.com/wiki/Celeste_Classic) (!!!)
 
 ``` sh
-cargo run --example $example --features runty8 
+cargo run --example celeste --features runty8 --release
 ```
 
 ![Celeste on the pc simulator](/assets/celeste-pc.png)

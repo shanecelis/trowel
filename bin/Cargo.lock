@@ -15,12 +15,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
-name = "cty"
-version = "0.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c4e1d41c471573612df00397113557693b5bf5909666a8acb253930612b93312"
-
-[[package]]
 name = "display_utils"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
