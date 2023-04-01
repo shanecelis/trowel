@@ -91,8 +91,16 @@ where
     }
 }
 
-pub fn run<Game: runty::App + 'static>(resources: Resources) -> ! {
-    let game: RuntyApp<Game> = RuntyApp::new(resources);
-    super::run(game);
+pub fn run_with<Game: runty::App + 'static, F>(resources: F) where F : FnOnce() -> Resources {
+    super::run_with(|| {
+        let game: RuntyApp<Game> = RuntyApp::new(resources());
+        game
+    });
+}
+
+pub fn run<Game: runty::App + 'static>(resources: Resources) {
+    run_with::<Game, _>(|| {
+        resources
+    });
 }
 

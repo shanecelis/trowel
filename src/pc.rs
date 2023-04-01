@@ -20,10 +20,6 @@ use crate::{App, Buttons};
 
 pub fn init_heap() { }
 
-pub mod buffered {
-    pub use crate::pc::run;
-}
-
 impl Default for FpsApp<StdClock> {
     fn default() -> Self {
         FpsApp::new(StdClock::default())
@@ -32,14 +28,8 @@ impl Default for FpsApp<StdClock> {
 
 pub type FpsApp0 = FpsApp<StdClock>;
 
-/// The `run` function configures the RP2040 peripherals, then runs the app.
-pub fn run(app: impl App) -> ! {
-
-    run_with(move || app);
-}
-
 pub fn run_with<F,A>(app_maker: F) -> !
-        where F : FnOnce() -> A, A : App {
+        where F : FnOnce() -> A, A : App + 'static {
 
     if Some("1") == option_env!("SHOW_FPS") {
         _run_with(move || app_maker().join(FpsApp::default()));
@@ -49,7 +39,7 @@ pub fn run_with<F,A>(app_maker: F) -> !
 }
 
 fn _run_with<F,A>(app_maker: F) -> !
-        where F : FnOnce() -> A, A : App {
+        where F : FnOnce() -> A, A : App + 'static {
 
     let mut display: SimulatorDisplay<Rgb565> = SimulatorDisplay::new(Size::new(160, 128));
 
