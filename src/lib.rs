@@ -6,7 +6,6 @@
    [3]: https://hackclub.com
    [4]: https://opensource.org/licenses/MIT
 */
-
 #![cfg_attr(all(target_arch = "arm", target_os = "none"), no_std)]
 use bitflags::bitflags;
 use embedded_graphics::{pixelcolor::Rgb565, prelude::DrawTarget};
@@ -78,7 +77,7 @@ extern crate alloc;
 #[cfg(all(target_arch = "arm", target_os = "none"))]
 mod sprig;
 #[cfg(all(target_arch = "arm", target_os = "none"))]
-pub use sprig::{run, run_with, init_heap};
+pub use sprig::run_with;
 
 mod fps;
 pub use fps::FpsApp;
@@ -88,7 +87,11 @@ pub mod buffered;
 #[cfg(any(target_family = "unix", target_family = "windows"))]
 mod pc;
 #[cfg(any(target_family = "unix", target_family = "windows"))]
-pub use pc::{run, run_with, init_heap};
+pub use pc::run_with;
+
+pub fn run(app: impl App + 'static) -> () {
+    run_with(move || app);
+}
 
 #[cfg(feature = "runty8")]
 pub mod runty8;
