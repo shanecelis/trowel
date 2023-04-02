@@ -54,7 +54,12 @@ impl App for DrawFerris
     }
 }
 
-#[cfg_attr(all(target_arch = "arm", target_os = "none"), cortex_m_rt::entry)]
-fn main() -> ! {
+fn main() {
     trowel::run(DrawFerris { frame: 0 });
+}
+
+#[cfg_attr(all(target_arch = "arm", target_os = "none"), cortex_m_rt::entry)]
+fn entry() -> ! {
+    main();
+    loop { }
 }

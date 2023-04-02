@@ -359,9 +359,9 @@ fn main() {
             player_y: 1.5,
             player_angle: -PI / 2.0,
         };
-        // let fps_app = FpsApp::try_default().expect("Could not create fps app");
-        // let mut app = BufferedApp::new(state.join(fps_app));
-        let mut app = BufferedApp::new(state);
+        let fps_app = FpsApp::try_default().expect("Could not create fps app");
+        let mut app = BufferedApp::new(state.join(fps_app));
+        // let mut app = BufferedApp::new(state);
         app.interlace = None;
         // These are just demo/debug buttons.
         app.increase_button = Some(Buttons::I);
