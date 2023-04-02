@@ -32,8 +32,8 @@ fi
 example="$1";
 shift;
 cargo build --example "$example" --target wasm32-unknown-unknown --$config "$@"
-wasm-bindgen --out-dir html/wasm --target web "target/wasm32-unknown-unknown/$config/examples/$example.wasm"
-cat <<EOF > html/index.html
+wasm-bindgen --out-dir "$example/wasm" --target web "target/wasm32-unknown-unknown/$config/examples/$example.wasm"
+cat <<EOF > "$example/index.html"
 <html>
   <head>
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type"/>
@@ -74,6 +74,6 @@ if [ $run_server -eq 1 ]; then
     echo "warning: No http-server command found. Suggest running 'cargo install http-server'." >&2;
     exit 3;
   else
-    http-server -vl html
+    http-server -vl "$example"
   fi
 fi
