@@ -50,20 +50,50 @@ cargo run --example maze
 ![maze on the sprig](/assets/maze-sprig.png)
 
 ``` sh
+cargo run --example maze --target thumbv6m-none-eabi
+```
+
+Or use the `run-sprig` alias.
+
+``` sh
 cargo run-sprig --example maze
 ```
 
-## Run as wasm
+## Run as a Web Assembly
+
+``` sh
+cargo run --example maze --target wasm32-unknown-unknown
+```
+
+Or use the `run-wasm` alias.
 
 ``` sh
 cargo run-wasm --example maze
 ```
 
+### Build Web Assembly
+
+``` sh
+./bin/build-wasm maze
+```
+
+Generates a web assembly files and `index.html` for deployment.
+
+``` sh
+maze
+├── index.html
+└── wasm
+    ├── maze.d.ts
+    ├── maze.js
+    ├── maze_bg.wasm
+    └── maze_bg.wasm.d.ts
+```
+
 ## Examples
 
-* hello_world
-* maze
-* draw_ferris
+* [hello_world](http://seawisphunter.com/trowel/hello_world)
+* [maze](http://seawisphunter.com/trowel/maze)
+* [draw_ferris](http://seawisphunter.com/trowel/draw_ferris)
 
 ``` sh
 cargo run --example $example
@@ -75,9 +105,9 @@ cargo run --example $example
 [pico-8](https://www.lexaloffle.com/pico-8.php) clone in rust. Trowel has an
 adapter so _any_ runty8 games can run on the Sprig.
 
-* bresenham 
-* moving-box
-* [celeste](https://celestegame.fandom.com/wiki/Celeste_Classic) (!!!)
+* [bresenham](http://seawisphunter.com/trowel/bresenham)
+* [moving-box](http://seawisphunter.com/trowel/moving-box)
+* [celeste](http://seawisphunter.com/trowel/celeste) [(!!!)](https://celestegame.fandom.com/wiki/Celeste_Classic)
 
 ``` sh
 cargo run --example celeste --features runty8 --release
