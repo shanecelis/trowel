@@ -8,13 +8,20 @@ extern crate console_error_panic_hook;
 
 use std::cell::RefCell;
 use std::rc::Rc;
-// use std::borrow::Borrow;
-
-const SCREEN_WIDTH: usize = 160;
-const SCREEN_HEIGHT: usize = 128;
 
 use crate::{App, Buttons};
 use web_sys::{Window, ImageData};
+use wasm_bindgen::{
+    prelude::*,
+    Clamped};
+
+use crate::FpsApp;
+use try_default::TryDefault;
+use embedded_time::{fraction::Fraction, Clock as EClock, clock::Error, Instant as EInstant};
+use wasm_timer::Instant;
+
+const SCREEN_WIDTH: usize = 160;
+const SCREEN_HEIGHT: usize = 128;
 
 /*
  * 1. What is going on here?
@@ -59,19 +66,22 @@ impl FrameBufferBackend for WasmBuffer {
         SCREEN_HEIGHT * SCREEN_WIDTH
     }
 }
+pub struct WasmClock(Instant);
 
+// https://docs.rs/embedded-time/0.12.1/embedded_time/clock/trait.Clock.html
+impl EClock for WasmClock {
+    type T = u64;
 
-use wasm_bindgen::{
-    prelude::*,
-    Clamped};
+    const SCALING_FACTOR: Fraction = Fraction::new(1, 1_000);
 
-use embedded_fps::StdClock;
-use crate::FpsApp;
-use try_default::TryDefault;
+    fn try_now(&self) -> Result<EInstant<Self>, Error> {
+        Ok(EInstant::<WasmClock>::new(self.0.elapsed().as_millis() as u64))
+    }
+}
 
-impl TryDefault<FpsApp<StdClock>> for FpsApp<StdClock> {
+impl TryDefault<FpsApp<WasmClock>> for FpsApp<WasmClock> {
     fn try_default() -> Option<Self> {
-        None
+        Some(FpsApp::new(WasmClock(Instant::now())))
     }
 }
 
@@ -89,14 +99,8 @@ fn _run_with<F,A>(app_maker: F)
         where F : FnOnce() -> A, A : App + 'static {
 
     let mut app = app_maker();
-
     app.init().expect("error initializing");
     setup::<A>(app).expect("error setting up app");
-
-    //     app.update(buttons).expect("error updating");
-    //     app.draw(&mut display).expect("error drawing");
-    //     window.update(&display);
-    // }
 }
 
 fn animation_frame(w: &Window, f: &Closure<dyn FnMut()>) {
@@ -104,13 +108,10 @@ fn animation_frame(w: &Window, f: &Closure<dyn FnMut()>) {
         .expect("should register 'requestAnimationFrame` OK");
 }
 
-// #[wasm_bindgen]
-// Main is called when the wasm module is instantiated.
-// #[wasm_bindgen(start)]
 fn setup<A>(mut app : A) -> Result<(), JsValue> where A : App + 'static {
     console_error_panic_hook::set_once();
 
-    let mut data = WasmBuffer([0; OUTPUT_BUFFER_SIZE]);
+    let data = WasmBuffer([0; OUTPUT_BUFFER_SIZE]);
     let mut display = FrameBuf::new(data, 160, 128);
 
     display
@@ -123,28 +124,29 @@ fn setup<A>(mut app : A) -> Result<(), JsValue> where A : App + 'static {
     let document = window.document().expect("should have a document on window");
     let body = document.body().expect("document should have a body");
 
-    // Manufacture the element we're gonna append.
-    // let val = document.create_element("p")?;
-    // val.set_inner_html("Hello from Rust!");
+    let canvas = document.get_element_by_id("trowel-canvas")
+                         .map(|c| c.dyn_into::<web_sys::HtmlCanvasElement>().unwrap())
+                         .or_else(|| {
+        let canvas = document
+            .create_element("canvas").ok()?
+            .dyn_into::<web_sys::HtmlCanvasElement>().ok()?;
+        canvas.set_id("trowel-canvas");
+        // canvas.style().set_property("border", "solid")?;
+        canvas.set_width(160);
+        canvas.set_height(128);
+        canvas.style().set_property("image-rendering", "pixelated").ok()?;
+        canvas.style().set_property("image-rendering", "crisp-edges").ok()?;
+        canvas.style().set_property("width", "100%").ok()?;
+        canvas.style().set_property("height", "100%").ok()?;
+        body.append_child(&canvas).ok()?;
+        Some(canvas)
+    }).expect("Cannot get or make canvas");
 
-    // body.append_child(&val)?;
-    let canvas = document
-        .create_element("canvas")?
-        .dyn_into::<web_sys::HtmlCanvasElement>()?;
-    body.append_child(&canvas)?;
-    canvas.set_width(160);
-    canvas.set_height(128);
-    canvas.style().set_property("border", "solid")?;
-    canvas.style().set_property("image-rendering", "pixelated")?;
-    canvas.style().set_property("image-rendering", "crisp-edges")?;
-    canvas.style().set_property("width", "100%")?;
     let context = canvas
         .get_context("2d")?
         .unwrap()
         .dyn_into::<web_sys::CanvasRenderingContext2d>()?;
     let buttons = Rc::new(RefCell::new(Buttons::empty()));
-    // let context = Rc::new(context);
-    let body = Rc::new(body);
     {
         let buttons = buttons.clone();
         let closure = Closure::<dyn FnMut(_)>::new(move |e: web_sys::KeyboardEvent| {
@@ -186,51 +188,6 @@ fn setup<A>(mut app : A) -> Result<(), JsValue> where A : App + 'static {
         document.add_event_listener_with_callback("keyup", closure.as_ref().unchecked_ref())?;
         closure.forget();
     }
-    // {
-    // // Here we want to call `requestAnimationFrame` in a loop, but only a fixed
-    // // number of times. After it's done we want all our resources cleaned up. To
-    // // achieve this we're using an `Rc`. The `Rc` will eventually store the
-    // // closure we want to execute on each frame, but to start out it contains
-    // // `None`.
-    // //
-    // // After the `Rc` is made we'll actually create the closure, and the closure
-    // // will reference one of the `Rc` instances. The other `Rc` reference is
-    // // used to store the closure, request the first frame, and then is dropped
-    // // by this function.
-    // //
-    // // Inside the closure we've got a persistent `Rc` reference, which we use
-    // // for all future iterations of the loop
-    // // let f : Rc<RefCell<Option<Closure<dyn FnMut()>>>> = Rc::new(RefCell::new(None));
-    // let f = Rc::new(RefCell::new(None));
-    // let g = f.clone();
-    // let buttons = buttons.clone();
-    // let window = Rc::new(window);
-    // let win = window.clone();
-
-    // // let mut i = 0;
-    // *g.borrow_mut() = Some(Closure::new(Box::new(move || {
-    //     // if i > 300 {
-    //     //     body().set_text_content(Some("All done!"));
-
-    //     //     // Drop our handle to this closure so that it will get cleaned
-    //     //     // up once we return.
-    //     //     let _ = f.borrow_mut().take();
-    //     //     return;
-    //     // }
-    //     // app.update((*buttons).borrow().clone());
-
-    //     // Set the body's text content to how many times this
-    //     // requestAnimationFrame callback has fired.
-    //     // i += 1;
-
-
-    //     // Schedule ourself for another requestAnimationFrame callback.
-    //     animation_frame(&win, f.borrow().as_ref().unwrap());
-    // }) as Box<dyn FnMut()>));
-
-    // animation_frame(&window, g.borrow().as_ref().unwrap());
-    // }
-
 
     let init : Option<Closure<dyn FnMut()>> = None;
     let f = Rc::new(RefCell::new(init));
@@ -238,20 +195,19 @@ fn setup<A>(mut app : A) -> Result<(), JsValue> where A : App + 'static {
 
     *g.borrow_mut() = Some(Closure::wrap(Box::new(move || {
 
-        app.update(buttons.borrow().clone());
-        app.draw(&mut display);
-        let image = ImageData::new_with_u8_clamped_array_and_sh(Clamped(&mut display.data.0), 160, 128).expect("Unable to make image data");
-        context.put_image_data(&image, 0., 0.);
-
+        app.update(buttons.borrow().clone()).expect("error updating");
+        app.draw(&mut display).expect("error drawing");
+        let image = ImageData::new_with_u8_clamped_array_and_sh(Clamped(&mut display.data.0), 160, 128)
+            .expect("Unable to make image data");
+        context.put_image_data(&image, 0., 0.).expect("error putting image");
 
         // Schedule ourself for another requestAnimationFrame callback.
         // let b : RefCell<Option<Closure<dyn FnMut()>>>= *f;
         request_animation_frame(f.borrow().as_ref().unwrap());
 
-    }) as Box<dyn FnMut()>));// <dyn FnMut()>);
+    }) as Box<dyn FnMut()>));
 
     request_animation_frame(g.borrow().as_ref().unwrap());
-
 
     Ok(())
 }

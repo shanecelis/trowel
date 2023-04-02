@@ -77,11 +77,6 @@ impl EClock for MonotonicClock {
 impl TryDefault<FpsApp<MonotonicClock>> for FpsApp<MonotonicClock> {
     fn try_default() -> Option<Self> {
         unsafe { MONOTONIC_CLOCK.take() }.map(|clock| FpsApp::new(clock))
-        // if let Option(clock) =
-        //     Some(FpsApp::new(clock))
-        // } else {
-        //     None
-        // }
     }
 }
 
