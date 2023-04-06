@@ -24,6 +24,12 @@ use rp2040_hal::{clocks::Clock, timer::{Alarm0, monotonic::Monotonic}};
 use st7735_lcd::{Orientation, ST7735};
 use rtic_monotonic::Monotonic as RticMonotonic;
 
+// Serial port module
+use rp2040_hal::usb::UsbBus;
+use usb_device::bus::UsbBusAllocator;
+use usb_device::prelude::*;
+use usbd_serial::{SerialPort, USB_CLASS_CDC};
+
 // A shorter alias for the Peripheral Access Crate, which provides low-level
 // register access.
 use crate::{App, Buttons, FpsApp, AppExt};
@@ -40,12 +46,6 @@ pub static BOOT2: [u8; 256] = rp2040_boot2::BOOT_LOADER_W25Q080;
 use core::cell::RefCell;
 use embedded_time::{fraction::Fraction, Clock as EClock, clock::Error, Instant as EInstant};
 
-// Add the USB-related imports here
-use rp2040_hal::usb::UsbBus;
-use usbd_serial::SerialPort as PicoUsbSerial;
-use usbd_serial::CdcAcmClass;
-use usb_device::prelude::UsbVidPid;
-use usb_device::{bus::UsbBusAllocator, device::UsbDeviceBuilder};
 /// External high-speed crystal on the Raspberry Pi Pico board is 12 MHz. Adjust
 /// if your board has a different frequency.
 const XTAL_FREQ_HZ: u32 = 12_000_000u32;
@@ -86,8 +86,6 @@ impl TryDefault<FpsApp<MonotonicClock>> for FpsApp<MonotonicClock> {
         unsafe { MONOTONIC_CLOCK.take() }.map(|clock| FpsApp::new(clock))
     }
 }
-
-pub type FpsApp0 = FpsApp<MonotonicClock>;
 
 /// The `run` function configures the RP2040 peripherals, then runs the app.
 pub fn run_with<F,A>(app_maker: F) -> ()
@@ -195,29 +193,21 @@ fn _run_with<F,A>(app_maker: F) -> ()
     // pixels for a brief moment.
     lcd_led.set_high().unwrap();
 
+    // Initialize USB serial communication
+    let usb_bus = UsbBus::new(pac.USBCTRL_REGS, pac.USBCTRL_DPRAM, clocks.usb_clock, true, &mut pac.RESETS);
+    let usb_bus_allocator = UsbBusAllocator::new(usb_bus);    
+    let mut serial = SerialPort::new(&usb_bus_allocator);
+    let mut usb_dev = UsbDeviceBuilder::new(&usb_bus_allocator, UsbVidPid(0x16c0, 0x27dd))
+    .manufacturer("Hack Club")
+    .product("Sprig")
+    .serial_number("0001")
+    .device_class(USB_CLASS_CDC)
+    .build();
+
     // We could turn on the MCU's led.
     // led.set_high().unwrap();
     let mut app = app_maker();
     app.init().expect("error initializing");
-
-    // Initalize the USB peripheral.
-    let usb_bus_allocator = UsbBusAllocator::new(UsbBus::new(
-        pac.USBCTRL_REGS,
-        pac.USBCTRL_DPRAM,
-        clocks.usb_clock,
-        true,
-        &mut pac.RESETS,
-    ));   
-    
-    let serial = CdcAcmClass::new(&usb_bus_allocator, 0x01);
-
-    UsbDeviceBuilder::new(&usb_bus_allocator, UsbVidPid(0x16c0, 0x27dd))
-    .manufacturer("HackClub")
-    .product("Sprig")
-    .serial_number("TEST")
-    .device_class(serial.max_packet_size().try_into().unwrap())
-    .build();
-
 
     // let mut fps_app = FpsApp::new().expect("error init fps app");
 
@@ -226,10 +216,21 @@ fn _run_with<F,A>(app_maker: F) -> ()
     // let fps_position = Point::new(5, 15);
 
     let mut buttons;
-    let mut usb_serial = PicoUsbSerial::new(&usb_bus_allocator);
     loop {
+        // Poll the USB device
+        usb_dev.poll(&mut [&mut serial]);
+    
+        // Read from the serial port and echo it back
+        let mut buf = [0u8; 64];
+        match serial.read(&mut buf) {
+            Ok(count) if count > 0 => {
+                serial.write(&buf[..count]).ok();
+            }
+            _ => {}
+        }
+    
         buttons = Buttons::empty();
-
+    
         if w.is_low().unwrap() {
             buttons |= Buttons::W;
         }
@@ -254,21 +255,12 @@ fn _run_with<F,A>(app_maker: F) -> ()
         if l.is_low().unwrap() {
             buttons |= Buttons::L;
         }
-
+    
         app.update(buttons).expect("error updating");
         app.draw(&mut disp).expect("error drawing");
-        // fps_app.draw(&mut disp).expect("error fps");
+
+         // fps_app.draw(&mut disp).expect("error fps");
         // let fps = fps_counter.tick();
         // Text::new(&format!("FPS: {fps}"), fps_position, character_style).draw(&mut disp).expect("error on fps");
-
-      // Read from the USB serial port
-    let mut buf = [0u8; 64];
-    match usb_serial.read(&mut buf) {
-        Ok(count) if count > 0 => {
-            // Process the received data in `buf[..count]`
-        }
-        _ => {}
-    }
     };
 }
-
