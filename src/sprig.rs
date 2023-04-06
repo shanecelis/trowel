@@ -40,6 +40,12 @@ pub static BOOT2: [u8; 256] = rp2040_boot2::BOOT_LOADER_W25Q080;
 use core::cell::RefCell;
 use embedded_time::{fraction::Fraction, Clock as EClock, clock::Error, Instant as EInstant};
 
+// Add the USB-related imports here
+use rp2040_hal::usb::UsbBus;
+use usbd_serial::SerialPort as PicoUsbSerial;
+use usbd_serial::CdcAcmClass;
+use usb_device::prelude::UsbVidPid;
+use usb_device::{bus::UsbBusAllocator, device::UsbDeviceBuilder};
 /// External high-speed crystal on the Raspberry Pi Pico board is 12 MHz. Adjust
 /// if your board has a different frequency.
 const XTAL_FREQ_HZ: u32 = 12_000_000u32;
@@ -62,6 +68,7 @@ impl MonotonicClock {
 // https://docs.rs/embedded-time/0.12.1/embedded_time/clock/trait.Clock.html
 impl EClock for MonotonicClock {
     // type T = Monotonic0::Instant::NOM;
+
     type T = u64;
 
     const SCALING_FACTOR: Fraction = Fraction::new(1, 1_000_000);
@@ -193,6 +200,25 @@ fn _run_with<F,A>(app_maker: F) -> ()
     let mut app = app_maker();
     app.init().expect("error initializing");
 
+    // Initalize the USB peripheral.
+    let usb_bus_allocator = UsbBusAllocator::new(UsbBus::new(
+        pac.USBCTRL_REGS,
+        pac.USBCTRL_DPRAM,
+        clocks.usb_clock,
+        true,
+        &mut pac.RESETS,
+    ));   
+    
+    let serial = CdcAcmClass::new(&usb_bus_allocator, 0x01);
+
+    UsbDeviceBuilder::new(&usb_bus_allocator, UsbVidPid(0x16c0, 0x27dd))
+    .manufacturer("HackClub")
+    .product("Sprig")
+    .serial_number("TEST")
+    .device_class(serial.max_packet_size().try_into().unwrap())
+    .build();
+
+
     // let mut fps_app = FpsApp::new().expect("error init fps app");
 
     // let mut fps_counter =
@@ -200,6 +226,7 @@ fn _run_with<F,A>(app_maker: F) -> ()
     // let fps_position = Point::new(5, 15);
 
     let mut buttons;
+    let mut usb_serial = PicoUsbSerial::new(&usb_bus_allocator);
     loop {
         buttons = Buttons::empty();
 
@@ -233,6 +260,15 @@ fn _run_with<F,A>(app_maker: F) -> ()
         // fps_app.draw(&mut disp).expect("error fps");
         // let fps = fps_counter.tick();
         // Text::new(&format!("FPS: {fps}"), fps_position, character_style).draw(&mut disp).expect("error on fps");
+
+      // Read from the USB serial port
+    let mut buf = [0u8; 64];
+    match usb_serial.read(&mut buf) {
+        Ok(count) if count > 0 => {
+            // Process the received data in `buf[..count]`
+        }
+        _ => {}
+    }
     };
 }
 
