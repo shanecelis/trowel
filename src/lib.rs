@@ -10,6 +10,9 @@
 use bitflags::bitflags;
 use embedded_graphics::{pixelcolor::Rgb565, prelude::DrawTarget};
 
+// pub use cortex_m_rt::entry as entry;
+pub use rp_pico::entry as entry;
+
 bitflags! {
     pub struct Buttons: u8 {
         const W = 0b00000001;
@@ -77,7 +80,7 @@ extern crate alloc;
 #[cfg(all(target_arch = "arm", target_os = "none"))]
 mod sprig;
 #[cfg(all(target_arch = "arm", target_os = "none"))]
-pub use sprig::run_with;
+pub use sprig::{run_with, stdout};
 
 mod fps;
 pub use fps::FpsApp;

@@ -13,22 +13,25 @@
 // Ensure we halt the program on panic. (If we don't mention this crate it won't
 // be linked.)
 use defmt_rtt as _;
+// use panic_halt as _;
 use panic_probe as _;
 
-use rp2040_hal as hal;
+// use rp2040_hal as hal;
 
 use embedded_graphics::{draw_target::DrawTarget, pixelcolor::Rgb565, prelude::*};
 use embedded_hal::digital::v2::{InputPin, OutputPin};
 use fugit::RateExtU32;
-use rp2040_hal::{clocks::Clock, timer::{Alarm0, monotonic::Monotonic}};
+use rp_pico::hal::{self, pac::interrupt};
+use hal::{clocks::Clock, timer::{Alarm0, monotonic::Monotonic}};
+// use rp2040_hal::timer::monotonic::Monotonic;
 use st7735_lcd::{Orientation, ST7735};
 use rtic_monotonic::Monotonic as RticMonotonic;
 
 // Serial port module
-use rp2040_hal::usb::UsbBus;
+use hal::usb::UsbBus;
 use usb_device::bus::UsbBusAllocator;
 use usb_device::prelude::*;
-use usbd_serial::{SerialPort, USB_CLASS_CDC};
+use usbd_serial::{SerialPort, USB_CLASS_CDC, UsbError};
 
 // A shorter alias for the Peripheral Access Crate, which provides low-level
 // register access.
@@ -37,23 +40,29 @@ use hal::pac;
 use embedded_alloc::Heap;
 use core::option::Option;
 use try_default::TryDefault;
+use circular_buffer::CircularBuffer;
 
-/// The linker will place this boot block at the start of our program image. We
-/// need this to help the ROM bootloader get our code up and running.
-#[link_section = ".boot2"]
-#[used]
-pub static BOOT2: [u8; 256] = rp2040_boot2::BOOT_LOADER_W25Q080;
 use core::cell::RefCell;
 use embedded_time::{fraction::Fraction, Clock as EClock, clock::Error, Instant as EInstant};
-
-/// External high-speed crystal on the Raspberry Pi Pico board is 12 MHz. Adjust
-/// if your board has a different frequency.
-const XTAL_FREQ_HZ: u32 = 12_000_000u32;
+// use core::fmt::Write;
+use genio::{Write, Read};
 
 #[global_allocator]
 static HEAP: Heap = Heap::empty();
 
+static mut STDOUT: Option<Stdout> = None;
+
 static mut MONOTONIC_CLOCK: Option<MonotonicClock> = None;
+
+// Taken from rp-hal-boards's pico_usb_serial_interrupt.rs example.
+/// The USB Device Driver (shared with the interrupt).
+static mut USB_DEVICE: Option<UsbDevice<hal::usb::UsbBus>> = None;
+
+/// The USB Bus Driver (shared with the interrupt).
+static mut USB_BUS: Option<UsbBusAllocator<hal::usb::UsbBus>> = None;
+
+/// The USB Serial Device Driver (shared with the interrupt).
+static mut USB_SERIAL: Option<SerialPort<hal::usb::UsbBus>> = None;
 
 type Monotonic0 = Monotonic<Alarm0>;
 
@@ -107,6 +116,65 @@ pub fn run_with<F,A>(app_maker: F) -> ()
     }
 }
 
+pub struct Stdout {
+    buffer: CircularBuffer<64, u8>,
+    error: Option<UsbError>
+}
+
+impl Stdout {
+    fn can_drain(&self) -> bool {
+        self.buffer.len() != 0
+    }
+
+    fn drain(&mut self, serial: &mut SerialPort<hal::usb::UsbBus>) {
+        if self.buffer.len() != 0 {
+            let (s1, s2) = self.buffer.as_slices();
+            match serial.write(s1) {
+                Ok(written) => { },
+                Err(err) => { self.error = Some(err);
+                    return;
+                }
+            }
+            if s2.len() != 0 {
+                match serial.write(s2) {
+                    Ok(written) => { },
+                    Err(err) => self.error = Some(err)
+                }
+            }
+            self.buffer.clear();
+        }
+    }
+}
+
+impl Write for Stdout {
+    type WriteError = UsbError;
+    type FlushError = UsbError;
+    fn write(&mut self, buf: &[u8]) -> Result<usize, Self::WriteError> {
+        match self.error.take() {
+            Some(err) => { return Err(err); },
+            None => { }
+        }
+
+        for c in buf {
+            self.buffer.push_back(*c);
+        }
+
+        Ok(buf.len())
+    }
+    fn flush(&mut self) -> Result<(), Self::FlushError> {
+        match self.error.take() {
+            Some(err) => Err(err),
+            None => Ok(())
+        }
+    }
+
+    fn size_hint(&mut self, bytes: usize) { }
+}
+
+pub fn stdout() -> &'static mut Stdout {
+    unsafe { STDOUT.as_mut().unwrap() }
+}
+
 
 fn _run_with<F,A>(app_maker: F) -> ()
         where F : FnOnce() -> A,
@@ -122,7 +190,7 @@ fn _run_with<F,A>(app_maker: F) -> ()
 
     // Configure the clocks.
     let clocks = hal::clocks::init_clocks_and_plls(
-        XTAL_FREQ_HZ,
+        rp_pico::XOSC_CRYSTAL_FREQ,
         pac.XOSC,
         pac.CLOCKS,
         pac.PLL_SYS,
@@ -194,43 +262,52 @@ fn _run_with<F,A>(app_maker: F) -> ()
     lcd_led.set_high().unwrap();
 
     // Initialize USB serial communication
-    let usb_bus = UsbBus::new(pac.USBCTRL_REGS, pac.USBCTRL_DPRAM, clocks.usb_clock, true, &mut pac.RESETS);
-    let usb_bus_allocator = UsbBusAllocator::new(usb_bus);    
-    let mut serial = SerialPort::new(&usb_bus_allocator);
-    let mut usb_dev = UsbDeviceBuilder::new(&usb_bus_allocator, UsbVidPid(0x16c0, 0x27dd))
+    let usb_bus = UsbBusAllocator::new(UsbBus::new(pac.USBCTRL_REGS,pac.USBCTRL_DPRAM,clocks.usb_clock,true,&mut pac.RESETS));
+    unsafe {
+        // Note (safety): This is safe as interrupts haven't been started yet
+        USB_BUS = Some(usb_bus);
+    }
+
+    // Grab a reference to the USB Bus allocator. We are promising to the
+    // compiler not to take mutable access to this global variable whilst this
+    // reference exists!
+    let bus_ref = unsafe { USB_BUS.as_ref().unwrap() };
+
+    let mut serial = SerialPort::new(bus_ref);
+
+    unsafe {
+        USB_SERIAL = Some(serial);
+    }
+
+    let mut usb_dev = UsbDeviceBuilder::new(bus_ref, UsbVidPid(0x16c0, 0x27dd))
     .manufacturer("Hack Club")
     .product("Sprig")
     .serial_number("0001")
     .device_class(USB_CLASS_CDC)
     .build();
 
-    // We could turn on the MCU's led.
-    // led.set_high().unwrap();
+    unsafe {
+        // Note (safety): This is safe as interrupts haven't been started yet
+        USB_DEVICE = Some(usb_dev);
+    }
+
+    unsafe {
+        STDOUT = Some(Stdout { buffer: CircularBuffer::new(), error: None });
+    }
+
+    // Enable the USB interrupt
+    unsafe {
+        pac::NVIC::unmask(hal::pac::Interrupt::USBCTRL_IRQ);
+    };
+
     let mut app = app_maker();
     app.init().expect("error initializing");
 
-    // let mut fps_app = FpsApp::new().expect("error init fps app");
-
-    // let mut fps_counter =
-    // let character_style = MonoTextStyle::new(&FONT_7X13, Rgb565::WHITE);
-    // let fps_position = Point::new(5, 15);
-
     let mut buttons;
     loop {
-        // Poll the USB device
-        usb_dev.poll(&mut [&mut serial]);
-    
-        // Read from the serial port and echo it back
-        let mut buf = [0u8; 64];
-        match serial.read(&mut buf) {
-            Ok(count) if count > 0 => {
-                serial.write(&buf[..count]).ok();
-            }
-            _ => {}
-        }
-    
+
         buttons = Buttons::empty();
-    
+
         if w.is_low().unwrap() {
             buttons |= Buttons::W;
         }
@@ -255,12 +332,63 @@ fn _run_with<F,A>(app_maker: F) -> ()
         if l.is_low().unwrap() {
             buttons |= Buttons::L;
         }
-    
-        app.update(buttons).expect("error updating");
-        app.draw(&mut disp).expect("error drawing");
 
-         // fps_app.draw(&mut disp).expect("error fps");
-        // let fps = fps_counter.tick();
-        // Text::new(&format!("FPS: {fps}"), fps_position, character_style).draw(&mut disp).expect("error on fps");
+        app.update(buttons).expect("error updating");
+        // XXX: This is too slow for usb.
+        app.draw(&mut disp).expect("error drawing");
+        let stdout = unsafe { STDOUT.as_ref() }.unwrap();
+        if stdout.can_drain() {
+            unsafe {
+            let stdout = STDOUT.as_mut().unwrap();
+            let serial = USB_SERIAL.as_mut().unwrap();
+            stdout.drain(serial);
+            }
+        }
     };
+}
+
+/// This function is called whenever the USB Hardware generates an Interrupt
+/// Request.
+///
+/// We do all our USB work under interrupt, so the main thread can continue on
+/// knowing nothing about USB.
+#[allow(non_snake_case)]
+#[interrupt]
+unsafe fn USBCTRL_IRQ() {
+    use core::sync::atomic::{AtomicBool, Ordering};
+
+    // Grab the global objects. This is OK as we only access them under interrupt.
+    let usb_dev = USB_DEVICE.as_mut().unwrap();
+    let serial = USB_SERIAL.as_mut().unwrap();
+
+    // Poll the USB driver with all of our supported USB Classes
+    if usb_dev.poll(&mut [serial]) {
+        let mut buf = [0u8; 64];
+        match serial.read(&mut buf) {
+            Err(_e) => {
+                // Do nothing
+            }
+            Ok(0) => {
+                // Do nothing
+            }
+            Ok(count) => {
+                // Check if the message is "connected"
+                let connected_msg = b"connected";
+                if &buf[..count] != connected_msg {
+                    // Convert to upper case
+                    buf.iter_mut().take(count).for_each(|b| {
+                        b.make_ascii_uppercase();
+                    });
+
+                    // Send back to the host
+                    let mut wr_ptr = &buf[..count];
+                    while !wr_ptr.is_empty() {
+                        let _ = serial.write(wr_ptr).map(|len| {
+                            wr_ptr = &wr_ptr[len..];
+                        });
+                    }
+                }
+            }
+        }
+    }
 }

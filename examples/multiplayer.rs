@@ -9,7 +9,8 @@ use embedded_graphics::{
     primitives::{Line, PrimitiveStyle, Rectangle},
     text::Text,
 };
-use trowel::{buffered::BufferedApp, App, AppResult, Buttons, Error};
+use trowel::{buffered::BufferedApp, App, AppResult, Buttons, Error, stdout};
+use genio::Write;
 
 // Define the cube struct
 struct Cube {
@@ -235,12 +236,12 @@ fn main() {
         cube1: Cube {
             x: 20,
             y: 50,
-            player_name: "cube1", // Update this line
+            player_name: "cube1",
         },
         cube2: Cube {
             x: 70,
             y: 50,
-            player_name: "cube2", // Update this line
+            player_name: "cube2",
         },
     };
 
@@ -249,9 +250,8 @@ fn main() {
     trowel::run(buffered_app);
 }
 
-#[cfg_attr(all(target_arch = "arm", target_os = "none"), cortex_m_rt::entry)]
+#[cfg_attr(all(target_arch = "arm", target_os = "none"), trowel::entry)]
 fn entry() -> ! {
     main();
     loop {}
 }
- 
