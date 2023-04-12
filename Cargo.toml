@@ -17,6 +17,8 @@ rtic-monotonic = "1.0.0"
 try_default = { git = "https://github.com/shanecelis/try_default.git", default-features = false }
 usbd-serial = "0.1"
 usb-device = "0.2.9"
+tinybmp = "0.4.0"
+heapless = "0.7.16"
 [target.'cfg(any(target_family = "unix", target_family = "windows"))'.dependencies]
 genio = { version = "0.2.1" }
 embedded-graphics-simulator = "0.4.1"

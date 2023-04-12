@@ -45,7 +45,7 @@ use circular_buffer::CircularBuffer;
 use core::cell::RefCell;
 use embedded_time::{fraction::Fraction, Clock as EClock, clock::Error, Instant as EInstant};
 // use core::fmt::Write;
-use genio::{Write, Read};
+use genio::Write;
 
 #[global_allocator]
 static HEAP: Heap = Heap::empty();
@@ -130,14 +130,14 @@ impl Stdout {
         if self.buffer.len() != 0 {
             let (s1, s2) = self.buffer.as_slices();
             match serial.write(s1) {
-                Ok(written) => { },
+                Ok(_written) => { },
                 Err(err) => { self.error = Some(err);
                     return;
                 }
             }
             if s2.len() != 0 {
                 match serial.write(s2) {
-                    Ok(written) => { },
+                    Ok(_written) => { },
                     Err(err) => self.error = Some(err)
                 }
             }
@@ -168,7 +168,7 @@ impl Write for Stdout {
         }
     }
 
-    fn size_hint(&mut self, bytes: usize) { }
+    fn size_hint(&mut self, _bytes: usize) { }
 }
 
 pub fn stdout() -> &'static mut Stdout {
@@ -273,13 +273,13 @@ fn _run_with<F,A>(app_maker: F) -> ()
     // reference exists!
     let bus_ref = unsafe { USB_BUS.as_ref().unwrap() };
 
-    let mut serial = SerialPort::new(bus_ref);
+    let serial = SerialPort::new(bus_ref);
 
     unsafe {
         USB_SERIAL = Some(serial);
     }
 
-    let mut usb_dev = UsbDeviceBuilder::new(bus_ref, UsbVidPid(0x16c0, 0x27dd))
+    let usb_dev = UsbDeviceBuilder::new(bus_ref, UsbVidPid(0x16c0, 0x27dd))
     .manufacturer("Hack Club")
     .product("Sprig")
     .serial_number("0001")
@@ -310,27 +310,51 @@ fn _run_with<F,A>(app_maker: F) -> ()
 
         if w.is_low().unwrap() {
             buttons |= Buttons::W;
+            unsafe {
+                USB_SERIAL.as_mut().unwrap().write(b"W").ok();
+                }
         }
         if a.is_low().unwrap() {
             buttons |= Buttons::A;
+            unsafe {
+                USB_SERIAL.as_mut().unwrap().write(b"A").ok();
+                }
         }
         if s.is_low().unwrap() {
             buttons |= Buttons::S;
+            unsafe {
+                USB_SERIAL.as_mut().unwrap().write(b"S").ok();
+                }
         }
         if d.is_low().unwrap() {
             buttons |= Buttons::D;
+            unsafe {
+                USB_SERIAL.as_mut().unwrap().write(b"D").ok();
+                }
         }
         if i.is_low().unwrap() {
             buttons |= Buttons::I;
+            unsafe {
+                USB_SERIAL.as_mut().unwrap().write(b"I").ok();
+                }
         }
         if j.is_low().unwrap() {
             buttons |= Buttons::J;
+            unsafe {
+                USB_SERIAL.as_mut().unwrap().write(b"J").ok();
+                }
         }
         if k.is_low().unwrap() {
             buttons |= Buttons::K;
+            unsafe {
+                USB_SERIAL.as_mut().unwrap().write(b"K").ok();
+                }
         }
         if l.is_low().unwrap() {
             buttons |= Buttons::L;
+            unsafe {
+                USB_SERIAL.as_mut().unwrap().write(b"L").ok();
+                }
         }
 
         app.update(buttons).expect("error updating");
@@ -355,8 +379,6 @@ fn _run_with<F,A>(app_maker: F) -> ()
 #[allow(non_snake_case)]
 #[interrupt]
 unsafe fn USBCTRL_IRQ() {
-    use core::sync::atomic::{AtomicBool, Ordering};
-
     // Grab the global objects. This is OK as we only access them under interrupt.
     let usb_dev = USB_DEVICE.as_mut().unwrap();
     let serial = USB_SERIAL.as_mut().unwrap();
