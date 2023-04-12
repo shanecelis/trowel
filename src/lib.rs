@@ -11,7 +11,8 @@ use bitflags::bitflags;
 use embedded_graphics::{pixelcolor::Rgb565, prelude::DrawTarget};
 
 #[cfg(all(target_arch = "arm", target_os = "none"))]
-pub use rp_pico::entry as entry;
+pub use trowel_macro::add_entry as entry;
+// pub use rp_pico::entry as entry;
 
 #[cfg(any(target_family = "unix", target_family = "windows"))]
 pub use trowel_macro::id as entry;
