@@ -12,7 +12,7 @@ use heapless::Vec;
 use tinybmp::Bmp;
 use trowel::{App, AppResult, Buttons, Error};
 
-const BMP_DATA: &[u8] = include_bytes!(r"sprites\player.bmp");
+const BMP_DATA: &[u8] = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/examples/topdown/sprites/player.bmp"));
 
 const SPRITE_DATA: &[(&str, u32, u32, u32, u32)] = &[
     ("sprite1", 18, 22, 13, 21),
