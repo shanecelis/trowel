@@ -15,6 +15,12 @@ pub fn omit(_attr: TokenStream, _item: TokenStream) -> TokenStream {
 
 #[proc_macro_attribute]
 pub fn add_entry(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    // Consider making this read the function name it is prefixed to. Going
+    // against that, however, what value is there if it's not main? That breaks
+    // the expectations that it'll be the entry point for both sprig and pc
+    // simulator.
+    //
+    // https://stackoverflow.com/questions/56718336/rust-function-name-caller-or-any-other-context-inside-macro
     let mut entry = TokenStream::from(quote! {
         #[rp_pico::entry]
         fn entry() -> ! {
@@ -28,9 +34,8 @@ pub fn add_entry(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
 // This is what the code looks like in use:
 //
-// fn main() {
-//     trowel::run(DrawFerris { frame: 10 });
-// }
+// fn main() { ... }
+//
 // #[trowel::entry]
 // fn entry() -> ! {
 //     main();
