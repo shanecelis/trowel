@@ -15,6 +15,7 @@ use embedded_graphics_simulator::{
 
 use embedded_fps::StdClock;
 use super::{FpsApp,AppExt};
+use genio::std_impls::GenioWrite;
 
 use crate::{App, Buttons};
 
@@ -24,6 +25,10 @@ impl Default for FpsApp<StdClock> {
     fn default() -> Self {
         FpsApp::new(StdClock::default())
     }
+}
+
+pub fn stdout() -> GenioWrite<std::io::Stdout> {
+    GenioWrite::new(std::io::stdout())
 }
 
 pub type FpsApp0 = FpsApp<StdClock>;

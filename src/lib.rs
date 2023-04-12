@@ -10,8 +10,16 @@
 use bitflags::bitflags;
 use embedded_graphics::{pixelcolor::Rgb565, prelude::DrawTarget};
 
+#[cfg(all(target_arch = "arm", target_os = "none"))]
 // pub use cortex_m_rt::entry as entry;
 pub use rp_pico::entry as entry;
+
+// XXX: This has to be implemented in a different scope or something.
+#[cfg(any(target_family = "unix", target_family = "windows"))]
+#[proc_macro_attribute]
+pub fn entry(attr: TokenStream, item: TokenStream) -> TokenStream {
+    item
+}
 
 bitflags! {
     pub struct Buttons: u8 {
@@ -90,7 +98,7 @@ pub mod buffered;
 #[cfg(any(target_family = "unix", target_family = "windows"))]
 mod pc;
 #[cfg(any(target_family = "unix", target_family = "windows"))]
-pub use pc::run_with;
+pub use pc::{run_with, stdout};
 
 pub fn run(app: impl App + 'static) -> () {
     run_with(move || app);

@@ -17,12 +17,13 @@ rtic-monotonic = "1.0.0"
 try_default = { git = "https://github.com/shanecelis/try_default.git", default-features = false }
 usbd-serial = "0.1"
 usb-device = "0.2.9"
-rp-pico = { version = "0.7.0", git = "https://github.com/shanecelis/rp-hal-boards.git", features = ["rtic-monotonic"] }
 [target.'cfg(any(target_family = "unix", target_family = "windows"))'.dependencies]
+genio = { version = "0.2.1" }
 embedded-graphics-simulator = "0.4.1"
 embedded-fps = { version = "0.1.0", features=["std"] }
 
 [target.'cfg(all(target_arch = "arm", target_os = "none"))'.dependencies]
+rp-pico = { version = "0.7.0", git = "https://github.com/shanecelis/rp-hal-boards.git", features = ["rtic-monotonic"] }
 circular-buffer = { version = "0.1.1", default-features = false }
 genio = { version = "0.2.1", default-features = false }
 embedded-fps = "0.1.0"
