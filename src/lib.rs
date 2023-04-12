@@ -11,15 +11,10 @@ use bitflags::bitflags;
 use embedded_graphics::{pixelcolor::Rgb565, prelude::DrawTarget};
 
 #[cfg(all(target_arch = "arm", target_os = "none"))]
-// pub use cortex_m_rt::entry as entry;
 pub use rp_pico::entry as entry;
 
-// XXX: This has to be implemented in a different scope or something.
 #[cfg(any(target_family = "unix", target_family = "windows"))]
-#[proc_macro_attribute]
-pub fn entry(attr: TokenStream, item: TokenStream) -> TokenStream {
-    item
-}
+pub use trowel_macro::id as entry;
 
 bitflags! {
     pub struct Buttons: u8 {

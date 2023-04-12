@@ -19,6 +19,7 @@ usbd-serial = "0.1"
 usb-device = "0.2.9"
 tinybmp = "0.4.0"
 heapless = "0.7.16"
+trowel-macro = { version = "0.1.0", path = "trowel-macro" }
 [target.'cfg(any(target_family = "unix", target_family = "windows"))'.dependencies]
 genio = { version = "0.2.1" }
 embedded-graphics-simulator = "0.4.1"
