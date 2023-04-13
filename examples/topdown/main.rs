@@ -4,7 +4,7 @@
 use embedded_graphics::{
     draw_target::DrawTarget,
     image::{Image, ImageRaw},
-    pixelcolor::Rgb565,
+    pixelcolor::{Rgb565},
     primitives::Rectangle,
     prelude::*,
 };
@@ -30,7 +30,8 @@ fn sprite_data(i: usize) -> (&'static str, i32, i32, u32, u32) {
    ("dummy_name", i as i32 * 16, 0, 16, 32)
 }
 
-const SPRITE_COUNT: usize = 60;
+// const SPRITE_COUNT: usize = 60;
+const SPRITE_COUNT: usize = 5;
 
 struct TopDown {
     frame: i32,
@@ -54,6 +55,11 @@ impl App for TopDown {
     where
         T: DrawTarget<Color = Rgb565, Error = E>,
     {
+        if self.frame == 0 {
+            display.clear(Rgb565::WHITE)
+                   .map_err(|_| Error::DisplayErr)?;
+
+        }
         let nth_frame = 15;
         if self.frame % nth_frame != 0 {
             return Ok(());
@@ -89,5 +95,5 @@ impl App for TopDown {
 
 #[trowel::entry]
 fn main() {
-    trowel::run(TopDown { frame: 10, bmp: None });
+    trowel::run(TopDown { frame: -1, bmp: None });
 }
