@@ -24,16 +24,15 @@ pub fn add_entry(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let parseable = item.clone();
     let input = syn::parse_macro_input!(parseable as syn::ItemFn);
     let fn_name = input.sig.ident;
-    let entry = TokenStream::from(quote! {
+    let mut entry = TokenStream::from(quote! {
         #[rp_pico::entry]
         fn entry() -> ! {
             #fn_name();
             loop {}
         }
-        #&item
     });
     // We can avoid an extend by doing #&item above.
-    // entry.extend(item);
+    entry.extend(item);
     entry
 }
 

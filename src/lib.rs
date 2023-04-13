@@ -33,7 +33,9 @@ bitflags! {
 #[derive(Debug)]
 pub enum Error {
     DisplayErr,
-    AppErr
+    AppErr,
+    #[cfg(feature = "bmp")]
+    BmpErr(tinybmp::ParseError)
 }
 pub type AppResult = Result<(), Error>;
 
