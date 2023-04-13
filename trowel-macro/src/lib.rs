@@ -21,14 +21,19 @@ pub fn add_entry(_attr: TokenStream, item: TokenStream) -> TokenStream {
     // simulator.
     //
     // https://stackoverflow.com/questions/56718336/rust-function-name-caller-or-any-other-context-inside-macro
-    let mut entry = TokenStream::from(quote! {
+    let parseable = item.clone();
+    let input = syn::parse_macro_input!(parseable as syn::ItemFn);
+    let fn_name = input.sig.ident;
+    let entry = TokenStream::from(quote! {
         #[rp_pico::entry]
         fn entry() -> ! {
-            main();
+            #fn_name();
             loop {}
         }
+        #&item
     });
-    entry.extend(item);
+    // We can avoid an extend by doing #&item above.
+    // entry.extend(item);
     entry
 }
 
@@ -36,7 +41,7 @@ pub fn add_entry(_attr: TokenStream, item: TokenStream) -> TokenStream {
 //
 // fn main() { ... }
 //
-// #[trowel::entry]
+// #[rp_pico::entry]
 // fn entry() -> ! {
 //     main();
 //     loop {}
