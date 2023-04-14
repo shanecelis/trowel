@@ -295,10 +295,12 @@ impl App for TopDown {
         T: DrawTarget<Color = Rgb565, Error = E>,
     {
         // We buffered. We can clear all the time.
-        target.clear(Rgb565::BLACK).map_err(|_| Error::DisplayErr)?;
-    
-        let sprite_index = self.current_animation.frame_indices[self.current_frame_index];
-    
+        display.clear(Rgb565::BLACK)
+                .map_err(|_| Error::DisplayErr)?;
+
+
+        let sprite_index = self.current_animation.frame_indices[self.current_frame_index % self.current_animation.frame_count()];
+
         let sprite = sprite_data_new(sprite_index);
         let position = self.position;
         let at = position;
