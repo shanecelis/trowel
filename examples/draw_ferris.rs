@@ -54,7 +54,7 @@ impl App for DrawFerris
     }
 }
 
-[trowel::entry]
+#[trowel::entry]
 fn main() {
     trowel::run(DrawFerris { frame: 0 });
 }
