@@ -9,6 +9,7 @@ use embedded_graphics::{
 };
 use tinybmp::Bmp;
 use trowel::{App, AppResult, Buttons, Error, buffered::BufferedApp};
+use trowel::flipped::{DrawTargetExt2, Axes};
 
 const BMP_DATA: &[u8] = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/examples/topdown/sprites/player.bmp"));
 
@@ -138,10 +139,12 @@ impl App for TopDown {
         let sprite = sprite_data_new(sprite_index);
         // let sprite = &sprite_data(sprite_index as usize % SPRITE_COUNT);
         let at = Point::new((160 - sprite.width as i32) / 2, (128 - sprite.height as i32) / 2);
+        let size = Size::new(sprite.width, sprite.height);
         self.bmp
             .expect("no bmp set")
-            .draw_sub_image(&mut display.translated(at),
-                            &Rectangle::new(Point::new(sprite.x, sprite.y), Size::new(sprite.width, sprite.height)))
+            // .draw_sub_image(&mut display.translated(at).flipped(Axes::Y),
+            .draw_sub_image(&mut display.cropped(&Rectangle::new(at, size)).flipped(Axes::Y),
+                            &Rectangle::new(Point::new(sprite.x, sprite.y), size))
             .map_err(|_| Error::DisplayErr)?;
 
         Ok(())

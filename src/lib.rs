@@ -93,6 +93,9 @@ pub use fps::FpsApp;
 
 pub mod buffered;
 
+pub mod flipped;
+
+
 #[cfg(any(target_family = "unix", target_family = "windows"))]
 mod pc;
 #[cfg(any(target_family = "unix", target_family = "windows"))]
