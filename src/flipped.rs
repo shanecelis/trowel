@@ -1,9 +1,7 @@
 use embedded_graphics::{
     draw_target::DrawTarget,
-    geometry::{Dimensions, Point},
-    iterator::PixelIteratorExt,
+    geometry::Dimensions,
     primitives::{Rectangle, PointsIter},
-    transform::Transform,
     Pixel,
 };
 use bitflags::bitflags;

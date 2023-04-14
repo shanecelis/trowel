@@ -402,11 +402,11 @@ fn _run_with<F,A>(app_maker: F) -> ()
                             // defmt::println!("G");
                         }
                     },
-                    Err(e) => { },// defmt::println!("E {:?}", e); }
+                    Err(_e) => { },// defmt::println!("E {:?}", e); }
                 }
                 start = end;
             },
-            Err(e) => {
+            Err(_e) => {
                 // defmt::println!("F {:?}", e);
                 start = try_now();
             }
