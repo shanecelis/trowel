@@ -295,8 +295,8 @@ impl App for TopDown {
         T: DrawTarget<Color = Rgb565, Error = E>,
     {
         // We buffered. We can clear all the time.
-        display.clear(Rgb565::BLACK)
-                .map_err(|_| Error::DisplayErr)?;
+        // target.clear(Rgb565::BLACK)
+        //         .map_err(|_| Error::DisplayErr)?;
 
 
         let sprite_index = self.current_animation.frame_indices[self.current_frame_index % self.current_animation.frame_count()];
@@ -326,7 +326,7 @@ impl App for TopDown {
 #[trowel::entry]
 fn main() {
     let app = TopDown {frame: -1,bmp:None,current_animation:IDLE,current_frame_index:0, position: Point::new(0, 0) };
-    let mut app = BufferedApp::new(app);
-    app.frame_buf.data.transparent = Some(Rgb565::from(Rgb888::new(0xee, 0x00, 0xff)));
+    // let mut app = BufferedApp::new(app);
+    // app.frame_buf.data.transparent = Some(Rgb565::from(Rgb888::new(0xee, 0x00, 0xff)));
     trowel::run(app);
 }
