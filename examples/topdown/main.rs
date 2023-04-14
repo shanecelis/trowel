@@ -184,6 +184,7 @@ struct TopDown {
     bmp: Option<Bmp<'static, Rgb565>>,
     current_animation: Animation,
     current_frame_index: usize,
+    position: Point, 
 }
 
 impl App for TopDown {
@@ -191,6 +192,7 @@ impl App for TopDown {
         self.bmp = Some(Bmp::from_slice(BMP_DATA).map_err(|e| Error::BmpErr(e))?);
         self.current_animation = IDLE;
         self.current_frame_index = 0;
+        self.position = Point::new(0, 0);
         Ok(())
     }
 
@@ -209,11 +211,13 @@ impl App for TopDown {
         }
     
         // MOVEMENT
+        let speed = 3;
         if buttons.contains(Buttons::W) {
             if self.current_animation != UP_IDLE && self.current_animation != UP_WALK {
                 self.current_animation = UP_IDLE;
                 self.current_frame_index = 0;
             } else if !is_walking_animation {
+                self.position.y -= speed;
                 self.current_animation = UP_WALK;
                 self.current_frame_index = 0;
             }
@@ -222,6 +226,7 @@ impl App for TopDown {
                 self.current_animation = RIGHT_IDLE;
                 self.current_frame_index = 0;
             } else if !is_walking_animation {
+                self.position.x += speed;
                 self.current_animation = RIGHT_WALK;
                 self.current_frame_index = 0;
             }
@@ -230,6 +235,7 @@ impl App for TopDown {
                 self.current_animation = IDLE;
                 self.current_frame_index = 0;
             } else if !is_walking_animation {
+                self.position.y += speed;
                 self.current_animation = DOWN_WALK;
                 self.current_frame_index = 0;
             }
@@ -238,6 +244,7 @@ impl App for TopDown {
                 self.current_animation = LEFT_IDLE;
                 self.current_frame_index = 0;
             } else if !is_walking_animation {
+                self.position.x -= speed;
                 self.current_animation = LEFT_WALK;
                 self.current_frame_index = 0;
             }
@@ -283,43 +290,40 @@ impl App for TopDown {
         Ok(())
     }
 
-    fn draw<T, E>(&mut self, display: &mut T) -> AppResult
+    fn draw<T, E>(&mut self, target: &mut T) -> AppResult
     where
         T: DrawTarget<Color = Rgb565, Error = E>,
     {
         // We buffered. We can clear all the time.
-        display.clear(Rgb565::BLACK)
-                .map_err(|_| Error::DisplayErr)?;
-
-
+        target.clear(Rgb565::BLACK).map_err(|_| Error::DisplayErr)?;
+    
         let sprite_index = self.current_animation.frame_indices[self.current_frame_index];
-
+    
         let sprite = sprite_data_new(sprite_index);
-        let at = Point::new((160 - sprite.width as i32) / 2, (128 - sprite.height as i32) / 2);
+        let position = self.position;
+        let at = position;
         let size = Size::new(sprite.width, sprite.height);
-
+    
         if self.current_animation == LEFT_IDLE || self.current_animation == LEFT_WALK || self.current_animation == LEFT_ATTACK {
             self.bmp
             .expect("no bmp set")                
-            .draw_sub_image(&mut display.cropped(&Rectangle::new(at, size)).flipped(Axes::X),
-            &Rectangle::new(Point::new(sprite.x, sprite.y), size))
-            .map_err(|_| Error::DisplayErr)?;
+            .draw_sub_image(&mut target.cropped(&Rectangle::new(at, size)).flipped(Axes::X),
+            &Rectangle::new(Point::new(sprite.x, sprite.y), size)).map_err(|_| Error::DisplayErr)?;
         }
         else {
         self.bmp
             .expect("no bmp set")                
-            .draw_sub_image(&mut display.cropped(&Rectangle::new(at, size)).flipped(Axes::empty()),
-            &Rectangle::new(Point::new(sprite.x, sprite.y), size))
-            .map_err(|_| Error::DisplayErr)?;
+            .draw_sub_image(&mut target.cropped(&Rectangle::new(at, size)).flipped(Axes::empty()),
+            &Rectangle::new(Point::new(sprite.x, sprite.y), size)).map_err(|_| Error::DisplayErr)?;
         }
-
+    
         Ok(())
-    }  
+    }      
 }
 
 #[trowel::entry]
 fn main() {
-    let app = TopDown { frame: -1, bmp: None, current_animation: IDLE, current_frame_index: 0 };
+    let app = TopDown {frame: -1,bmp:None,current_animation:IDLE,current_frame_index:0, position: Point::new(0, 0) };
     let mut app = BufferedApp::new(app);
     app.frame_buf.data.transparent = Some(Rgb565::from(Rgb888::new(0xee, 0x00, 0xff)));
     trowel::run(app);
