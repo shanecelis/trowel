@@ -230,6 +230,45 @@ impl App for DrawCubes {
     }
 }
 
+let map = r##"
+!"#$%&'()*
++,-./01234
+56789:;<=>
+?@ABCDEFGH
+IJKLMNOPQR
+STUVWXYZ[\
+]^_`abcdef
+ghijklmnop
+qrstuvwxyz
+
+{|}~
+"##; // that's 10x8 with 4 printable characters to spare.
+
+
+let map = r##"
+~~~____bp_
+~~~_r_B___
+~~________
+__......._
+_.........
+..........
+....____..
+..._______
+__________
+"##;
+
+let map = r##"
+!"#$%&'()*
++,-./01234
+56789:;<=>
+?@ABCDEFGH
+IJKLMNOPQR
+STUVWXYZ[\
+]^_`abcdef
+ghijklmnop
+qrstuvwxyz
+{|}~
+"##;
 fn main() {
     let draw_cubes = DrawCubes {
         frame: 0,

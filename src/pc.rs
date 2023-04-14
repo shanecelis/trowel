@@ -16,10 +16,9 @@ use embedded_graphics_simulator::{
 use embedded_fps::StdClock;
 use super::{FpsApp,AppExt};
 use genio::std_impls::GenioWrite;
+use std::time::{Instant, Duration};
 
 use crate::{App, Buttons};
-
-pub fn init_heap() { }
 
 impl Default for FpsApp<StdClock> {
     fn default() -> Self {
@@ -32,6 +31,8 @@ pub fn stdout() -> GenioWrite<std::io::Stdout> {
 }
 
 pub type FpsApp0 = FpsApp<StdClock>;
+const FPS_TARGET : u8 = 30;
+const FRAME_BUDGET : u64 = 1_000_000 /* micro seconds */ / FPS_TARGET as u64; 
 
 pub fn run_with<F,A>(app_maker: F) -> !
         where F : FnOnce() -> A, A : App + 'static {
@@ -64,8 +65,10 @@ fn _run_with<F,A>(app_maker: F) -> !
     app.init().expect("error initializing");
 
     let mut buttons = Buttons::empty();
+    let frame_budget = Duration::from_micros(FRAME_BUDGET);
     // 'running: loop {
     loop {
+        let instant = Instant::now();
         window.update(&display);
         // BUG: This seems to hang on macOS if window.events() is not called.
         for event in window.events() {
@@ -100,6 +103,8 @@ fn _run_with<F,A>(app_maker: F) -> !
 
         app.update(buttons).expect("error updating");
         app.draw(&mut display).expect("error drawing");
-        window.update(&display);
+        if let Some(leftover) = frame_budget.checked_sub(instant.elapsed()) {
+            std::thread::sleep(leftover)
+        }
     }
 }

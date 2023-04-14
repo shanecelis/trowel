@@ -43,7 +43,7 @@ use try_default::TryDefault;
 use circular_buffer::CircularBuffer;
 
 use core::cell::RefCell;
-use embedded_time::{fraction::Fraction, Clock as EClock, clock::Error, Instant as EInstant};
+use embedded_time::{fraction::Fraction, Clock as EClock, clock::Error, Instant as EInstant, duration::Microseconds};
 // use core::fmt::Write;
 use genio::Write;
 
@@ -80,7 +80,7 @@ impl EClock for MonotonicClock {
 
     type T = u64;
 
-    const SCALING_FACTOR: Fraction = Fraction::new(1, 1_000_000);
+    const SCALING_FACTOR: Fraction = Fraction::new(1, 1_000_000); // micro seconds
 
     fn try_now(&self) -> Result<EInstant<Self>, Error> {
         match self.0.try_borrow_mut() {
@@ -94,6 +94,17 @@ impl TryDefault<FpsApp<MonotonicClock>> for FpsApp<MonotonicClock> {
     fn try_default() -> Option<Self> {
         unsafe { MONOTONIC_CLOCK.take() }.map(|clock| FpsApp::new(clock))
     }
+}
+
+pub fn try_now() -> Result<u64, &'static str> {
+    let ref clock = unsafe { MONOTONIC_CLOCK.as_ref() };
+    let clock = clock.ok_or("No clock setup")?;
+    let now = clock.try_now()
+        .map_err(|_| "Failed now")?;
+    let duration = now.duration_since_epoch();
+    let microseconds : Microseconds<u64> = duration.try_into()
+        .map_err(|_| "Problem since epoch")?;
+    Ok(microseconds.0)
 }
 
 /// The `run` function configures the RP2040 peripherals, then runs the app.
@@ -175,11 +186,12 @@ pub fn stdout() -> &'static mut Stdout {
     unsafe { STDOUT.as_mut().unwrap() }
 }
 
+const FPS_TARGET : u8 = 30;
+const FRAME_BUDGET : u64 = 1_000_000 /* micro seconds */ / FPS_TARGET as u64;
 
 fn _run_with<F,A>(app_maker: F) -> ()
         where F : FnOnce() -> A,
               A : App {
-
 
     // Grab our singleton objects.
     let mut pac = pac::Peripherals::take().unwrap();
@@ -304,7 +316,9 @@ fn _run_with<F,A>(app_maker: F) -> ()
     app.init().expect("error initializing");
 
     let mut buttons;
+    let mut start : Result<u64, &'static str> = try_now();
     loop {
+        // defmt::println!("Hello, world!");
 
         buttons = Buttons::empty();
 
@@ -363,9 +377,38 @@ fn _run_with<F,A>(app_maker: F) -> ()
         let stdout = unsafe { STDOUT.as_ref() }.unwrap();
         if stdout.can_drain() {
             unsafe {
-            let stdout = STDOUT.as_mut().unwrap();
-            let serial = USB_SERIAL.as_mut().unwrap();
-            stdout.drain(serial);
+                let stdout = STDOUT.as_mut().unwrap();
+                let serial = USB_SERIAL.as_mut().unwrap();
+                stdout.drain(serial);
+            }
+        }
+
+        match start {
+            Ok(s) => {
+                let end = try_now();
+                match end {
+                    Ok(e) => {
+                        // defmt::println!("FB {}, e {}, s {}", FRAME_BUDGET, e, s);
+                        let x = FRAME_BUDGET as i64 - (e - s) as i64;
+
+                        // defmt::println!("X {}", x);
+                        if let Ok(leftover) = i32::try_from(x) {
+
+                            // defmt::println!("C {}", leftover);
+                            if leftover > 0 {
+                                delay.delay_us(leftover as u32);
+                            }
+                        } else {
+                            // defmt::println!("G");
+                        }
+                    },
+                    Err(e) => { },// defmt::println!("E {:?}", e); }
+                }
+                start = end;
+            },
+            Err(e) => {
+                // defmt::println!("F {:?}", e);
+                start = try_now();
             }
         }
     };

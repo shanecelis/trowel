@@ -8,16 +8,25 @@ use embedded_graphics::{
 use crate::{App, AppResult, Buttons, Error};
 use embedded_graphics_framebuf::{FrameBuf, backends::FrameBufferBackend};
 
-pub struct Buffer(pub [Rgb565; 20480]);
+pub struct Buffer {
+    pub data: [Rgb565; 20480],
+    pub transparent: Option<Rgb565>
+}
 
 impl FrameBufferBackend for Buffer {
     type Color = Rgb565;
     fn set(&mut self, index: usize, color: Self::Color) {
-        self.0[index] = color;
+        if let Some(trans) = self.transparent {
+            if trans == color {
+                // Don't set color.
+                return;
+            }
+        }
+        self.data[index] = color;
     }
 
     fn get(&self, index: usize) -> Self::Color {
-        self.0[index]
+        self.data[index]
     }
 
     fn nr_elements(&self) -> usize {
@@ -27,8 +36,7 @@ impl FrameBufferBackend for Buffer {
 
 pub struct BufferedApp<A,B=Buffer, C=Rgb565> where A : App, B : FrameBufferBackend<Color = C>, C : PixelColor
 {
-    frame_buf : FrameBuf<C, B>,
-    // buffer : Buffer,
+    pub frame_buf : FrameBuf<C, B>,
     app : A,
     pub interlace : Option<u8>,
     frame : u32,
@@ -41,7 +49,7 @@ pub struct BufferedApp<A,B=Buffer, C=Rgb565> where A : App, B : FrameBufferBacke
 impl<A> BufferedApp<A> where A : App
 {
     pub fn new(app: A) -> Self {
-        let data = Buffer([Rgb565::BLACK; 20480]);
+        let data = Buffer { data: [Rgb565::BLACK; 20480], transparent: None };
         BufferedApp {
             // buffer: data,
             frame_buf: FrameBuf::new(data, 160, 128),
@@ -106,7 +114,7 @@ impl<A> App for BufferedApp<A>
                            .map_err(|_| Error::DisplayErr),
             Some(k) => {
                let mut buf : [Rgb565; 160] = [Rgb565::BLACK; 160];
-               for (jj, row) in self.frame_buf.data.0.chunks(160).enumerate() {
+               for (jj, row) in self.frame_buf.data.data.chunks(160).enumerate() {
                    let j = jj as u8;
                // for j in 0..128 {
                    if (j % k) as u32 == self.frame % k as u32 {

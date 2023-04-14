@@ -3,12 +3,12 @@
 
 use embedded_graphics::{
     draw_target::DrawTarget,
-    pixelcolor::{Rgb565},
+    pixelcolor::{Rgb565, Rgb888},
     primitives::Rectangle,
     prelude::*,
 };
 use tinybmp::Bmp;
-use trowel::{App, AppResult, Buttons, Error};
+use trowel::{App, AppResult, Buttons, Error, buffered::BufferedApp};
 
 const BMP_DATA: &[u8] = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/examples/topdown/sprites/player.bmp"));
 
@@ -22,6 +22,17 @@ struct SpriteData {
     width: u32,
     height: u32,
 }
+// struct SpriteData<'a> { name: &'a str, x: i32, y: i32, width: u32, height: u32 }
+
+// fn sprite_data(i: usize) -> SpriteData<'static> {
+//    // let name = format!("sprite{i}");
+//    // if i < UNIFORM_SPRITE_COUNT {
+//         // ("dummy_name", i as i32 * 16, 0, 16, 32)
+//         SpriteData { name: "dummy_name", x: i as i32 * 16, y: 0, width: 16, height: 32 }
+//    // } else {
+//    //     SPRITE_DATA[i - UNIFORM_SPRITE_COUNT]
+//    // }
+// }
 
 const SPRITE_DATA: [SpriteData; SPRITE_COUNT] = [
     // Idle
@@ -52,27 +63,29 @@ const SPRITE_DATA: [SpriteData; SPRITE_COUNT] = [
 #[derive(Clone, Copy)]
 struct Animation {
     name: &'static str,
-    frame_count: usize,
     frame_indices: &'static [usize],
 }
 
 const IDLE: Animation = Animation {
     name: "idle",
-    frame_count: 4,
     frame_indices: &[0, 1, 2, 3, 4, 5],
 };
 
 const RIGHT_IDLE: Animation = Animation {
     name: "IdleRight",
-    frame_count: 4,
     frame_indices: &[6, 7, 8, 9, 10, 11],
 };
 
 const UP_IDLE: Animation = Animation {
     name: "IdleUp",
-    frame_count: 2,
     frame_indices: &[12, 13, 14, 15, 16, 17],
 };
+
+impl Animation {
+    fn frame_count(&self) -> usize {
+        self.frame_indices.len()
+    }
+}
 
 fn sprite_data_new(i: usize) -> SpriteData {
     SPRITE_DATA[i % SPRITE_COUNT]
@@ -106,7 +119,7 @@ impl App for TopDown {
         }
 
         // Update the current frame index
-        self.current_frame_index = (self.current_frame_index + 1) % self.current_animation.frame_count;
+        self.current_frame_index = (self.current_frame_index + 1) % self.current_animation.frame_count();
 
         Ok(())
     }
@@ -115,23 +128,20 @@ impl App for TopDown {
     where
         T: DrawTarget<Color = Rgb565, Error = E>,
     {
-        if self.frame == 0 {
-            display.clear(Rgb565::WHITE)
-                   .map_err(|_| Error::DisplayErr)?;
+        // We buffered. We can clear all the time.
+        display.clear(Rgb565::WHITE)
+                .map_err(|_| Error::DisplayErr)?;
 
-        }
-        let nth_frame = 15;
-        if self.frame % nth_frame != 0 {
-            return Ok(());
-        }
+
         let sprite_index = self.current_animation.frame_indices[self.current_frame_index];
 
         let sprite = sprite_data_new(sprite_index);
+        // let sprite = &sprite_data(sprite_index as usize % SPRITE_COUNT);
         let at = Point::new((160 - sprite.width as i32) / 2, (128 - sprite.height as i32) / 2);
         self.bmp
             .expect("no bmp set")
             .draw_sub_image(&mut display.translated(at),
-            &Rectangle::new(Point::new(sprite.x, sprite.y), Size::new(sprite.width, sprite.height)))
+                            &Rectangle::new(Point::new(sprite.x, sprite.y), Size::new(sprite.width, sprite.height)))
             .map_err(|_| Error::DisplayErr)?;
 
         Ok(())
@@ -140,5 +150,8 @@ impl App for TopDown {
 
 #[trowel::entry]
 fn main() {
-    trowel::run(TopDown { frame: -1, bmp: None, current_animation: IDLE, current_frame_index: 0 });
+    let app = TopDown { frame: -1, bmp: None, current_animation: IDLE, current_frame_index: 0 };
+    let mut app = BufferedApp::new(app);
+    app.frame_buf.data.transparent = Some(Rgb565::from(Rgb888::new(0xee, 0x00, 0xff)));
+    trowel::run(app);
 }
