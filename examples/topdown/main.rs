@@ -211,7 +211,7 @@ impl App for TopDown {
         }
     
         // MOVEMENT
-        let speed = 3;
+        let speed = 15;
         if buttons.contains(Buttons::W) {
             if self.current_animation != UP_IDLE && self.current_animation != UP_WALK {
                 self.current_animation = UP_IDLE;
