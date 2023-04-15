@@ -30,7 +30,6 @@ pub fn stdout() -> GenioWrite<std::io::Stdout> {
     GenioWrite::new(std::io::stdout())
 }
 
-pub type FpsApp0 = FpsApp<StdClock>;
 const FPS_TARGET : u8 = 30;
 const FRAME_BUDGET : u64 = 1_000_000 /* micro seconds */ / FPS_TARGET as u64; 
 

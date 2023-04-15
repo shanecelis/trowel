@@ -3,20 +3,25 @@
 
 use embedded_graphics::{
     draw_target::DrawTarget,
-    pixelcolor::{Rgb565, Rgb888},
-    // framebuffer,
-    // framebuffer::{Framebuffer, buffer_size},
+    framebuffer,
+    framebuffer::{Framebuffer, buffer_size},
     pixelcolor::{Rgb565, Rgb888, raw::{LittleEndian, RawU16}},
     primitives::Rectangle,
+    image::{SubImage, GetPixel},
     prelude::*,
 };
 use tinybmp::Bmp;
 use trowel::{App, AppResult, Buttons, Error, buffered::BufferedApp};
 use trowel::flipped::{DrawTargetExt2, Axes};
+use heapless::Vec;
 
 const BMP_DATA: &[u8] = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/examples/topdown/sprites/player.bmp"));
 
 const SPRITE_COUNT: usize = 51;
+type Framebuf = Framebuffer::<Rgb565, RawU16, LittleEndian, 160, 128, {buffer_size::<Rgb565>(160, 128)}>;
+
+// Ought to be the maximum size of a sprite.
+type Spritebuf = Framebuffer::<Rgb565, RawU16, LittleEndian, 34, 23, {buffer_size::<Rgb565>(34, 23)}>;
 
 #[derive(Clone, Copy)]
 struct SpriteData {
@@ -25,6 +30,12 @@ struct SpriteData {
     y: i32,
     width: u32,
     height: u32,
+}
+
+impl SpriteData {
+    fn as_image<'a, T>(&self, atlas: &'a T) -> SubImage<'a, T> where T : ImageDrawable {
+        atlas.sub_image(&Rectangle::new(Point::new(self.x, self.y), Size::new(self.width, self.height)))
+    }
 }
 
 const SPRITE_DATA: [SpriteData; SPRITE_COUNT] = [
@@ -182,22 +193,37 @@ fn sprite_data_new(i: usize) -> SpriteData {
     SPRITE_DATA[i % SPRITE_COUNT]
 }
 
-// type Framebuf = Framebuffer::<Rgb565, RawU16, LittleEndian, 160, 128, {buffer_size::<Rgb565>(160, 128)}>;
+const SPRITE_WIDTH_MAX : usize = 23;
+const SPRITE_HEIGHT_MAX : usize = 33;
 
 struct TopDown {
     frame: i32,
-    bmp: Option<Bmp<'static, Rgb565>>,
+    bmp: Bmp<'static, Rgb565>,
     current_animation: Animation,
     current_frame_index: usize,
-    position: Point, 
+    position: Point,
+    transparent: Rgb565,
+    framebuf: Framebuf,
+    dirty_points: Vec<Point, {SPRITE_WIDTH_MAX * SPRITE_HEIGHT_MAX}>
+}
+
+impl TopDown {
+    fn new() -> Result<Self, Error> {
+        let bmp = Bmp::from_slice(BMP_DATA).map_err(|e| Error::BmpErr(e))?;
+        Ok(Self { frame: -1,
+                  bmp,
+                  current_animation: IDLE,
+                  current_frame_index: 0,
+                  position: Point::new(0, 0),
+                  transparent: Rgb565::from(Rgb888::new(0xee, 0x00, 0xff)),
+                  framebuf: Framebuf::new(),
+                  dirty_points: Vec::new()
+        })
+    }
 }
 
 impl App for TopDown {
     fn init(&mut self) -> AppResult {
-        self.bmp = Some(Bmp::from_slice(BMP_DATA).map_err(|e| Error::BmpErr(e))?);
-        self.current_animation = IDLE;
-        self.current_frame_index = 0;
-        self.position = Point::new(0, 0);
         Ok(())
     }
 
@@ -300,29 +326,57 @@ impl App for TopDown {
         T: DrawTarget<Color = Rgb565, Error = E>,
     {
         // We buffered. We can clear all the time.
-        // target.clear(Rgb565::BLACK)
-        //         .map_err(|_| Error::DisplayErr)?;
+        if self.frame == 0 {
+            let area = self.framebuf.bounding_box();
+            self.framebuf.fill_contiguous(&area,
+                                          (0..area.size.width*area.size.height).map(|i| RawU16::from(i as u16).into()))
+                    .map_err(|_| Error::DisplayErr)?;
+
+            
+            self.framebuf.as_image().draw(target)
+                .map_err(|_| Error::DisplayErr)?;
+            // target.clear(Rgb565::RED)
+            //         .map_err(|_| Error::DisplayErr)?;
+        }
 
 
         let sprite_index = self.current_animation.frame_indices[self.current_frame_index % self.current_animation.frame_count()];
 
         let sprite = sprite_data_new(sprite_index);
+        let sprite_image = sprite.as_image(&self.bmp);
         let position = self.position;
         let at = position;
         let size = Size::new(sprite.width, sprite.height);
-    
+        let area = Rectangle::new(at, size);
+
+        let mut axes = Axes::empty();
         if self.current_animation == LEFT_IDLE || self.current_animation == LEFT_WALK || self.current_animation == LEFT_ATTACK {
-            self.bmp
-            .expect("no bmp set")                
-            .draw_sub_image(&mut target.cropped(&Rectangle::new(at, size)).flipped(Axes::X),
-            &Rectangle::new(Point::new(sprite.x, sprite.y), size)).map_err(|_| Error::DisplayErr)?;
+            axes |= Axes::X;
         }
-        else {
-        self.bmp
-            .expect("no bmp set")                
-            .draw_sub_image(&mut target.cropped(&Rectangle::new(at, size)).flipped(Axes::empty()),
-            &Rectangle::new(Point::new(sprite.x, sprite.y), size)).map_err(|_| Error::DisplayErr)?;
-        }
+        let mut sprite_buf = Spritebuf::new();
+        sprite_image.draw(&mut sprite_buf)
+                     .map_err(|_| Error::DisplayErr)?;
+
+        target
+            .draw_iter(self.dirty_points.iter()
+                         .filter_map(|p| self.framebuf.pixel(*p).map(|c| Pixel(*p, c))))
+            .map_err(|_| Error::DisplayErr)?;
+
+        self.dirty_points.clear();
+        target
+            .cropped(&area).flipped(axes)
+            .draw_iter(Rectangle::new(Point::new(0,0), size).points()
+                         .map(|p| Pixel(p, sprite_buf.pixel(p).unwrap_or(self.transparent)))
+                         .filter(|Pixel(p,c)| *c != self.transparent)
+                         .map(|Pixel(p,c)| {
+                             self.dirty_points.push(p + at);
+                             Pixel(p,c)
+                         }))
+            .map_err(|_| Error::DisplayErr)?;
+
+        // sprite_image.draw(&mut self.framebuf.cropped(&area).flipped(axes)).map_err(|_| Error::DisplayErr)?;
+        // self.framebuf.as_image().draw(target)
+        //         .map_err(|_| Error::DisplayErr)?;
     
         Ok(())
     }      
@@ -330,7 +384,7 @@ impl App for TopDown {
 
 #[trowel::entry]
 fn main() {
-    let app = TopDown {frame: -1,bmp:None,current_animation:IDLE,current_frame_index:0, position: Point::new(0, 0) };
+    let app = TopDown::new().expect("Could not make TopDown app");
     // let mut app = BufferedApp::new(app);
     // app.frame_buf.data.transparent = Some(Rgb565::from(Rgb888::new(0xee, 0x00, 0xff)));
     trowel::run(app);

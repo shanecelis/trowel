@@ -51,7 +51,6 @@ impl<A> BufferedApp<A> where A : App
     pub fn new(app: A) -> Self {
         let data = Buffer { data: [Rgb565::BLACK; 20480], transparent: None };
         BufferedApp {
-            // buffer: data,
             frame_buf: FrameBuf::new(data, 160, 128),
             app,
             interlace: None,
@@ -67,7 +66,6 @@ impl<A> BufferedApp<A> where A : App
             Some(n) => Some(n + 1),
             None => Some(2),
         }
-        // self.interlace = Some(self.interlace.or(0) + 1)
     }
 
     fn decrease(&mut self) {
@@ -131,4 +129,3 @@ impl<A> App for BufferedApp<A>
         }
     }
 }
-

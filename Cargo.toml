@@ -12,6 +12,7 @@ micromath = "2.0.0"
 runty8-core = { git = "https://github.com/shanecelis/runty8.git", branch = "feature-no-std", optional = true, default-features = false }
 embedded-alloc = "0.5.0"
 embedded-graphics-framebuf = "0.2.0"
+embedded-graphics = { version = "0.7.1" }
 embedded-time = "0.12.1"
 rtic-monotonic = "1.0.0"
 try_default = { git = "https://github.com/shanecelis/try_default.git", default-features = false }
@@ -44,7 +45,7 @@ panic-probe = { version = "0.3.0", features = ["print-defmt"] }
 # rp2040-hal = { git = "https://github.com/rp-rs/rp-hal", branch="main", features=["rt", "critical-section-impl", "disable-intrinsics", "rtic-monotonic"] }
 # rp2040-hal = { version = "0.8.0", features=["rt", "critical-section-impl"] }
 # rp2040-boot2 = { git = "https://github.com/rp-rs/rp2040-boot2-rs", branch="main" }
-st7735-lcd = "0.8"
+st7735-lcd = { version = "0.8", features = ["graphics"] }
 fugit = "0.3.6"
 
 [target.'cfg(target_family = "wasm")'.dependencies]
@@ -69,9 +70,8 @@ features = [
   'Window',
 ]
 
-[dependencies.embedded-graphics]
-version = "0.7"
-optional = true
+[patch.crates-io]
+embedded-graphics = { git = "https://github.com/embedded-graphics/embedded-graphics.git" }
 
 # cargo build/run
 [profile.dev]
@@ -129,8 +129,7 @@ opt-level = 3
 include_dir = { version = "0.7.3" }
 
 [features]
-default = ["graphics", "console_error_panic_hook"]
-graphics = ["embedded-graphics"]
+default = ["console_error_panic_hook"]
 runty8 = ["dep:runty8-core"]
 bmp = ["tinybmp"]
 

@@ -18,7 +18,7 @@ use panic_probe as _;
 
 // use rp2040_hal as hal;
 
-use embedded_graphics::{draw_target::DrawTarget, pixelcolor::Rgb565, prelude::*};
+use embedded_graphics::{pixelcolor::Rgb565, prelude::*};
 use embedded_hal::digital::v2::{InputPin, OutputPin};
 use fugit::RateExtU32;
 use rp_pico::hal::{self, pac::interrupt};
