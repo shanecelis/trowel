@@ -4,6 +4,9 @@
 use embedded_graphics::{
     draw_target::DrawTarget,
     pixelcolor::{Rgb565, Rgb888},
+    // framebuffer,
+    // framebuffer::{Framebuffer, buffer_size},
+    pixelcolor::{Rgb565, Rgb888, raw::{LittleEndian, RawU16}},
     primitives::Rectangle,
     prelude::*,
 };
@@ -178,6 +181,8 @@ impl Animation {
 fn sprite_data_new(i: usize) -> SpriteData {
     SPRITE_DATA[i % SPRITE_COUNT]
 }
+
+// type Framebuf = Framebuffer::<Rgb565, RawU16, LittleEndian, 160, 128, {buffer_size::<Rgb565>(160, 128)}>;
 
 struct TopDown {
     frame: i32,
