@@ -19,26 +19,26 @@ use embedded_graphics::{
     pixelcolor::Rgb565,
     prelude::*,
 };
-use trowel::{App, AppResult, Buttons, Error};
+use trowel::{App, AppResult, Buttons, Error, OptionalFS, FS};
 
 struct DrawFerris {
     /// Frame count
     frame: i32,
 }
 
-impl App for DrawFerris
-{
-    fn init(&mut self) -> AppResult {
+impl App for DrawFerris {
+    fn init<F: FS>(&mut self, _fs: &mut OptionalFS<F>) -> AppResult {
         Ok(())
     }
 
-    fn update(&mut self, _buttons: Buttons) -> AppResult {
+    fn update<F: FS>(&mut self, _buttons: Buttons, _fs: &mut OptionalFS<F>) -> AppResult {
         self.frame += 1;
         Ok(())
     }
 
-    fn draw<T,E>(&mut self, display: &mut T) -> AppResult
-        where T: DrawTarget<Color = Rgb565, Error = E>,
+    fn draw<T, E>(&mut self, display: &mut T) -> AppResult
+    where
+        T: DrawTarget<Color = Rgb565, Error = E>,
     {
         if self.frame == 1 {
             // We only need to draw the image once for it to persist.
@@ -61,5 +61,5 @@ fn main() {
 #[cfg_attr(all(target_arch = "arm", target_os = "none"), cortex_m_rt::entry)]
 fn entry() -> ! {
     main();
-    loop { }
+    loop {}
 }

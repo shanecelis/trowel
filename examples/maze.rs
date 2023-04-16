@@ -22,7 +22,9 @@ use embedded_graphics::{
 };
 #[allow(unused_imports)]
 use micromath::F32Ext;
-use trowel::{App, AppResult, Buttons, buffered::BufferedApp, Error, FpsApp, AppExt};
+use trowel::{
+    buffered::BufferedApp, App, AppExt, AppResult, Buttons, Error, FpsApp, OptionalFS, FS,
+};
 use try_default::TryDefault;
 
 // The original platform had a 160x160 display. Sprig only has a 160x128
@@ -59,15 +61,14 @@ const MAP: [u16; 8] = [
     0b1111111111111111,
 ];
 
-impl App for State
-{
-    fn init(&mut self) -> AppResult {
+impl App for State {
+    fn init<F: FS>(&mut self, _fs: &mut OptionalFS<F>) -> AppResult {
         // This way the first frame is zero.
         self.frame = -1;
         Ok(())
     }
 
-    fn update(&mut self, buttons: Buttons) -> AppResult {
+    fn update<F: FS>(&mut self, _buttons: Buttons, _fs: &mut OptionalFS<F>) -> AppResult {
         self.frame += 1;
 
         self.update(
@@ -79,11 +80,13 @@ impl App for State
         Ok(())
     }
 
-    fn draw<T,E>(&mut self, display: &mut T) -> AppResult
-        where T: DrawTarget<Color = Rgb565, Error = E>,
+    fn draw<T, E>(&mut self, display: &mut T) -> AppResult
+    where
+        T: DrawTarget<Color = Rgb565, Error = E>,
     {
-        display.clear(to_color(PALETTE[0]))
-               .map_err(|_| Error::DisplayErr)?;
+        display
+            .clear(to_color(PALETTE[0]))
+            .map_err(|_| Error::DisplayErr)?;
         // Go through each column on screen and draw walls in the center.
         for (x, wall) in self.get_view().iter().enumerate() {
             let (height, shadow) = wall;
@@ -373,5 +376,5 @@ fn main() {
 #[cfg_attr(all(target_arch = "arm", target_os = "none"), cortex_m_rt::entry)]
 fn entry() -> ! {
     main();
-    loop { }
+    loop {}
 }

@@ -1,35 +1,38 @@
 //! Run a standalone Runty8 game natively or in wasm.
 
-use runty8_core as runty;
-use runty::{Input, Pico8, Resources};//, KeyboardEvent, InputEvent, Key, KeyState};
+use runty::{Input, Pico8, Resources};
+use runty8_core as runty; //, KeyboardEvent, InputEvent, Key, KeyState};
 
+use crate::{App, AppResult, Buttons, Error, OptionalFS, FS};
 use embedded_graphics::{
     draw_target::DrawTarget,
     image::{Image, ImageRaw, ImageRawBE},
     pixelcolor::{Rgb565, Rgb888},
     prelude::*,
 };
-use crate::{App, AppResult, Buttons, Error};
 
 struct RuntyApp<G>
-    where G : runty::App + 'static
+where
+    G: runty::App + 'static,
 {
     pico8: Pico8,
     game: G,
     input: Input,
-    last_buttons: Buttons
+    last_buttons: Buttons,
 }
 
 impl<G> RuntyApp<G>
-    where G : runty::App + 'static {
-    fn new(resources: Resources) -> Self{
+where
+    G: runty::App + 'static,
+{
+    fn new(resources: Resources) -> Self {
         let mut pico8 = Pico8::new(resources);
         let game = G::init(&mut pico8);
         RuntyApp {
             pico8: pico8,
             game: game,
             input: Input::new(),
-            last_buttons: Buttons::empty()
+            last_buttons: Buttons::empty(),
         }
     }
 
@@ -46,12 +49,11 @@ impl<G> App for RuntyApp<G>
 where
     G: runty::App + 'static,
 {
-    fn init(&mut self) -> AppResult {
+    fn init<F: FS>(&mut self, _fs: &mut OptionalFS<F>) -> AppResult {
         Ok(())
     }
 
-    fn update(&mut self, buttons: Buttons) -> AppResult {
-
+    fn update<F: FS>(&mut self, buttons: Buttons, _fs: &mut OptionalFS<F>) -> AppResult {
         // self.handle_event(Buttons::W, buttons, Key::W);
         // self.handle_event(Buttons::A, buttons, Key::A);
         // self.handle_event(Buttons::S, buttons, Key::S);
@@ -72,15 +74,20 @@ where
         Ok(())
     }
 
-    fn draw<T,E>(&mut self, display: &mut T) -> AppResult
-        where T: DrawTarget<Color = Rgb565, Error = E>
+    fn draw<T, E>(&mut self, display: &mut T) -> AppResult
+    where
+        T: DrawTarget<Color = Rgb565, Error = E>,
     {
         self.game.draw(&mut self.pico8);
-        let mut rgb565s: [u8 ; 128 * 128 * 2 ] = [ 0; 128 * 128 * 2 ];
+        let mut rgb565s: [u8; 128 * 128 * 2] = [0; 128 * 128 * 2];
         let rgb888s = self.pico8.draw_data.buffer();
-        for (i, rgb) in rgb888s.chunks(3).map(|rgb| Rgb565::from(Rgb888::new(rgb[0], rgb[1], rgb[2]))).enumerate() {
+        for (i, rgb) in rgb888s
+            .chunks(3)
+            .map(|rgb| Rgb565::from(Rgb888::new(rgb[0], rgb[1], rgb[2])))
+            .enumerate()
+        {
             let j = i * 2;
-            let x : u16 = rgb.into_storage();
+            let x: u16 = rgb.into_storage();
             rgb565s[j] = (x >> 8) as u8;
             rgb565s[j + 1] = (x & 0xff) as u8;
         }
@@ -91,7 +98,10 @@ where
     }
 }
 
-pub fn run_with<Game: runty::App + 'static, F>(resources: F) where F : FnOnce() -> Resources {
+pub fn run_with<Game: runty::App + 'static, F>(resources: F)
+where
+    F: FnOnce() -> Resources,
+{
     super::run_with(|| {
         let game: RuntyApp<Game> = RuntyApp::new(resources());
         game
@@ -99,8 +109,5 @@ pub fn run_with<Game: runty::App + 'static, F>(resources: F) where F : FnOnce() 
 }
 
 pub fn run<Game: runty::App + 'static>(resources: Resources) {
-    run_with::<Game, _>(|| {
-        resources
-    });
+    run_with::<Game, _>(|| resources);
 }
-

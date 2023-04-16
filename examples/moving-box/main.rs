@@ -1,9 +1,9 @@
 #![cfg_attr(all(target_arch = "arm", target_os = "none"), no_std)]
 #![cfg_attr(all(target_arch = "arm", target_os = "none"), no_main)]
 
-use runty8_core as runty8;
-use runty8::{App, Button, Pico8, Resources};
 use core::cmp;
+use runty8::{App, Button, Pico8, Resources};
+use runty8_core as runty8;
 
 #[cfg(all(target_arch = "arm", target_os = "none"))]
 #[macro_use]
@@ -17,7 +17,7 @@ fn main() {
 #[cfg_attr(all(target_arch = "arm", target_os = "none"), cortex_m_rt::entry)]
 fn entry() -> ! {
     main();
-    loop { }
+    loop {}
 }
 
 pub struct ExampleApp {

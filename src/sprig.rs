@@ -10,21 +10,15 @@
    [6]: https://hackclub.com
 */
 
-use alloc::string::{String, ToString};
 // Ensure we halt the program on panic. (If we don't mention this crate it won't
 // be linked.)
 use defmt_rtt as _;
-use embedded_graphics::{
-    mono_font::{ascii, MonoTextStyle},
-    text::Text,
-};
 use panic_probe as _;
 
 use rp2040_hal as hal;
 
 use embedded_graphics::{draw_target::DrawTarget, pixelcolor::Rgb565, prelude::*};
 use embedded_hal::digital::v2::{InputPin, OutputPin};
-use embedded_sdmmc::filesystem::Mode;
 use embedded_sdmmc::{Controller, SdMmcSpi, VolumeIdx};
 use fugit::RateExtU32;
 use rp2040_hal::{
@@ -36,7 +30,7 @@ use st7735_lcd::{Orientation, ST7735};
 
 // A shorter alias for the Peripheral Access Crate, which provides low-level
 // register access.
-use crate::{App, AppExt, Buttons, FpsApp};
+use crate::{App, AppExt, Buttons, FpsApp, OptionalFS};
 use core::option::Option;
 use embedded_alloc::Heap;
 use hal::pac;
@@ -62,6 +56,8 @@ static mut MONOTONIC_CLOCK: Option<MonotonicClock> = None;
 type Monotonic0 = Monotonic<Alarm0>;
 
 mod fs;
+
+use self::fs::SPIFS;
 
 pub struct MonotonicClock(RefCell<Monotonic0>);
 impl MonotonicClock {
@@ -91,8 +87,6 @@ impl TryDefault<FpsApp<MonotonicClock>> for FpsApp<MonotonicClock> {
         unsafe { MONOTONIC_CLOCK.take() }.map(|clock| FpsApp::new(clock))
     }
 }
-
-pub type FpsApp0 = FpsApp<MonotonicClock>;
 
 /// The `run` function configures the RP2040 peripherals, then runs the app.
 pub fn run_with<F, A>(app_maker: F) -> ()
@@ -162,6 +156,10 @@ where
 
     let mut lcd_led = pins.gpio17.into_push_pull_output();
     let mut _led = pins.gpio25.into_push_pull_output();
+
+    let mut l_led = pins.gpio28.into_push_pull_output();
+    let mut r_led = pins.gpio4.into_push_pull_output();
+
     let dc = pins.gpio22.into_push_pull_output();
     let rst = pins.gpio26.into_push_pull_output();
 
@@ -184,12 +182,15 @@ where
     );
 
     let bus = shared_bus::BusManagerSimple::new(spi);
-
     let mut disp = ST7735::new(bus.acquire_spi(), dc, rst, true, false, 160, 128);
+    let mut disp_cs = pins
+        .gpio20
+        .into_push_pull_output_in_state(hal::gpio::PinState::Low);
 
     disp.init(&mut delay).unwrap();
     disp.set_orientation(&Orientation::Landscape).unwrap();
     disp.clear(Rgb565::BLACK).unwrap();
+    disp_cs.set_high().unwrap();
 
     let mut timer = hal::Timer::new(pac.TIMER, &mut pac.RESETS);
     // let mut alarm = hal::Timer::new(pac.TIMER, &mut pac.RESETS);
@@ -204,91 +205,41 @@ where
     // pixels for a brief moment.
     lcd_led.set_high().unwrap();
 
+    let time_source = fs::FSClock {};
+
+    let sdmmc_cs = pins.gpio21.into_push_pull_output();
+    let mut sd_spi = SdMmcSpi::new(bus.acquire_spi(), sdmmc_cs);
+
+    let block = sd_spi.acquire();
+    let mut fs = match block {
+        Ok(block) => {
+            // Successfully connected to SD Card
+            l_led.set_high().unwrap();
+
+            let mut cont = Controller::new(block, time_source);
+            let volume = cont.get_volume(VolumeIdx(0)).unwrap();
+            let root = cont.open_root_dir(&volume).unwrap();
+
+            Some(SPIFS::new(cont, volume, root))
+        }
+        Err(_) => {
+            // Failed to connect to SD Card
+            r_led.set_high().unwrap();
+
+            None
+        }
+    };
+
+    let mut fs: OptionalFS<SPIFS> = match &mut fs {
+        Some(fs) => Some(fs),
+        None => None,
+    };
+
     // Init the App
     // We could turn on the MCU's led.
     // led.set_high().unwrap();
     let mut app = app_maker();
-    app.init().expect("error initializing");
-
-    struct FSClock {}
-    impl embedded_sdmmc::TimeSource for FSClock {
-        fn get_timestamp(&self) -> embedded_sdmmc::Timestamp {
-            embedded_sdmmc::Timestamp::from_fat(0, 0)
-        }
-    }
-    let time_source = FSClock {};
-
-    let mut sdmmc_cs = pins.gpio21.into_push_pull_output();
-    let mut sd_spi = SdMmcSpi::new(bus.acquire_spi(), sdmmc_cs);
-
-    if let Ok(block) = sd_spi.acquire() {
-        // Successfully connected to SD Card
-    }
-
-    let block = match sd_spi.acquire() {
-        Ok(block) => block,
-        Err(e) => {
-            write(format!("Block E: {:?}", e));
-            return;
-        }
-    };
-
-    print!("Successfully connected to SD Card");
-
-    print!("Init SD card controller...");
-    let mut cont = Controller::new(block, time_source);
-
-    print!("Card size...");
-    match cont.device().card_size_bytes() {
-        Ok(size) => printf!("card size is {} bytes", size),
-        Err(e) => {
-            printf!("Error retrieving card size: {:?}", e);
-            return;
-        }
-    }
-
-    print!("Get Volume...");
-    let mut volume = match cont.get_volume(VolumeIdx(0)) {
-        Ok(v) => v,
-        Err(e) => {
-            printf!("Error getting volume 0: {:?}", e);
-            return;
-        }
-    };
-
-    let dir = match cont.open_root_dir(&volume) {
-        Ok(dir) => dir,
-        Err(e) => {
-            panic!("Error opening root dir: {:?}", e);
-        }
-    };
-
-    print!("Open file...");
-    match cont.open_file_in_dir(
-        &mut volume,
-        &dir,
-        "secrets.lst",
-        Mode::ReadWriteCreateOrAppend,
-    ) {
-        Ok(mut file) => {
-            let mut buffer = vec![0; file.length() as usize];
-            file.seek_from_start(0).unwrap();
-            let actual_read = cont.read(&mut volume, &mut file, &mut buffer).unwrap();
-            printf!(
-                "Read {}/{} bytes from file: {:?}",
-                actual_read,
-                buffer.len(),
-                String::from_utf8(buffer).unwrap()
-            );
-
-            cont.write(&mut volume, &mut file, b"moresecret").unwrap();
-            cont.close_file(&volume, file).unwrap();
-        }
-        Err(e) => {
-            printf!("Error opening file: {:?}", e);
-            return;
-        }
-    }
+    app.init(&mut fs).expect("error initializing");
 
     // let mut fps_app = FpsApp::new().expect("error init fps app");
 
@@ -325,10 +276,13 @@ where
             buttons |= Buttons::L;
         }
 
-        app.update(buttons).expect("error updating");
+        app.update(buttons, &mut fs).expect("error updating");
+
+        disp_cs.set_low().unwrap();
         app.draw(&mut disp).expect("error drawing");
         // fps_app.draw(&mut disp).expect("error fps");
         // let fps = fps_counter.tick();
         // Text::new(&format!("FPS: {fps}"), fps_position, character_style).draw(&mut disp).expect("error on fps");
+        disp_cs.set_high().unwrap();
     }
 }
