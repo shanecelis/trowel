@@ -47,7 +47,7 @@ panic-probe = { version = "0.3.0", features = ["print-defmt"] }
 # rp2040-hal = { git = "https://github.com/rp-rs/rp-hal", branch="main", features=["rt", "critical-section-impl", "disable-intrinsics", "rtic-monotonic"] }
 # rp2040-hal = { version = "0.8.0", features=["rt", "critical-section-impl"] }
 rp2040-boot2 = { git = "https://github.com/rp-rs/rp2040-boot2-rs", branch="main" }
-st7735-lcd = "0.4"
+st7735-lcd = "0.8"
 embedded-sdmmc = { git = "https://github.com/UserJHansen/embedded-sdmmc-rs/", branch="main"}
 shared-bus = { version = "0.2.5", features=["cortex-m"] }
 fugit = "0.3.6"
