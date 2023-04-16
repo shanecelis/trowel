@@ -3,7 +3,6 @@
 
 use embedded_graphics::{
     draw_target::DrawTarget,
-    framebuffer,
     framebuffer::{Framebuffer, buffer_size},
     pixelcolor::{Rgb565, Rgb888, raw::{LittleEndian, RawU16}},
     primitives::Rectangle,
@@ -47,9 +46,9 @@ const SPRITE_DATA: [SpriteData; SPRITE_COUNT] = [
     SpriteData { name: "sprite1", x: 52, y: 21, width: 13, height: 21 },
     SpriteData { name: "sprite2", x: 112, y: 23, width: 13, height: 21 },
     SpriteData { name: "sprite3", x: 38, y: 0, width: 13, height: 21 },
-    SpriteData { name: "sprite4", x: 30, y: 71, width: 13, height: 20 },
-    SpriteData { name: "sprite5", x: 20, y: 92, width: 13, height: 20 },
-    SpriteData { name: "sprite6", x: 74, y: 113, width: 13, height: 20 },
+    SpriteData { name: "sprite4", x: 30, y: 70, width: 13, height: 21 },
+    SpriteData { name: "sprite5", x: 20, y: 91, width: 13, height: 21 },
+    SpriteData { name: "sprite6", x: 74, y: 112, width: 13, height: 21 },
 
     // right idle
     SpriteData { name: "sprite7", x: 126, y: 44, width: 15, height: 21 },
