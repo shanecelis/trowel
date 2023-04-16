@@ -3,6 +3,7 @@
     "rust-analyzer.linkedProjects": [
         "./Cargo.toml"
     ],
+    // "rust-analyzer.cargo.target": "wasm32-unknown-unknown",
     "rust-analyzer.cargo.target": "thumbv6m-none-eabi",
     "rust-analyzer.cargo.features": "all"
 }

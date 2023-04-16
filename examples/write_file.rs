@@ -20,7 +20,7 @@ impl App for WriteFile {
     fn init<F: FS>(&mut self, fs: &mut OptionalFS<F>) -> AppResult {
         match fs {
             Some(fs) => {
-                let file = fs.write_file("hello.txt", b"Hello, World!", WriteMode::Append);
+                let file = fs.write_file("hello.txt", b"Hello, FS!", WriteMode::Append);
                 self.was_successful = file;
             }
             None => {

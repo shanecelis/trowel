@@ -1,24 +1,26 @@
 use embedded_graphics::{
     draw_target::DrawTarget,
-    pixelcolor::{Rgb565, Rgb888, RgbColor}
+    pixelcolor::{Rgb565, Rgb888, RgbColor},
 };
 
-use embedded_graphics_framebuf::{FrameBuf, backends::FrameBufferBackend};
+use embedded_graphics_framebuf::{backends::FrameBufferBackend, FrameBuf};
 extern crate console_error_panic_hook;
 
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crate::{App, Buttons};
-use web_sys::{Window, ImageData};
-use wasm_bindgen::{
-    prelude::*,
-    Clamped};
+use crate::{App, Buttons, OptionalFS};
+use wasm_bindgen::{prelude::*, Clamped};
+use web_sys::ImageData;
 
 use crate::FpsApp;
+use embedded_time::{clock::Error, fraction::Fraction, Clock as EClock, Instant as EInstant};
 use try_default::TryDefault;
-use embedded_time::{fraction::Fraction, Clock as EClock, clock::Error, Instant as EInstant};
 use wasm_timer::Instant;
+
+use self::fs::WebFS;
+
+mod fs;
 
 const SCREEN_WIDTH: usize = 160;
 const SCREEN_HEIGHT: usize = 128;
@@ -75,7 +77,9 @@ impl EClock for WasmClock {
     const SCALING_FACTOR: Fraction = Fraction::new(1, 1_000);
 
     fn try_now(&self) -> Result<EInstant<Self>, Error> {
-        Ok(EInstant::<WasmClock>::new(self.0.elapsed().as_millis() as u64))
+        Ok(EInstant::<WasmClock>::new(
+            self.0.elapsed().as_millis() as u64
+        ))
     }
 }
 
@@ -85,30 +89,35 @@ impl TryDefault<FpsApp<WasmClock>> for FpsApp<WasmClock> {
     }
 }
 
-pub fn run_with<F,A>(app_maker: F)
-        where F : FnOnce() -> A, A : App + 'static {
-
+pub fn run_with<F, A>(app_maker: F)
+where
+    F: FnOnce() -> A,
+    A: App + 'static,
+{
     // if Some("1") == option_env!("SHOW_FPS") {
     //     _run_with(move || app_maker().join(FpsApp::default()));
     // } else {
-        _run_with(app_maker);
+    _run_with(app_maker);
     // }
 }
 
-fn _run_with<F,A>(app_maker: F)
-        where F : FnOnce() -> A, A : App + 'static {
-
+fn _run_with<F, A>(app_maker: F)
+where
+    F: FnOnce() -> A,
+    A: App + 'static,
+{
     let mut app = app_maker();
-    app.init().expect("error initializing");
+    let mut fs = WebFS::new();
+    let mut fs: OptionalFS<WebFS> = Some(&mut fs);
+
+    app.init(&mut fs).expect("error initializing");
     setup::<A>(app).expect("error setting up app");
 }
 
-fn animation_frame(w: &Window, f: &Closure<dyn FnMut()>) {
-    w.request_animation_frame(f.as_ref().unchecked_ref())
-        .expect("should register 'requestAnimationFrame` OK");
-}
-
-fn setup<A>(mut app : A) -> Result<(), JsValue> where A : App + 'static {
+fn setup<A>(mut app: A) -> Result<(), JsValue>
+where
+    A: App + 'static,
+{
     console_error_panic_hook::set_once();
 
     let data = WasmBuffer([0; OUTPUT_BUFFER_SIZE]);
@@ -124,23 +133,33 @@ fn setup<A>(mut app : A) -> Result<(), JsValue> where A : App + 'static {
     let document = window.document().expect("should have a document on window");
     let body = document.body().expect("document should have a body");
 
-    let canvas = document.get_element_by_id("trowel-canvas")
-                         .map(|c| c.dyn_into::<web_sys::HtmlCanvasElement>().unwrap())
-                         .or_else(|| {
-        let canvas = document
-            .create_element("canvas").ok()?
-            .dyn_into::<web_sys::HtmlCanvasElement>().ok()?;
-        canvas.set_id("trowel-canvas");
-        // canvas.style().set_property("border", "solid")?;
-        canvas.set_width(160);
-        canvas.set_height(128);
-        canvas.style().set_property("image-rendering", "pixelated").ok()?;
-        canvas.style().set_property("image-rendering", "crisp-edges").ok()?;
-        canvas.style().set_property("width", "100%").ok()?;
-        canvas.style().set_property("height", "100%").ok()?;
-        body.append_child(&canvas).ok()?;
-        Some(canvas)
-    }).expect("Cannot get or make canvas");
+    let canvas = document
+        .get_element_by_id("trowel-canvas")
+        .map(|c| c.dyn_into::<web_sys::HtmlCanvasElement>().unwrap())
+        .or_else(|| {
+            let canvas = document
+                .create_element("canvas")
+                .ok()?
+                .dyn_into::<web_sys::HtmlCanvasElement>()
+                .ok()?;
+            canvas.set_id("trowel-canvas");
+            // canvas.style().set_property("border", "solid")?;
+            canvas.set_width(160);
+            canvas.set_height(128);
+            canvas
+                .style()
+                .set_property("image-rendering", "pixelated")
+                .ok()?;
+            canvas
+                .style()
+                .set_property("image-rendering", "crisp-edges")
+                .ok()?;
+            canvas.style().set_property("width", "100%").ok()?;
+            canvas.style().set_property("height", "100%").ok()?;
+            body.append_child(&canvas).ok()?;
+            Some(canvas)
+        })
+        .expect("Cannot get or make canvas");
 
     let context = canvas
         .get_context("2d")?
@@ -151,8 +170,7 @@ fn setup<A>(mut app : A) -> Result<(), JsValue> where A : App + 'static {
         let buttons = buttons.clone();
         let closure = Closure::<dyn FnMut(_)>::new(move |e: web_sys::KeyboardEvent| {
             let c = char::from(e.key_code() as u8).to_ascii_uppercase();
-            buttons.replace_with(move |buttons|
-            match c {
+            buttons.replace_with(move |buttons| match c {
                 'W' => *buttons | Buttons::W,
                 'A' => *buttons | Buttons::A,
                 'S' => *buttons | Buttons::S,
@@ -161,7 +179,7 @@ fn setup<A>(mut app : A) -> Result<(), JsValue> where A : App + 'static {
                 'J' => *buttons | Buttons::J,
                 'K' => *buttons | Buttons::K,
                 'L' => *buttons | Buttons::L,
-                _ => *buttons
+                _ => *buttons,
             });
         });
         document.add_event_listener_with_callback("keypress", closure.as_ref().unchecked_ref())?;
@@ -172,8 +190,7 @@ fn setup<A>(mut app : A) -> Result<(), JsValue> where A : App + 'static {
         let buttons = buttons.clone();
         let closure = Closure::<dyn FnMut(_)>::new(move |e: web_sys::KeyboardEvent| {
             let c = char::from(e.key_code() as u8).to_ascii_uppercase();
-            buttons.replace_with(move |buttons|
-            match c {
+            buttons.replace_with(move |buttons| match c {
                 'W' => *buttons & !Buttons::W,
                 'A' => *buttons & !Buttons::A,
                 'S' => *buttons & !Buttons::S,
@@ -182,29 +199,34 @@ fn setup<A>(mut app : A) -> Result<(), JsValue> where A : App + 'static {
                 'J' => *buttons & !Buttons::J,
                 'K' => *buttons & !Buttons::K,
                 'L' => *buttons & !Buttons::L,
-                _ => *buttons
+                _ => *buttons,
             });
         });
         document.add_event_listener_with_callback("keyup", closure.as_ref().unchecked_ref())?;
         closure.forget();
     }
 
-    let init : Option<Closure<dyn FnMut()>> = None;
+    let init: Option<Closure<dyn FnMut()>> = None;
     let f = Rc::new(RefCell::new(init));
     let g = f.clone();
 
     *g.borrow_mut() = Some(Closure::wrap(Box::new(move || {
+        let mut fs = WebFS::new();
+        let mut fs: OptionalFS<WebFS> = Some(&mut fs);
 
-        app.update(buttons.borrow().clone()).expect("error updating");
+        app.update(buttons.borrow().clone(), &mut fs)
+            .expect("error updating");
         app.draw(&mut display).expect("error drawing");
-        let image = ImageData::new_with_u8_clamped_array_and_sh(Clamped(&mut display.data.0), 160, 128)
-            .expect("Unable to make image data");
-        context.put_image_data(&image, 0., 0.).expect("error putting image");
+        let image =
+            ImageData::new_with_u8_clamped_array_and_sh(Clamped(&mut display.data.0), 160, 128)
+                .expect("Unable to make image data");
+        context
+            .put_image_data(&image, 0., 0.)
+            .expect("error putting image");
 
         // Schedule ourself for another requestAnimationFrame callback.
         // let b : RefCell<Option<Closure<dyn FnMut()>>>= *f;
         request_animation_frame(f.borrow().as_ref().unwrap());
-
     }) as Box<dyn FnMut()>));
 
     request_animation_frame(g.borrow().as_ref().unwrap());
