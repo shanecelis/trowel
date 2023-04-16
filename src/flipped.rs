@@ -1,8 +1,9 @@
 use embedded_graphics::{
     draw_target::DrawTarget,
     geometry::Dimensions,
-    primitives::{Rectangle, PointsIter},
+    primitives::{Rectangle, PointsIter },
     Pixel,
+    prelude::{Size, Point}
 };
 use bitflags::bitflags;
 
@@ -11,6 +12,20 @@ bitflags! {
     pub struct Axes: u8 {
         const X = 0b00000001;
         const Y = 0b00000010;
+    }
+}
+
+impl Axes {
+    pub fn flip(&self, q: Point, size: Size) -> Point {
+        let mut p = q;
+        if self.contains(Axes::X) {
+            p.x = size.width as i32 - p.x - 1;
+        }
+
+        if self.contains(Axes::Y) {
+            p.y = size.height as i32 - p.y - 1;
+        }
+        p
     }
 }
 
@@ -100,14 +115,7 @@ where
         let rect = self.bounding_box();
         self.parent
             .draw_iter(pixels.into_iter().map(|Pixel(q, c)| {
-                let mut p = q;
-                if self.axes.contains(Axes::X) {
-                    p.x = rect.size.width as i32 - p.x - 1;
-                }
-
-                if self.axes.contains(Axes::Y) {
-                    p.y = rect.size.height as i32 - p.y - 1;
-                }
+                let p = self.axes.flip(q, rect.size);
                 Pixel(p,c)
              }))
     }

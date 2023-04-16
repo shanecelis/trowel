@@ -13,7 +13,7 @@ use embedded_graphics::{
 use tinybmp::Bmp;
 use trowel::{App, AppResult, Buttons, Error, buffered::BufferedApp};
 use trowel::flipped::{DrawTargetExt2, Axes};
-use heapless::Vec;
+use heapless::FnvIndexSet as Set;
 
 const BMP_DATA: &[u8] = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/examples/topdown/sprites/player.bmp"));
 
@@ -195,6 +195,7 @@ fn sprite_data_new(i: usize) -> SpriteData {
 
 const SPRITE_WIDTH_MAX : usize = 23;
 const SPRITE_HEIGHT_MAX : usize = 33;
+const SET_SIZE : usize = 512;
 
 struct TopDown {
     frame: i32,
@@ -204,7 +205,23 @@ struct TopDown {
     position: Point,
     transparent: Rgb565,
     framebuf: Framebuf,
-    dirty_points: Vec<Point, {SPRITE_WIDTH_MAX * SPRITE_HEIGHT_MAX}>
+    dirty_points: Set<MyPoint, SET_SIZE>,
+    old_dirty_points: Set<MyPoint, SET_SIZE>,
+}
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]//, hash32_derive::Hash32)]
+struct MyPoint(Point);
+
+impl From<Point> for MyPoint {
+    fn from(value: Point) -> Self {
+        Self(value)
+    }
+}
+
+impl hash32::Hash for MyPoint {
+    fn hash<H: hash32::Hasher>(&self, h: &mut H) {
+        self.0.x.hash(h);
+        self.0.y.hash(h);
+    }
 }
 
 impl TopDown {
@@ -217,7 +234,8 @@ impl TopDown {
                   position: Point::new(0, 0),
                   transparent: Rgb565::from(Rgb888::new(0xee, 0x00, 0xff)),
                   framebuf: Framebuf::new(),
-                  dirty_points: Vec::new()
+                  dirty_points: Set::new(),
+                  old_dirty_points: Set::new()
         })
     }
 }
@@ -357,27 +375,32 @@ impl App for TopDown {
         sprite_image.draw(&mut sprite_buf)
                      .map_err(|_| Error::DisplayErr)?;
 
-        target
-            .draw_iter(self.dirty_points.iter()
-                         .filter_map(|p| self.framebuf.pixel(*p).map(|c| Pixel(*p, c))))
-            .map_err(|_| Error::DisplayErr)?;
 
         self.dirty_points.clear();
         target
             .cropped(&area).flipped(axes)
-            .draw_iter(Rectangle::new(Point::new(0,0), size).points()
-                         .map(|p| Pixel(p, sprite_buf.pixel(p).unwrap_or(self.transparent)))
-                         .filter(|Pixel(p,c)| *c != self.transparent)
+            .draw_iter(Rectangle::new(Point::new(0,0), size)
+                         .points()
+                         .filter_map(|p| sprite_buf.pixel(p)
+                                                   .filter(|c| *c != self.transparent)
+                                                   .map(|c| Pixel(p, c)))
                          .map(|Pixel(p,c)| {
-                             self.dirty_points.push(p + at);
+                             // Don't need to draw over the points we're drawing this time.
+                             let q = axes.flip(p, size) + at;
+                             self.old_dirty_points.remove(&MyPoint::from(q));
+                             let _ = self.dirty_points.insert(MyPoint::from(q));
                              Pixel(p,c)
                          }))
             .map_err(|_| Error::DisplayErr)?;
 
-        // sprite_image.draw(&mut self.framebuf.cropped(&area).flipped(axes)).map_err(|_| Error::DisplayErr)?;
-        // self.framebuf.as_image().draw(target)
-        //         .map_err(|_| Error::DisplayErr)?;
-    
+        target
+            .draw_iter(self.old_dirty_points.iter()
+                         .filter_map(|p| self.framebuf.pixel(p.0).map(|c| Pixel(p.0, c))))
+            .map_err(|_| Error::DisplayErr)?;
+
+        // (self.old_dirty_points, self.dirty_points) = (self.dirty_points, self.old_dirty_points);
+        core::mem::swap(&mut self.dirty_points, &mut self.old_dirty_points);
+
         Ok(())
     }      
 }
