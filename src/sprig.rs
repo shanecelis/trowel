@@ -10,26 +10,36 @@
    [6]: https://hackclub.com
 */
 
+use alloc::string::{String, ToString};
 // Ensure we halt the program on panic. (If we don't mention this crate it won't
 // be linked.)
 use defmt_rtt as _;
+use embedded_graphics::{
+    mono_font::{ascii, MonoTextStyle},
+    text::Text,
+};
 use panic_probe as _;
 
 use rp2040_hal as hal;
 
 use embedded_graphics::{draw_target::DrawTarget, pixelcolor::Rgb565, prelude::*};
 use embedded_hal::digital::v2::{InputPin, OutputPin};
+use embedded_sdmmc::filesystem::Mode;
+use embedded_sdmmc::{Controller, SdMmcSpi, VolumeIdx};
 use fugit::RateExtU32;
-use rp2040_hal::{clocks::Clock, timer::{Alarm0, monotonic::Monotonic}};
-use st7735_lcd::{Orientation, ST7735};
+use rp2040_hal::{
+    clocks::Clock,
+    timer::{monotonic::Monotonic, Alarm0},
+};
 use rtic_monotonic::Monotonic as RticMonotonic;
+use st7735_lcd::{Orientation, ST7735};
 
 // A shorter alias for the Peripheral Access Crate, which provides low-level
 // register access.
-use crate::{App, Buttons, FpsApp, AppExt};
-use hal::pac;
-use embedded_alloc::Heap;
+use crate::{App, AppExt, Buttons, FpsApp};
 use core::option::Option;
+use embedded_alloc::Heap;
+use hal::pac;
 use try_default::TryDefault;
 
 /// The linker will place this boot block at the start of our program image. We
@@ -38,7 +48,7 @@ use try_default::TryDefault;
 #[used]
 pub static BOOT2: [u8; 256] = rp2040_boot2::BOOT_LOADER_W25Q080;
 use core::cell::RefCell;
-use embedded_time::{fraction::Fraction, Clock as EClock, clock::Error, Instant as EInstant};
+use embedded_time::{clock::Error, fraction::Fraction, Clock as EClock, Instant as EInstant};
 
 /// External high-speed crystal on the Raspberry Pi Pico board is 12 MHz. Adjust
 /// if your board has a different frequency.
@@ -51,10 +61,12 @@ static mut MONOTONIC_CLOCK: Option<MonotonicClock> = None;
 
 type Monotonic0 = Monotonic<Alarm0>;
 
+mod fs;
+
 pub struct MonotonicClock(RefCell<Monotonic0>);
 impl MonotonicClock {
-    fn new(monotonic : Monotonic0) -> Self {
-// https://docs.rs/rp2040-hal/latest/rp2040_hal/timer/monotonic/struct.Monotonic.html
+    fn new(monotonic: Monotonic0) -> Self {
+        // https://docs.rs/rp2040-hal/latest/rp2040_hal/timer/monotonic/struct.Monotonic.html
         Self(monotonic.into())
     }
 }
@@ -69,7 +81,7 @@ impl EClock for MonotonicClock {
     fn try_now(&self) -> Result<EInstant<Self>, Error> {
         match self.0.try_borrow_mut() {
             Ok(mut m) => Ok(EInstant::<MonotonicClock>::new(m.now().ticks())),
-            Err(_) => Err(Error::Unspecified)
+            Err(_) => Err(Error::Unspecified),
         }
     }
 }
@@ -83,9 +95,11 @@ impl TryDefault<FpsApp<MonotonicClock>> for FpsApp<MonotonicClock> {
 pub type FpsApp0 = FpsApp<MonotonicClock>;
 
 /// The `run` function configures the RP2040 peripherals, then runs the app.
-pub fn run_with<F,A>(app_maker: F) -> ()
-        where F : FnOnce() -> A,
-              A : App {
+pub fn run_with<F, A>(app_maker: F) -> ()
+where
+    F: FnOnce() -> A,
+    A: App,
+{
     {
         use core::mem::MaybeUninit;
         const HEAP_SIZE: usize = 12_000;
@@ -102,12 +116,11 @@ pub fn run_with<F,A>(app_maker: F) -> ()
     }
 }
 
-
-fn _run_with<F,A>(app_maker: F) -> ()
-        where F : FnOnce() -> A,
-              A : App {
-
-
+fn _run_with<F, A>(app_maker: F) -> ()
+where
+    F: FnOnce() -> A,
+    A: App,
+{
     // Grab our singleton objects.
     let mut pac = pac::Peripherals::take().unwrap();
     let core = pac::CorePeripherals::take().unwrap();
@@ -129,7 +142,6 @@ fn _run_with<F,A>(app_maker: F) -> ()
     .expect("clock init failed.");
 
     let mut delay = cortex_m::delay::Delay::new(core.SYST, clocks.system_clock.freq().to_Hz());
-
 
     // The single-cycle I/O block controls our GPIO pins.
     let sio = hal::Sio::new(pac.SIO);
@@ -171,7 +183,9 @@ fn _run_with<F,A>(app_maker: F) -> ()
         &embedded_hal::spi::MODE_0,
     );
 
-    let mut disp = ST7735::new(spi, dc, rst, true, false, 160, 128);
+    let bus = shared_bus::BusManagerSimple::new(spi);
+
+    let mut disp = ST7735::new(bus.acquire_spi(), dc, rst, true, false, 160, 128);
 
     disp.init(&mut delay).unwrap();
     disp.set_orientation(&Orientation::Landscape).unwrap();
@@ -182,16 +196,99 @@ fn _run_with<F,A>(app_maker: F) -> ()
     let alarm = timer.alarm_0().unwrap();
     let monotonic = Monotonic::new(timer, alarm);
     let monotonic_clock = MonotonicClock::new(monotonic);
-    unsafe { MONOTONIC_CLOCK = Some(monotonic_clock); }
+    unsafe {
+        MONOTONIC_CLOCK = Some(monotonic_clock);
+    }
 
     // Wait until the screen cleared otherwise the screen will show random
     // pixels for a brief moment.
     lcd_led.set_high().unwrap();
 
+    // Init the App
     // We could turn on the MCU's led.
     // led.set_high().unwrap();
     let mut app = app_maker();
     app.init().expect("error initializing");
+
+    struct FSClock {}
+    impl embedded_sdmmc::TimeSource for FSClock {
+        fn get_timestamp(&self) -> embedded_sdmmc::Timestamp {
+            embedded_sdmmc::Timestamp::from_fat(0, 0)
+        }
+    }
+    let time_source = FSClock {};
+
+    let mut sdmmc_cs = pins.gpio21.into_push_pull_output();
+    let mut sd_spi = SdMmcSpi::new(bus.acquire_spi(), sdmmc_cs);
+
+    if let Ok(block) = sd_spi.acquire() {
+        // Successfully connected to SD Card
+    }
+
+    let block = match sd_spi.acquire() {
+        Ok(block) => block,
+        Err(e) => {
+            write(format!("Block E: {:?}", e));
+            return;
+        }
+    };
+
+    print!("Successfully connected to SD Card");
+
+    print!("Init SD card controller...");
+    let mut cont = Controller::new(block, time_source);
+
+    print!("Card size...");
+    match cont.device().card_size_bytes() {
+        Ok(size) => printf!("card size is {} bytes", size),
+        Err(e) => {
+            printf!("Error retrieving card size: {:?}", e);
+            return;
+        }
+    }
+
+    print!("Get Volume...");
+    let mut volume = match cont.get_volume(VolumeIdx(0)) {
+        Ok(v) => v,
+        Err(e) => {
+            printf!("Error getting volume 0: {:?}", e);
+            return;
+        }
+    };
+
+    let dir = match cont.open_root_dir(&volume) {
+        Ok(dir) => dir,
+        Err(e) => {
+            panic!("Error opening root dir: {:?}", e);
+        }
+    };
+
+    print!("Open file...");
+    match cont.open_file_in_dir(
+        &mut volume,
+        &dir,
+        "secrets.lst",
+        Mode::ReadWriteCreateOrAppend,
+    ) {
+        Ok(mut file) => {
+            let mut buffer = vec![0; file.length() as usize];
+            file.seek_from_start(0).unwrap();
+            let actual_read = cont.read(&mut volume, &mut file, &mut buffer).unwrap();
+            printf!(
+                "Read {}/{} bytes from file: {:?}",
+                actual_read,
+                buffer.len(),
+                String::from_utf8(buffer).unwrap()
+            );
+
+            cont.write(&mut volume, &mut file, b"moresecret").unwrap();
+            cont.close_file(&volume, file).unwrap();
+        }
+        Err(e) => {
+            printf!("Error opening file: {:?}", e);
+            return;
+        }
+    }
 
     // let mut fps_app = FpsApp::new().expect("error init fps app");
 
@@ -233,6 +330,5 @@ fn _run_with<F,A>(app_maker: F) -> ()
         // fps_app.draw(&mut disp).expect("error fps");
         // let fps = fps_counter.tick();
         // Text::new(&format!("FPS: {fps}"), fps_position, character_style).draw(&mut disp).expect("error on fps");
-    };
+    }
 }
-
