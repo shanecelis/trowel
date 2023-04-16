@@ -18,10 +18,14 @@ use heapless::FnvIndexSet as Set;
 const BMP_DATA: &[u8] = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/examples/topdown/sprites/player.bmp"));
 
 const SPRITE_COUNT: usize = 51;
+const SPRITE_WIDTH_MAX : usize = 23;
+const SPRITE_HEIGHT_MAX : usize = 33;
+const SET_SIZE : usize = 512;
 type Framebuf = Framebuffer::<Rgb565, RawU16, LittleEndian, 160, 128, {buffer_size::<Rgb565>(160, 128)}>;
 
 // Ought to be the maximum size of a sprite.
-type Spritebuf = Framebuffer::<Rgb565, RawU16, LittleEndian, 34, 23, {buffer_size::<Rgb565>(34, 23)}>;
+type Spritebuf = Framebuffer::<Rgb565, RawU16, LittleEndian, SPRITE_WIDTH_MAX, SPRITE_HEIGHT_MAX,
+                               {buffer_size::<Rgb565>(SPRITE_WIDTH_MAX, SPRITE_HEIGHT_MAX)}>;
 
 #[derive(Clone, Copy)]
 struct SpriteData {
@@ -193,10 +197,6 @@ fn sprite_data_new(i: usize) -> SpriteData {
     SPRITE_DATA[i % SPRITE_COUNT]
 }
 
-const SPRITE_WIDTH_MAX : usize = 23;
-const SPRITE_HEIGHT_MAX : usize = 33;
-const SET_SIZE : usize = 512;
-
 struct TopDown {
     frame: i32,
     bmp: Bmp<'static, Rgb565>,
@@ -208,6 +208,10 @@ struct TopDown {
     dirty_points: Set<MyPoint, SET_SIZE>,
     old_dirty_points: Set<MyPoint, SET_SIZE>,
 }
+
+// We just Point to implement Hash32, but we can't add that to Point, so we do
+// the next best thing. One nice thing is these one-element wrapper types in
+// rust don't actually cost any extra memory.
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]//, hash32_derive::Hash32)]
 struct MyPoint(Point);
 
@@ -216,6 +220,7 @@ impl From<Point> for MyPoint {
         Self(value)
     }
 }
+
 
 impl hash32::Hash for MyPoint {
     fn hash<H: hash32::Hasher>(&self, h: &mut H) {
@@ -377,28 +382,29 @@ impl App for TopDown {
 
 
         self.dirty_points.clear();
+        // Take note of all pixels touched in dirty_points.
         target
             .cropped(&area).flipped(axes)
             .draw_iter(Rectangle::new(Point::new(0,0), size)
                          .points()
-                         .filter_map(|p| sprite_buf.pixel(p)
+                         .filter_map(|p| sprite_buf.pixel(p) // Option<Rgb565>
                                                    .filter(|c| *c != self.transparent)
                                                    .map(|c| Pixel(p, c)))
                          .map(|Pixel(p,c)| {
-                             // Don't need to draw over the points we're drawing this time.
                              let q = axes.flip(p, size) + at;
+                             // Don't need to draw over the background points we're drawing this time.
                              self.old_dirty_points.remove(&MyPoint::from(q));
                              let _ = self.dirty_points.insert(MyPoint::from(q));
                              Pixel(p,c)
                          }))
             .map_err(|_| Error::DisplayErr)?;
 
+        // Restore the background pixels from the last sprite draw.
         target
             .draw_iter(self.old_dirty_points.iter()
                          .filter_map(|p| self.framebuf.pixel(p.0).map(|c| Pixel(p.0, c))))
             .map_err(|_| Error::DisplayErr)?;
 
-        // (self.old_dirty_points, self.dirty_points) = (self.dirty_points, self.old_dirty_points);
         core::mem::swap(&mut self.dirty_points, &mut self.old_dirty_points);
 
         Ok(())
@@ -408,7 +414,5 @@ impl App for TopDown {
 #[trowel::entry]
 fn main() {
     let app = TopDown::new().expect("Could not make TopDown app");
-    // let mut app = BufferedApp::new(app);
-    // app.frame_buf.data.transparent = Some(Rgb565::from(Rgb888::new(0xee, 0x00, 0xff)));
     trowel::run(app);
 }
