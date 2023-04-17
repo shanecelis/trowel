@@ -17,7 +17,7 @@ impl FS for PCFS {
 
     fn read_file(&mut self, name: &str) -> String {
         let name = format!("fs/{}", name);
-        fs::read_to_string(name).unwrap()
+        fs::read_to_string(name).unwrap_or_default()
     }
 
     fn delete_file(&mut self, name: &str) -> bool {
