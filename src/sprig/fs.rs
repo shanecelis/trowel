@@ -58,10 +58,13 @@ impl fs::FS for SPIFS<'_> {
     }
 
     fn read_file(&mut self, name: &str) -> String {
-        let mut file = self
-            .controller
-            .open_file_in_dir(&mut self.volume, &self.root, name, Mode::ReadOnly)
-            .expect("Failed to open file");
+        let file =
+            self.controller
+                .open_file_in_dir(&mut self.volume, &self.root, name, Mode::ReadOnly);
+        if let Err(_) = file {
+            return String::new();
+        }
+        let mut file = file.unwrap();
         let mut buf = vec![0u8; file.length() as usize];
         file.seek_from_start(0).unwrap();
         let _ = self.controller.read(&mut self.volume, &mut file, &mut buf);
