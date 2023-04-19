@@ -30,7 +30,7 @@ use st7735_lcd::{Orientation, ST7735};
 
 // A shorter alias for the Peripheral Access Crate, which provides low-level
 // register access.
-use crate::{App, AppExt, Buttons, FpsApp, OptionalFS};
+use crate::{App, AppExt, Buttons, FpsApp};
 use core::option::Option;
 use embedded_alloc::Heap;
 use hal::pac;
@@ -230,16 +230,11 @@ where
         }
     };
 
-    let mut fs: OptionalFS<SPIFS> = match &mut fs {
-        Some(fs) => Some(fs),
-        None => None,
-    };
-
     // Init the App
     // We could turn on the MCU's led.
     // led.set_high().unwrap();
     let mut app = app_maker();
-    app.init(&mut fs).expect("error initializing");
+    app.init().expect("error initializing");
 
     // let mut fps_app = FpsApp::new().expect("error init fps app");
 
@@ -276,7 +271,7 @@ where
             buttons |= Buttons::L;
         }
 
-        app.update(buttons, &mut fs).expect("error updating");
+        app.update(buttons).expect("error updating");
 
         disp_cs.set_low().unwrap();
         app.draw(&mut disp).expect("error drawing");
@@ -284,5 +279,9 @@ where
         // let fps = fps_counter.tick();
         // Text::new(&format!("FPS: {fps}"), fps_position, character_style).draw(&mut disp).expect("error on fps");
         disp_cs.set_high().unwrap();
+
+        if let Some(fs) = &mut fs {
+            app.read_write(fs).expect("error reading/writing");
+        }
     }
 }

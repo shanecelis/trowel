@@ -11,7 +11,7 @@ use embedded_graphics::{
     prelude::*,
     text::Text,
 };
-use trowel::{App, AppResult, Buttons, Error, OptionalFS, FS};
+use trowel::{App, AppResult, Buttons, Error, FS};
 
 struct ReadFile {
     frame: i32, // Frame count
@@ -20,19 +20,27 @@ struct ReadFile {
 }
 
 impl App for ReadFile {
-    fn init<F: FS>(&mut self, fs: &mut OptionalFS<F>) -> AppResult {
-        match fs {
-            Some(fs) => {
-                let file = fs.read_file("hello.txt");
-                self.file_contents = Box::from(file);
-            }
-            None => self.file_contents = Box::from("No filesystem"),
+    fn read_write<F>(&mut self, fs: &mut F) -> AppResult
+    where
+        F: FS,
+    {
+        if self.frame != 1 {
+            return Ok(());
+        }
+
+        let file = fs.read_file("hello.txt");
+        if let Some((size, file)) = file {
+            self.file_contents = Box::from(core::str::from_utf8(&file[..size]).unwrap());
         }
 
         Ok(())
     }
 
-    fn update<F: FS>(&mut self, _buttons: Buttons, _fs: &mut OptionalFS<F>) -> AppResult {
+    fn init(&mut self) -> AppResult {
+        Ok(())
+    }
+
+    fn update(&mut self, _buttons: Buttons) -> AppResult {
         self.frame += 1;
 
         Ok(())
@@ -57,7 +65,7 @@ impl App for ReadFile {
 fn main() {
     trowel::run(ReadFile {
         frame: 0,
-        file_contents: "".into(),
+        file_contents: Box::from("No filesystem"),
     });
 }
 

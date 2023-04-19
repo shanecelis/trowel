@@ -1,4 +1,4 @@
-use crate::{App, AppResult, Buttons, Error, OptionalFS, FS};
+use crate::{App, AppResult, Buttons, Error};
 use embedded_graphics::{
     draw_target::DrawTarget, pixelcolor::Rgb565, prelude::*, primitives::Rectangle,
 };
@@ -76,12 +76,12 @@ impl<A> App for BufferedApp<A>
 where
     A: App,
 {
-    fn init<F: FS>(&mut self, fs: &mut OptionalFS<F>) -> AppResult {
-        self.app.init(fs)
+    fn init(&mut self) -> AppResult {
+        self.app.init()
     }
 
-    fn update<F: FS>(&mut self, buttons: Buttons, fs: &mut OptionalFS<F>) -> AppResult {
-        self.app.update(buttons, fs)?;
+    fn update(&mut self, buttons: Buttons) -> AppResult {
+        self.app.update(buttons)?;
         self.frame += 1;
         if let Some(inc_b) = self.increase_button {
             if buttons.contains(inc_b) && !self.last_buttons.contains(inc_b) {

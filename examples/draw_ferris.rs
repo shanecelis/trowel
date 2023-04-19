@@ -19,7 +19,7 @@ use embedded_graphics::{
     pixelcolor::Rgb565,
     prelude::*,
 };
-use trowel::{App, AppResult, Buttons, Error, OptionalFS, FS};
+use trowel::{App, AppResult, Buttons, Error};
 
 struct DrawFerris {
     /// Frame count
@@ -27,11 +27,11 @@ struct DrawFerris {
 }
 
 impl App for DrawFerris {
-    fn init<F: FS>(&mut self, _fs: &mut OptionalFS<F>) -> AppResult {
+    fn init(&mut self) -> AppResult {
         Ok(())
     }
 
-    fn update<F: FS>(&mut self, _buttons: Buttons, _fs: &mut OptionalFS<F>) -> AppResult {
+    fn update(&mut self, _buttons: Buttons) -> AppResult {
         self.frame += 1;
         Ok(())
     }

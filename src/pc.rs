@@ -13,12 +13,10 @@ use embedded_graphics_simulator::{
     Window,
 };
 
-use self::fs::PCFS;
-
 use super::{AppExt, FpsApp};
 use embedded_fps::StdClock;
 
-use crate::{App, Buttons, OptionalFS};
+use crate::{App, Buttons};
 
 mod fs;
 
@@ -57,12 +55,11 @@ where
     let mut window = Window::new("Sprig Simulator", &output_settings);
     let mut app = app_maker();
     let mut fs = fs::PCFS::new();
-    let mut fs: OptionalFS<PCFS> = Some(&mut fs).into();
 
     // if Some("1") == option_env!("SHOW_FPS") {
     //     app = app.join(FpsApp::default());
     // }
-    app.init(&mut fs).expect("error initializing");
+    app.init().expect("error initializing");
 
     let mut buttons = Buttons::empty();
     // 'running: loop {
@@ -99,8 +96,10 @@ where
             }
         }
 
-        app.update(buttons, &mut fs).expect("error updating");
+        app.update(buttons).expect("error updating");
         app.draw(&mut display).expect("error drawing");
+        app.read_write(&mut fs).expect("error reading/writing");
+
         window.update(&display);
     }
 }

@@ -1,8 +1,6 @@
 use embedded_graphics::{draw_target::DrawTarget, pixelcolor::Rgb565, prelude::*};
 use embedded_time::Clock;
 
-use crate::{OptionalFS, FS};
-
 use super::{App, AppResult, Buttons, Error};
 use embedded_fps::FPS;
 use embedded_graphics::{
@@ -42,11 +40,11 @@ impl<C> App for FpsApp<C>
 where
     C: Clock,
 {
-    fn init<F: FS>(&mut self, _fs: &mut OptionalFS<F>) -> AppResult {
+    fn init(&mut self) -> AppResult {
         Ok(())
     }
 
-    fn update<F: FS>(&mut self, _buttons: Buttons, _fs: &mut OptionalFS<F>) -> AppResult {
+    fn update(&mut self, _buttons: Buttons) -> AppResult {
         Ok(())
     }
 

@@ -1,5 +1,5 @@
 use crate::fs;
-use alloc::string::String;
+use alloc::{boxed::Box, string::String};
 use embedded_sdmmc::{BlockSpi, Controller, Mode};
 use rp2040_hal::{
     gpio::{bank0::Gpio21, Output, Pin, PushPull},
@@ -57,20 +57,22 @@ impl fs::FS for SPIFS<'_> {
             .is_ok()
     }
 
-    fn read_file(&mut self, name: &str) -> String {
+    fn read_file(&mut self, name: &str) -> Option<(usize, Box<[u8]>)> {
         let file =
             self.controller
                 .open_file_in_dir(&mut self.volume, &self.root, name, Mode::ReadOnly);
-        if let Err(_) = file {
-            return String::new();
-        }
-        let mut file = file.unwrap();
+
+        let mut file = file.ok()?;
         let mut buf = vec![0u8; file.length() as usize];
+
         file.seek_from_start(0).unwrap();
-        let _ = self.controller.read(&mut self.volume, &mut file, &mut buf);
-        let s = String::from_utf8(buf).expect("Failed to convert to str");
+        let bytes_read = self
+            .controller
+            .read(&mut self.volume, &mut file, &mut buf)
+            .ok();
         self.controller.close_file(&self.volume, file).unwrap();
-        s
+        let bytes_read = bytes_read?;
+        Some((bytes_read, buf.into_boxed_slice()))
     }
 
     fn write_file(&mut self, name: &str, data: &[u8], mode: fs::WriteMode) -> bool {

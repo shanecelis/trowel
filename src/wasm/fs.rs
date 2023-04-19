@@ -18,11 +18,14 @@ impl FS for WebFS {
         self.local_storage.get_item(name).unwrap().is_some()
     }
 
-    fn read_file(&mut self, name: &str) -> String {
-        self.local_storage
-            .get_item(name)
-            .unwrap()
-            .unwrap_or("".to_string())
+    fn read_file(&mut self, name: &str) -> Option<(usize, Box<[u8]>)> {
+        let data = self.local_storage.get_item(name).unwrap();
+
+        if let Some(data) = data {
+            Some((data.len(), data.into_bytes().into_boxed_slice()))
+        } else {
+            None
+        }
     }
 
     fn delete_file(&mut self, name: &str) -> bool {
@@ -34,16 +37,26 @@ impl FS for WebFS {
     }
 
     fn write_file(&mut self, name: &str, data: &[u8], mode: WriteMode) -> bool {
+        let did_exist = self.file_exists(name);
+
         match mode {
             WriteMode::Append => {
-                let data = self.read_file(name) + &String::from_utf8_lossy(data);
-                self.local_storage.set_item(name, &data).is_ok()
+                let existing_data = self.read_file(name).unwrap().1;
+                let mut new_buf = vec![0u8; existing_data.len() + data.len()];
+                new_buf[..existing_data.len()].copy_from_slice(&existing_data);
+                new_buf[existing_data.len()..].copy_from_slice(data);
+                self.local_storage
+                    .set_item(name, &String::from_utf8(new_buf).unwrap())
+                    .unwrap();
             }
-            WriteMode::Truncate => self
-                .local_storage
-                .set_item(name, &String::from_utf8_lossy(data))
-                .is_ok(),
+            WriteMode::Truncate => {
+                self.local_storage
+                    .set_item(name, &String::from_utf8(data.to_vec()).unwrap())
+                    .unwrap();
+            }
         }
+
+        did_exist
     }
 
     fn list_files(&mut self) -> Vec<String> {

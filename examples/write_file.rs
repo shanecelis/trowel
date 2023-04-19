@@ -8,7 +8,7 @@ use embedded_graphics::{
     prelude::*,
     text::Text,
 };
-use trowel::{App, AppResult, Buttons, Error, OptionalFS, WriteMode, FS};
+use trowel::{App, AppResult, Buttons, Error, WriteMode, FS};
 
 struct WriteFile {
     frame: i32, // Frame count
@@ -17,21 +17,25 @@ struct WriteFile {
 }
 
 impl App for WriteFile {
-    fn init<F: FS>(&mut self, fs: &mut OptionalFS<F>) -> AppResult {
-        match fs {
-            Some(fs) => {
-                let file = fs.write_file("hello.txt", b"Hello, FS!", WriteMode::Append);
-                self.was_successful = file;
-            }
-            None => {
-                self.was_successful = false;
-            }
+    fn read_write<F>(&mut self, fs: &mut F) -> AppResult
+    where
+        F: FS,
+    {
+        if self.frame != 1 {
+            return Ok(());
         }
+
+        let file = fs.write_file("hello.txt", b"Hello, FS!", WriteMode::Append);
+        self.was_successful = file;
 
         Ok(())
     }
 
-    fn update<F: FS>(&mut self, _buttons: Buttons, _fs: &mut OptionalFS<F>) -> AppResult {
+    fn init(&mut self) -> AppResult {
+        Ok(())
+    }
+
+    fn update(&mut self, _buttons: Buttons) -> AppResult {
         self.frame += 1;
 
         Ok(())
