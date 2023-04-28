@@ -10,22 +10,30 @@
    [6]: https://hackclub.com
 */
 
+use alloc::string::{String, ToString};
 // Ensure we halt the program on panic. (If we don't mention this crate it won't
 // be linked.)
 use defmt_rtt as _;
 // use panic_halt as _;
+use embedded_graphics::{
+    mono_font::{ascii, MonoTextStyle},
+    text::Text,
+};
 use panic_probe as _;
 
 // use rp2040_hal as hal;
 
 use embedded_graphics::{pixelcolor::Rgb565, prelude::*};
 use embedded_hal::digital::v2::{InputPin, OutputPin};
+use embedded_sdmmc::filesystem::Mode;
+use embedded_sdmmc::{Controller, SdMmcSpi, VolumeIdx};
 use fugit::RateExtU32;
 use rp_pico::hal::{self, pac::interrupt};
 use hal::{clocks::Clock, timer::{Alarm0, monotonic::Monotonic}};
 // use rp2040_hal::timer::monotonic::Monotonic;
 use st7735_lcd::{Orientation, ST7735};
 use rtic_monotonic::Monotonic as RticMonotonic;
+use st7735_lcd::{Orientation, ST7735};
 
 // Serial port module
 use hal::usb::UsbBus;
@@ -35,10 +43,10 @@ use usbd_serial::{SerialPort, USB_CLASS_CDC, UsbError};
 
 // A shorter alias for the Peripheral Access Crate, which provides low-level
 // register access.
-use crate::{App, Buttons, FpsApp, AppExt};
-use hal::pac;
-use embedded_alloc::Heap;
+use crate::{App, AppExt, Buttons, FpsApp};
 use core::option::Option;
+use embedded_alloc::Heap;
+use hal::pac;
 use try_default::TryDefault;
 use circular_buffer::CircularBuffer;
 
@@ -66,10 +74,12 @@ static mut USB_SERIAL: Option<SerialPort<hal::usb::UsbBus>> = None;
 
 type Monotonic0 = Monotonic<Alarm0>;
 
+mod fs;
+
 pub struct MonotonicClock(RefCell<Monotonic0>);
 impl MonotonicClock {
-    fn new(monotonic : Monotonic0) -> Self {
-// https://docs.rs/rp2040-hal/latest/rp2040_hal/timer/monotonic/struct.Monotonic.html
+    fn new(monotonic: Monotonic0) -> Self {
+        // https://docs.rs/rp2040-hal/latest/rp2040_hal/timer/monotonic/struct.Monotonic.html
         Self(monotonic.into())
     }
 }
@@ -85,7 +95,7 @@ impl EClock for MonotonicClock {
     fn try_now(&self) -> Result<EInstant<Self>, Error> {
         match self.0.try_borrow_mut() {
             Ok(mut m) => Ok(EInstant::<MonotonicClock>::new(m.now().ticks())),
-            Err(_) => Err(Error::Unspecified)
+            Err(_) => Err(Error::Unspecified),
         }
     }
 }
@@ -108,9 +118,11 @@ pub fn try_now() -> Result<u64, &'static str> {
 }
 
 /// The `run` function configures the RP2040 peripherals, then runs the app.
-pub fn run_with<F,A>(app_maker: F) -> ()
-        where F : FnOnce() -> A,
-              A : App {
+pub fn run_with<F, A>(app_maker: F) -> ()
+where
+    F: FnOnce() -> A,
+    A: App,
+{
     {
         use core::mem::MaybeUninit;
         const HEAP_SIZE: usize = 12_000;
@@ -189,10 +201,11 @@ pub fn stdout() -> &'static mut Stdout {
 const FPS_TARGET : u8 = 30;
 const FRAME_BUDGET : u64 = 1_000_000 /* micro seconds */ / FPS_TARGET as u64;
 
-fn _run_with<F,A>(app_maker: F) -> ()
-        where F : FnOnce() -> A,
-              A : App {
-
+fn _run_with<F, A>(app_maker: F) -> ()
+where
+    F: FnOnce() -> A,
+    A: App,
+{
     // Grab our singleton objects.
     let mut pac = pac::Peripherals::take().unwrap();
     let core = pac::CorePeripherals::take().unwrap();
@@ -214,7 +227,6 @@ fn _run_with<F,A>(app_maker: F) -> ()
     .expect("clock init failed.");
 
     let mut delay = cortex_m::delay::Delay::new(core.SYST, clocks.system_clock.freq().to_Hz());
-
 
     // The single-cycle I/O block controls our GPIO pins.
     let sio = hal::Sio::new(pac.SIO);
@@ -256,7 +268,9 @@ fn _run_with<F,A>(app_maker: F) -> ()
         &embedded_hal::spi::MODE_0,
     );
 
-    let mut disp = ST7735::new(spi, dc, rst, true, false, 160, 128);
+    let bus = shared_bus::BusManagerSimple::new(spi);
+
+    let mut disp = ST7735::new(bus.acquire_spi(), dc, rst, true, false, 160, 128);
 
     disp.init(&mut delay).unwrap();
     disp.set_orientation(&Orientation::Landscape).unwrap();
@@ -267,7 +281,9 @@ fn _run_with<F,A>(app_maker: F) -> ()
     let alarm = timer.alarm_0().unwrap();
     let monotonic = Monotonic::new(timer, alarm);
     let monotonic_clock = MonotonicClock::new(monotonic);
-    unsafe { MONOTONIC_CLOCK = Some(monotonic_clock); }
+    unsafe {
+        MONOTONIC_CLOCK = Some(monotonic_clock);
+    }
 
     // Wait until the screen cleared otherwise the screen will show random
     // pixels for a brief moment.
@@ -312,8 +328,97 @@ fn _run_with<F,A>(app_maker: F) -> ()
         pac::NVIC::unmask(hal::pac::Interrupt::USBCTRL_IRQ);
     };
 
+    // Init the App
+    // We could turn on the MCU's led.
+    // led.set_high().unwrap();
     let mut app = app_maker();
     app.init().expect("error initializing");
+
+    struct FSClock {}
+    impl embedded_sdmmc::TimeSource for FSClock {
+        fn get_timestamp(&self) -> embedded_sdmmc::Timestamp {
+            embedded_sdmmc::Timestamp::from_fat(0, 0)
+        }
+    }
+    let time_source = FSClock {};
+
+    let mut sdmmc_cs = pins.gpio21.into_push_pull_output();
+    let mut sd_spi = SdMmcSpi::new(bus.acquire_spi(), sdmmc_cs);
+
+    if let Ok(block) = sd_spi.acquire() {
+        // Successfully connected to SD Card
+    }
+
+    let block = match sd_spi.acquire() {
+        Ok(block) => block,
+        Err(e) => {
+            write(format!("Block E: {:?}", e));
+            return;
+        }
+    };
+
+    print!("Successfully connected to SD Card");
+
+    print!("Init SD card controller...");
+    let mut cont = Controller::new(block, time_source);
+
+    print!("Card size...");
+    match cont.device().card_size_bytes() {
+        Ok(size) => printf!("card size is {} bytes", size),
+        Err(e) => {
+            printf!("Error retrieving card size: {:?}", e);
+            return;
+        }
+    }
+
+    print!("Get Volume...");
+    let mut volume = match cont.get_volume(VolumeIdx(0)) {
+        Ok(v) => v,
+        Err(e) => {
+            printf!("Error getting volume 0: {:?}", e);
+            return;
+        }
+    };
+
+    let dir = match cont.open_root_dir(&volume) {
+        Ok(dir) => dir,
+        Err(e) => {
+            panic!("Error opening root dir: {:?}", e);
+        }
+    };
+
+    print!("Open file...");
+    match cont.open_file_in_dir(
+        &mut volume,
+        &dir,
+        "secrets.lst",
+        Mode::ReadWriteCreateOrAppend,
+    ) {
+        Ok(mut file) => {
+            let mut buffer = vec![0; file.length() as usize];
+            file.seek_from_start(0).unwrap();
+            let actual_read = cont.read(&mut volume, &mut file, &mut buffer).unwrap();
+            printf!(
+                "Read {}/{} bytes from file: {:?}",
+                actual_read,
+                buffer.len(),
+                String::from_utf8(buffer).unwrap()
+            );
+
+            cont.write(&mut volume, &mut file, b"moresecret").unwrap();
+            cont.close_file(&volume, file).unwrap();
+        }
+        Err(e) => {
+            printf!("Error opening file: {:?}", e);
+            return;
+        }
+    }
+
+    // let mut fps_app = FpsApp::new().expect("error init fps app");
+
+    // let mut fps_counter =
+    // let character_style = MonoTextStyle::new(&FONT_7X13, Rgb565::WHITE);
+    // let fps_position = Point::new(5, 15);
 
     let mut buttons;
     let mut start : Result<u64, &'static str> = try_now();
