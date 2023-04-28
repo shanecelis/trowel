@@ -48,7 +48,7 @@ panic-probe = { version = "0.3.0", features = ["print-defmt"] }
 # rp2040-hal = { version = "0.8.0", features=["rt", "critical-section-impl"] }
 rp2040-boot2 = { git = "https://github.com/rp-rs/rp2040-boot2-rs", branch="main" }
 st7735-lcd = "0.8"
-embedded-sdmmc = { git = "https://github.com/UserJHansen/embedded-sdmmc-rs/", branch="main"}
+embedded-sdmmc = { git = "https://github.com/UserJHansen/embedded-sdmmc-rs/", branch="develop"}
 shared-bus = { version = "0.2.5", features=["cortex-m"] }
 fugit = "0.3.6"
 
@@ -72,6 +72,7 @@ features = [
   'ImageData',
   'Node',
   'Window',
+  'Storage'
 ]
 
 [patch.crates-io]

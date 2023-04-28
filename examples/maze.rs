@@ -68,7 +68,7 @@ impl App for State {
         Ok(())
     }
 
-    fn update<F: FS>(&mut self, _buttons: Buttons, _fs: &mut OptionalFS<F>) -> AppResult {
+    fn update<F: FS>(&mut self, buttons: Buttons, _fs: &mut OptionalFS<F>) -> AppResult {
         self.frame += 1;
 
         self.update(

@@ -13,12 +13,17 @@ use embedded_graphics_simulator::{
     Window,
 };
 
+use self::fs::PCFS;
+
+use super::{AppExt, FpsApp};
 use embedded_fps::StdClock;
 use super::{FpsApp,AppExt};
 use genio::std_impls::GenioWrite;
 use std::time::{Instant, Duration};
 
-use crate::{App, Buttons};
+use crate::{App, Buttons, OptionalFS};
+
+mod fs;
 
 impl Default for FpsApp<StdClock> {
     fn default() -> Self {
@@ -33,9 +38,11 @@ pub fn stdout() -> GenioWrite<std::io::Stdout> {
 const FPS_TARGET : u8 = 30;
 const FRAME_BUDGET : u64 = 1_000_000 /* micro seconds */ / FPS_TARGET as u64; 
 
-pub fn run_with<F,A>(app_maker: F) -> !
-        where F : FnOnce() -> A, A : App + 'static {
-
+pub fn run_with<F, A>(app_maker: F) -> !
+where
+    F: FnOnce() -> A,
+    A: App + 'static,
+{
     if Some("1") == option_env!("SHOW_FPS") {
         _run_with(move || app_maker().join(FpsApp::default()));
     } else {
@@ -43,9 +50,11 @@ pub fn run_with<F,A>(app_maker: F) -> !
     }
 }
 
-fn _run_with<F,A>(app_maker: F) -> !
-        where F : FnOnce() -> A, A : App + 'static {
-
+fn _run_with<F, A>(app_maker: F) -> !
+where
+    F: FnOnce() -> A,
+    A: App + 'static,
+{
     let mut display: SimulatorDisplay<Rgb565> = SimulatorDisplay::new(Size::new(160, 128));
 
     display
@@ -57,11 +66,13 @@ fn _run_with<F,A>(app_maker: F) -> !
         .build();
     let mut window = Window::new("Sprig Simulator", &output_settings);
     let mut app = app_maker();
+    let mut fs = fs::PCFS::new();
+    let mut fs: OptionalFS<PCFS> = Some(&mut fs).into();
 
     // if Some("1") == option_env!("SHOW_FPS") {
     //     app = app.join(FpsApp::default());
     // }
-    app.init().expect("error initializing");
+    app.init(&mut fs).expect("error initializing");
 
     let mut buttons = Buttons::empty();
     let frame_budget = Duration::from_micros(FRAME_BUDGET);
@@ -100,7 +111,7 @@ fn _run_with<F,A>(app_maker: F) -> !
             }
         }
 
-        app.update(buttons).expect("error updating");
+        app.update(buttons, &mut fs).expect("error updating");
         app.draw(&mut display).expect("error drawing");
         if let Some(leftover) = frame_budget.checked_sub(instant.elapsed()) {
             std::thread::sleep(leftover)
