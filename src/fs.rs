@@ -1,5 +1,6 @@
 use alloc::{boxed::Box, string::String, vec::Vec};
 
+#[allow(dead_code)]
 pub enum WriteMode {
     Append,
     Truncate,

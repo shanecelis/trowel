@@ -9,15 +9,10 @@ use runty8_core as runty8;
 #[macro_use]
 extern crate alloc;
 
+#[trowel::entry]
 fn main() {
     let resources = Resources::default();
     trowel::runty8::run::<ExampleApp>(resources);
-}
-
-#[cfg_attr(all(target_arch = "arm", target_os = "none"), cortex_m_rt::entry)]
-fn entry() -> ! {
-    main();
-    loop {}
 }
 
 pub struct ExampleApp {

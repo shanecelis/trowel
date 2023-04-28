@@ -1,7 +1,7 @@
 use crate::fs;
 use alloc::{boxed::Box, string::String};
 use embedded_sdmmc::{BlockSpi, Controller, Mode};
-use rp2040_hal::{
+use rp_pico::hal::{
     gpio::{bank0::Gpio21, Output, Pin, PushPull},
     pac::SPI0,
     spi::Enabled,

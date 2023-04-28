@@ -3,7 +3,9 @@
 use runty::{Input, Pico8, Resources};
 use runty8_core as runty; //, KeyboardEvent, InputEvent, Key, KeyState};
 
-use crate::{App, AppResult, Buttons, Error, OptionalFS, FS};
+use crate::{App, AppResult, Buttons, Error};
+#[cfg(feature = "sdcard")]
+use crate::{FS};
 use embedded_graphics::{
     draw_target::DrawTarget,
     image::{Image, ImageRaw, ImageRawBE},
@@ -49,11 +51,11 @@ impl<G> App for RuntyApp<G>
 where
     G: runty::App + 'static,
 {
-    fn init<F: FS>(&mut self, _fs: &mut OptionalFS<F>) -> AppResult {
+    fn init(&mut self) -> AppResult {
         Ok(())
     }
 
-    fn update<F: FS>(&mut self, buttons: Buttons, _fs: &mut OptionalFS<F>) -> AppResult {
+    fn update(&mut self, buttons: Buttons) -> AppResult {
         // self.handle_event(Buttons::W, buttons, Key::W);
         // self.handle_event(Buttons::A, buttons, Key::A);
         // self.handle_event(Buttons::S, buttons, Key::S);

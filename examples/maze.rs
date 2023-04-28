@@ -22,7 +22,7 @@ use embedded_graphics::{
 };
 #[allow(unused_imports)]
 use micromath::F32Ext;
-use trowel::{buffered::BufferedApp, App, AppExt, AppResult, Buttons, Error, FpsApp, FS};
+use trowel::{buffered::BufferedApp, App, AppExt, AppResult, Buttons, Error, FpsApp};
 use try_default::TryDefault;
 
 // The original platform had a 160x160 display. Sprig only has a 160x128
@@ -352,6 +352,7 @@ fn fabsf(x: f32) -> f32 {
     x.abs()
 }
 
+#[trowel::entry]
 fn main() {
     trowel::run_with(|| {
         let state: State = State {
@@ -369,10 +370,4 @@ fn main() {
         app.decrease_button = Some(Buttons::K);
         app
     })
-}
-
-#[cfg_attr(all(target_arch = "arm", target_os = "none"), cortex_m_rt::entry)]
-fn entry() -> ! {
-    main();
-    loop {}
 }

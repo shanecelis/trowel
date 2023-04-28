@@ -50,7 +50,7 @@ impl App for ReadFile {
     where
         T: DrawTarget<Color = Rgb565, Error = E>,
     {
-        if self.frame == 1 {
+        if self.frame == 30 {
             // Create a new character style
             let style = MonoTextStyle::new(&ascii::FONT_7X13, Rgb565::WHITE);
 
@@ -62,15 +62,10 @@ impl App for ReadFile {
     }
 }
 
+#[trowel::entry]
 fn main() {
     trowel::run(ReadFile {
         frame: 0,
         file_contents: Box::from("No filesystem"),
     });
-}
-
-#[cfg_attr(all(target_arch = "arm", target_os = "none"), cortex_m_rt::entry)]
-fn entry() -> ! {
-    main();
-    loop {}
 }

@@ -153,9 +153,11 @@ required-features = ["runty8"]
 
 [[example]]
 name = "read_file"
+required-features = ["sdcard"]
 
 [[example]]
 name = "write_file"
+required-features = ["sdcard"]
 
 [[example]]
 name = "maze"

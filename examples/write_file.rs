@@ -25,7 +25,7 @@ impl App for WriteFile {
             return Ok(());
         }
 
-        let file = fs.write_file("hello.txt", b"Hello, FS!", WriteMode::Append);
+        let file = fs.write_file("hello.txt", b"Hello, FS!\n", WriteMode::Append);
         self.was_successful = file;
 
         Ok(())
@@ -45,7 +45,7 @@ impl App for WriteFile {
     where
         T: DrawTarget<Color = Rgb565, Error = E>,
     {
-        if self.frame == 1 {
+        if self.frame == 30 {
             // Create a new character style
             let style = MonoTextStyle::new(&ascii::FONT_7X13, Rgb565::WHITE);
 
@@ -65,15 +65,10 @@ impl App for WriteFile {
     }
 }
 
+#[trowel::entry]
 fn main() {
     trowel::run(WriteFile {
         frame: 0,
         was_successful: false,
     });
-}
-
-#[cfg_attr(all(target_arch = "arm", target_os = "none"), cortex_m_rt::entry)]
-fn entry() -> ! {
-    main();
-    loop {}
 }

@@ -14,10 +14,10 @@
 // be linked.)
 use defmt_rtt as _;
 // use panic_halt as _;
-use embedded_graphics::{
-    mono_font::{ascii, MonoTextStyle},
-    text::Text,
-};
+// use embedded_graphics::{
+//     mono_font::{ascii, MonoTextStyle},
+//     text::Text,
+// };
 use panic_probe as _;
 
 // use rp2040_hal as hal;
@@ -31,7 +31,6 @@ use hal::{clocks::Clock, timer::{Alarm0, monotonic::Monotonic}};
 // use rp2040_hal::timer::monotonic::Monotonic;
 use st7735_lcd::{Orientation, ST7735};
 use rtic_monotonic::Monotonic as RticMonotonic;
-use st7735_lcd::{Orientation, ST7735};
 
 // Serial port module
 use hal::usb::UsbBus;
@@ -333,6 +332,7 @@ where
     // Enable the USB interrupt
     unsafe {
         pac::NVIC::unmask(hal::pac::Interrupt::USBCTRL_IRQ);
+    }
     let time_source = fs::FSClock {};
 
     let sdmmc_cs = pins.gpio21.into_push_pull_output();
@@ -379,51 +379,27 @@ where
 
         if w.is_low().unwrap() {
             buttons |= Buttons::W;
-            unsafe {
-                USB_SERIAL.as_mut().unwrap().write(b"W").ok();
-                }
         }
         if a.is_low().unwrap() {
             buttons |= Buttons::A;
-            unsafe {
-                USB_SERIAL.as_mut().unwrap().write(b"A").ok();
-                }
         }
         if s.is_low().unwrap() {
             buttons |= Buttons::S;
-            unsafe {
-                USB_SERIAL.as_mut().unwrap().write(b"S").ok();
-                }
         }
         if d.is_low().unwrap() {
             buttons |= Buttons::D;
-            unsafe {
-                USB_SERIAL.as_mut().unwrap().write(b"D").ok();
-                }
         }
         if i.is_low().unwrap() {
             buttons |= Buttons::I;
-            unsafe {
-                USB_SERIAL.as_mut().unwrap().write(b"I").ok();
-                }
         }
         if j.is_low().unwrap() {
             buttons |= Buttons::J;
-            unsafe {
-                USB_SERIAL.as_mut().unwrap().write(b"J").ok();
-                }
         }
         if k.is_low().unwrap() {
             buttons |= Buttons::K;
-            unsafe {
-                USB_SERIAL.as_mut().unwrap().write(b"K").ok();
-                }
         }
         if l.is_low().unwrap() {
             buttons |= Buttons::L;
-            unsafe {
-                USB_SERIAL.as_mut().unwrap().write(b"L").ok();
-                }
         }
 
         app.update(buttons).expect("error updating");

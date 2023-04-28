@@ -130,8 +130,6 @@ pub fn run(app: impl App + 'static) -> () {
 #[cfg(feature = "runty8")]
 pub mod runty8;
 
-#[cfg(feature = "sdcard")]
-pub mod sdcard;
 #[cfg(target_family = "wasm")]
 mod wasm;
 #[cfg(target_family = "wasm")]
