@@ -15,12 +15,12 @@ use embedded_graphics_simulator::{
 
 use super::{AppExt, FpsApp};
 use embedded_fps::StdClock;
-use super::{FpsApp,AppExt};
 use genio::std_impls::GenioWrite;
 use std::time::{Instant, Duration};
 
 use crate::{App, Buttons};
 
+#[cfg(feature = "sdcard")]
 mod fs;
 
 impl Default for FpsApp<StdClock> {
@@ -64,6 +64,7 @@ where
         .build();
     let mut window = Window::new("Sprig Simulator", &output_settings);
     let mut app = app_maker();
+    #[cfg(feature = "sdcard")]
     let mut fs = fs::PCFS::new();
 
     // if Some("1") == option_env!("SHOW_FPS") {
@@ -113,6 +114,8 @@ where
         if let Some(leftover) = frame_budget.checked_sub(instant.elapsed()) {
             std::thread::sleep(leftover)
         }
+
+        #[cfg(feature = "sdcard")]
         app.read_write(&mut fs).expect("error reading/writing");
 
         window.update(&display);

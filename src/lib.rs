@@ -38,6 +38,7 @@ pub enum Error {
     BmpErr(tinybmp::ParseError)
 }
 pub type AppResult = Result<(), Error>;
+#[cfg(feature = "sdcard")]
 pub use fs::{WriteMode, FS};
 
 pub trait App {
@@ -47,8 +48,8 @@ pub trait App {
     where
         T: DrawTarget<Color = Rgb565, Error = E>;
 
-    #[allow(unused_variables)]
-    fn read_write<F>(&mut self, fs: &mut F) -> AppResult
+    #[cfg(feature = "sdcard")]
+    fn read_write<F>(&mut self, _fs: &mut F) -> AppResult
     where
         F: fs::FS,
     {

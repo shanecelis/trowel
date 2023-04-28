@@ -117,7 +117,7 @@ where
                 .map_err(|_| Error::DisplayErr),
             Some(k) => {
                 let mut buf: [Rgb565; 160] = [Rgb565::BLACK; 160];
-                for (jj, row) in self.frame_buf.data.0.chunks(160).enumerate() {
+                for (jj, row) in self.frame_buf.data.data.chunks(160).enumerate() {
                     let j = jj as u8;
                     // for j in 0..128 {
                     if (j % k) as u32 == self.frame % k as u32 {
