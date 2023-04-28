@@ -1,27 +1,27 @@
 #![cfg_attr(all(target_arch = "arm", target_os = "none"), no_std)]
 #![cfg_attr(all(target_arch = "arm", target_os = "none"), no_main)]
 
+use core::f32::consts::{FRAC_1_SQRT_2, PI};
 #[cfg(not(feature = "std"))]
 use runty8_core as runty8;
-use core::f32::consts::{FRAC_1_SQRT_2, PI};
 
 use runty8::{rnd, App, Button, Pico8};
 
+use core::cmp;
 use core::iter::{Chain, Map};
 use core::slice;
-use core::cmp;
 #[cfg(all(target_arch = "arm", target_os = "none"))]
 #[macro_use]
 extern crate alloc;
 
 #[cfg(all(target_arch = "arm", target_os = "none"))]
-use alloc::vec::Vec;
-#[cfg(all(target_arch = "arm", target_os = "none"))]
 use crate::alloc::borrow::ToOwned;
 #[cfg(all(target_arch = "arm", target_os = "none"))]
-use micromath::F32Ext;
-#[cfg(all(target_arch = "arm", target_os = "none"))]
 use crate::alloc::string::ToString;
+#[cfg(all(target_arch = "arm", target_os = "none"))]
+use alloc::vec::Vec;
+#[cfg(all(target_arch = "arm", target_os = "none"))]
+use micromath::F32Ext;
 
 fn main() {
     let resources = runty8::load_assets_bin!("examples/celeste").unwrap();
@@ -33,7 +33,7 @@ fn main() {
 #[cfg_attr(all(target_arch = "arm", target_os = "none"), cortex_m_rt::entry)]
 fn entry() -> ! {
     main();
-    loop { }
+    loop {}
 }
 
 struct GameState {

@@ -10,7 +10,6 @@ bitflags = "1.3.2"
 micromath = "2.0.0"
 # runty8-core = { version = "0.1.0", path = "../runty8/src/runty8-core", optional = true, default-features = false }
 runty8-core = { git = "https://github.com/shanecelis/runty8.git", branch = "feature-no-std", optional = true, default-features = false }
-# embedded-sdmmc = { path = "embedded-sdmmc-rs", optional = true }
 embedded-alloc = "0.5.0"
 embedded-graphics-framebuf = "0.2.0"
 embedded-graphics = { version = "0.7.1" }
@@ -47,10 +46,8 @@ panic-probe = { version = "0.3.0", features = ["print-defmt"] }
 # If you're not going to use a Board Support Package you'll need these:
 # rp2040-hal = { git = "https://github.com/rp-rs/rp-hal", branch="main", features=["rt", "critical-section-impl", "disable-intrinsics", "rtic-monotonic"] }
 # rp2040-hal = { version = "0.8.0", features=["rt", "critical-section-impl"] }
-# rp2040-boot2 = { git = "https://github.com/rp-rs/rp2040-boot2-rs", branch="main" }
-st7735-lcd = { version = "0.8", features = ["graphics"] }
 # st7735-lcd = { path = "st7735-lcd-rs" }
-shared-bus = "0.2.5"
+shared-bus = { version = "0.2.5", features=["cortex-m"] }
 fugit = "0.3.6"
 
 [target.'cfg(target_family = "wasm")'.dependencies]
@@ -153,11 +150,9 @@ required-features = ["runty8"]
 
 [[example]]
 name = "read_file"
-required-features = ["sdcard"]
 
 [[example]]
 name = "write_file"
-required-features = ["sdcard"]
 
 [[example]]
 name = "maze"

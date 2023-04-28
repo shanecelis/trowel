@@ -1,6 +1,9 @@
 #![cfg_attr(all(target_arch = "arm", target_os = "none"), no_std)]
 #![cfg_attr(all(target_arch = "arm", target_os = "none"), no_main)]
 
+extern crate alloc;
+
+use alloc::boxed::Box;
 use embedded_graphics::{
     draw_target::DrawTarget,
     mono_font::{ascii, MonoTextStyle},
@@ -8,18 +11,30 @@ use embedded_graphics::{
     prelude::*,
     text::Text,
 };
-use trowel::{App, AppResult, Buttons, Error};
+use trowel::{App, AppResult, Buttons, Error, OptionalFS, FS};
 
 struct ReadFile {
     frame: i32, // Frame count
+
+    file_contents: Box<str>,
 }
 
 impl App for ReadFile {
-    fn init(&mut self) -> AppResult {
+    fn init<F: FS>(&mut self, fs: &mut OptionalFS<F>) -> AppResult {
+        match fs {
+            Some(fs) => {
+                let file = fs.read_file("hello.txt");
+                self.file_contents = Box::from(file);
+            }
+            None => self.file_contents = Box::from("No filesystem"),
+        }
+
         Ok(())
     }
 
-    fn update(&mut self, _buttons: Buttons) -> AppResult {
+    fn update<F: FS>(&mut self, _buttons: Buttons, _fs: &mut OptionalFS<F>) -> AppResult {
+        self.frame += 1;
+
         Ok(())
     }
 
@@ -31,7 +46,7 @@ impl App for ReadFile {
             // Create a new character style
             let style = MonoTextStyle::new(&ascii::FONT_7X13, Rgb565::WHITE);
 
-            Text::new("Hello, World!", Point::new(20, 30), style)
+            Text::new(&self.file_contents, Point::new(20, 30), style)
                 .draw(display)
                 .map_err(|_| Error::DisplayErr)?;
         }
@@ -40,7 +55,10 @@ impl App for ReadFile {
 }
 
 fn main() {
-    trowel::run(ReadFile { frame: 0 });
+    trowel::run(ReadFile {
+        frame: 0,
+        file_contents: "".into(),
+    });
 }
 
 #[cfg_attr(all(target_arch = "arm", target_os = "none"), cortex_m_rt::entry)]

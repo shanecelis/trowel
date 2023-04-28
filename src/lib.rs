@@ -38,10 +38,16 @@ pub enum Error {
     BmpErr(tinybmp::ParseError)
 }
 pub type AppResult = Result<(), Error>;
+pub type OptionalFS<'a, F> = Option<&'a mut F>;
+pub use fs::{WriteMode, FS};
 
 pub trait App {
-    fn init(&mut self) -> AppResult;
-    fn update(&mut self, buttons: Buttons) -> AppResult;
+    fn init<F>(&mut self, fs: &mut OptionalFS<F>) -> AppResult
+    where
+        F: fs::FS;
+    fn update<F>(&mut self, buttons: Buttons, fs: &mut OptionalFS<F>) -> AppResult
+    where
+        F: fs::FS;
     fn draw<T, E>(&mut self, display: &mut T) -> AppResult
     where
         T: DrawTarget<Color = Rgb565, Error = E>;
@@ -61,14 +67,14 @@ where
     A: App,
     B: App,
 {
-    fn init(&mut self) -> AppResult {
-        self.a.init()?;
-        self.b.init()
+    fn init<F: FS>(&mut self, fs: &mut OptionalFS<F>) -> AppResult {
+        self.a.init(fs)?;
+        self.b.init(fs)
     }
 
-    fn update(&mut self, buttons: Buttons) -> AppResult {
-        self.a.update(buttons)?;
-        self.b.update(buttons)
+    fn update<F: FS>(&mut self, buttons: Buttons, fs: &mut OptionalFS<F>) -> AppResult {
+        self.a.update(buttons, fs)?;
+        self.b.update(buttons, fs)
     }
 
     fn draw<T, E>(&mut self, display: &mut T) -> AppResult
@@ -99,6 +105,7 @@ mod sprig;
 pub use sprig::{run_with, stdout};
 
 mod fps;
+mod fs;
 pub use fps::FpsApp;
 
 pub mod buffered;
