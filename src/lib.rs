@@ -38,19 +38,23 @@ pub enum Error {
     BmpErr(tinybmp::ParseError)
 }
 pub type AppResult = Result<(), Error>;
-pub type OptionalFS<'a, F> = Option<&'a mut F>;
 pub use fs::{WriteMode, FS};
 
 pub trait App {
-    fn init<F>(&mut self, fs: &mut OptionalFS<F>) -> AppResult
-    where
-        F: fs::FS;
-    fn update<F>(&mut self, buttons: Buttons, fs: &mut OptionalFS<F>) -> AppResult
-    where
-        F: fs::FS;
+    fn init(&mut self) -> AppResult;
+    fn update(&mut self, buttons: Buttons) -> AppResult;
     fn draw<T, E>(&mut self, display: &mut T) -> AppResult
     where
         T: DrawTarget<Color = Rgb565, Error = E>;
+
+    #[allow(unused_variables)]
+    fn read_write<F>(&mut self, fs: &mut F) -> AppResult
+    where
+        F: fs::FS,
+    {
+        // Default implementation does nothing.
+        Ok(())
+    }
 }
 
 pub struct JoinApps<A, B>
@@ -67,14 +71,14 @@ where
     A: App,
     B: App,
 {
-    fn init<F: FS>(&mut self, fs: &mut OptionalFS<F>) -> AppResult {
-        self.a.init(fs)?;
-        self.b.init(fs)
+    fn init(&mut self) -> AppResult {
+        self.a.init()?;
+        self.b.init()
     }
 
-    fn update<F: FS>(&mut self, buttons: Buttons, fs: &mut OptionalFS<F>) -> AppResult {
-        self.a.update(buttons, fs)?;
-        self.b.update(buttons, fs)
+    fn update(&mut self, buttons: Buttons) -> AppResult {
+        self.a.update(buttons)?;
+        self.b.update(buttons)
     }
 
     fn draw<T, E>(&mut self, display: &mut T) -> AppResult

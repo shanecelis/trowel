@@ -15,9 +15,10 @@ impl FS for PCFS {
         fs::metadata(name).is_ok()
     }
 
-    fn read_file(&mut self, name: &str) -> String {
+    fn read_file(&mut self, name: &str) -> Option<(usize, Box<[u8]>)> {
         let name = format!("fs/{}", name);
-        fs::read_to_string(name).unwrap_or_default()
+        let data = fs::read(name).ok()?;
+        Some((data.len(), data.into_boxed_slice()))
     }
 
     fn delete_file(&mut self, name: &str) -> bool {

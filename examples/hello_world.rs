@@ -8,18 +8,18 @@ use embedded_graphics::{
     prelude::*,
     text::Text,
 };
-use trowel::{App, AppResult, Buttons, Error, OptionalFS, FS};
+use trowel::{App, AppResult, Buttons, Error};
 
 struct DrawFerris {
     frame: i32, // Frame count
 }
 
 impl App for DrawFerris {
-    fn init<F: FS>(&mut self, _fs: &mut OptionalFS<F>) -> AppResult {
+    fn init(&mut self) -> AppResult {
         Ok(())
     }
 
-    fn update<F: FS>(&mut self, _buttons: Buttons, _fs: &mut OptionalFS<F>) -> AppResult {
+    fn update(&mut self, _buttons: Buttons) -> AppResult {
         self.frame += 1;
         Ok(())
     }

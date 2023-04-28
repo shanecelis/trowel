@@ -22,9 +22,7 @@ use embedded_graphics::{
 };
 #[allow(unused_imports)]
 use micromath::F32Ext;
-use trowel::{
-    buffered::BufferedApp, App, AppExt, AppResult, Buttons, Error, FpsApp, OptionalFS, FS,
-};
+use trowel::{buffered::BufferedApp, App, AppExt, AppResult, Buttons, Error, FpsApp, FS};
 use try_default::TryDefault;
 
 // The original platform had a 160x160 display. Sprig only has a 160x128
@@ -62,13 +60,13 @@ const MAP: [u16; 8] = [
 ];
 
 impl App for State {
-    fn init<F: FS>(&mut self, _fs: &mut OptionalFS<F>) -> AppResult {
+    fn init(&mut self) -> AppResult {
         // This way the first frame is zero.
         self.frame = -1;
         Ok(())
     }
 
-    fn update<F: FS>(&mut self, buttons: Buttons, _fs: &mut OptionalFS<F>) -> AppResult {
+    fn update(&mut self, buttons: Buttons) -> AppResult {
         self.frame += 1;
 
         self.update(

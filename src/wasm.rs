@@ -9,7 +9,7 @@ extern crate console_error_panic_hook;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crate::{App, Buttons, OptionalFS};
+use crate::{App, Buttons};
 use wasm_bindgen::{prelude::*, Clamped};
 use web_sys::ImageData;
 
@@ -107,10 +107,8 @@ where
     A: App + 'static,
 {
     let mut app = app_maker();
-    let mut fs = WebFS::new();
-    let mut fs: OptionalFS<WebFS> = Some(&mut fs);
 
-    app.init(&mut fs).expect("error initializing");
+    app.init().expect("error initializing");
     setup::<A>(app).expect("error setting up app");
 }
 
@@ -212,11 +210,11 @@ where
 
     *g.borrow_mut() = Some(Closure::wrap(Box::new(move || {
         let mut fs = WebFS::new();
-        let mut fs: OptionalFS<WebFS> = Some(&mut fs);
 
-        app.update(buttons.borrow().clone(), &mut fs)
+        app.update(buttons.borrow().clone())
             .expect("error updating");
         app.draw(&mut display).expect("error drawing");
+        app.read_write(&mut fs).expect("error reading/writing");
         let image =
             ImageData::new_with_u8_clamped_array_and_sh(Clamped(&mut display.data.0), 160, 128)
                 .expect("Unable to make image data");
