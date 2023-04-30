@@ -162,6 +162,6 @@ required-features = ["sdcard"]
 [[example]]
 name = "maze"
 
-[[example]]
-name = "topdown"
-required-features = ["bmp"]
+# [[example]]
+# name = "topdown"
+# required-features = ["bmp"]

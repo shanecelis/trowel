@@ -2,7 +2,7 @@ use crate::fs;
 use core::cell::RefCell;
 use alloc::{boxed::Box, string::String, rc::Rc};
 use core::mem;
-use embedded_sdmmc::{BlockSpi, Controller, Mode, File, BlockDevice, Error, VolumeIdx};
+use embedded_sdmmc::{BlockSpi, Controller, Mode, File, BlockDevice, Error};
 use rp_pico::hal::{
     gpio::{bank0::Gpio21, Output, Pin, PushPull},
     pac::SPI0,
@@ -54,23 +54,47 @@ impl<'a> SPIFS<'a> {
     }
 }
 
-struct ReadFile<'a> {
+struct SdFile<'a> {
     file: File,
     spifs: RefSPIFS<'a>,
 }
 
-impl<'a> Read for ReadFile<'a> {
+impl<'a> Read for SdFile<'a> {
     type ReadError = Error<<BlockSpiType<'a> as BlockDevice>::Error>;
     fn read(&mut self, buf: &mut [u8]) -> Result<usize, Self::ReadError> {
         let spifs = &self.spifs.0;
-        let mut controller = spifs.controller.borrow_mut();
-
         let volume = spifs.volume.borrow();
-        controller.read(&volume, &mut self.file, buf)
+        spifs.controller
+            .borrow_mut()
+            .read(&volume, &mut self.file, buf)
     }
 }
 
-impl<'a> Drop for ReadFile<'a> {
+impl<'a> Write for SdFile<'a> {
+    type WriteError = Error<<BlockSpiType<'a> as BlockDevice>::Error>;
+    type FlushError = ();
+    fn write(&mut self, buf: &[u8]) -> Result<usize, Self::WriteError> {
+        let spifs = &self.spifs.0;
+        let mut volume = spifs.volume.borrow_mut();
+        spifs.controller
+            .borrow_mut()
+            .write(&mut volume, &mut self.file, buf)
+    }
+
+    fn flush(&mut self) -> Result<(), Self::FlushError> {
+        // There doesn't appear to be any flush possible.
+        Ok(())
+    }
+
+    fn size_hint(&mut self, _bytes: usize) {
+    }
+
+    fn uses_size_hint(&self) -> bool {
+        false
+    }
+}
+
+impl<'a> Drop for SdFile<'a> {
     fn drop(&mut self) {
         let spifs = &self.spifs.0;
         let volume = spifs.volume.borrow();
@@ -85,54 +109,58 @@ impl<'a> Drop for ReadFile<'a> {
     }
 }
 
-struct WriteFile<'a> {
-    file: File,
-    spifs: SPIFS<'a>,
-}
+impl<'a> fs::FileSys for RefSPIFS<'a> {
+    type FileError = <SdFile<'a> as Read>::ReadError;
+    type File = SdFile<'a>;
 
-// impl<'a> Write for WriteFile<'a> {
-//     type WriteError = Error<<BlockSpiType<'a> as BlockDevice>::Error>;
-//     type FlushError = ();
-//     fn write(&mut self, buf: &[u8]) -> Result<usize, Self::WriteError> {
-//         self.spifs.controller.write(&mut self.spifs.volume, &mut self.file, buf)
-//     }
-
-//     fn flush(&mut self) -> Result<(), Self::FlushError> {
-//         // There doesn't appear to be any flush possible.
-//         Ok(())
-//     }
-
-//     fn size_hint(&mut self, _bytes: usize) {
-//     }
-
-//     fn uses_size_hint(&self) -> bool {
-//         false
-//     }
-// }
-
-impl<'a> RefSPIFS<'a> {
-
-    fn _file_exists(&mut self, name: &str) -> Result<bool,
-                                                     <ReadFile<'a> as Read>::ReadError> {
+    fn file_exists(&mut self, name: &str) -> Result<bool, Self::FileError> {
         let spifs = &self.0;
-
         spifs.controller
              .borrow_mut()
             .find_directory_entry(&spifs.volume.borrow_mut(), &spifs.root, name)
             .map(|_| true)
     }
 
-    fn _read_file(&mut self, name: &str) -> Result<ReadFile<'a>,
-                                                   <ReadFile<'a> as Read>::ReadError> {
+    fn open_file(&mut self, name: &str, mode: fs::WriteMode) -> Result<SdFile<'a>, Self::FileError> {
 
         let spifs = &self.0;
-        let mut controller = spifs.controller.borrow_mut();
+        let mut volume = spifs.volume.borrow_mut();
+        spifs.controller
+            .borrow_mut()
+            .open_file_in_dir(&mut volume, &spifs.root, name, mode.into())
+            .map(|f| SdFile { file: f, spifs: self.clone() })
+    }
 
-        let mut volume = controller.get_volume(VolumeIdx(0))?;
-        let root = controller.open_root_dir(&volume)?;
-        controller
-            .open_file_in_dir(&mut volume, &root, name, Mode::ReadOnly)
-            .map(|f| ReadFile { file: f, spifs: self.clone() })
+    fn delete_file(&mut self, name: &str) -> Result<(), Self::FileError> {
+
+        let spifs = &self.0;
+        let mut volume = spifs.volume.borrow_mut();
+        spifs.controller
+            .borrow_mut()
+            .delete_file_in_dir(&mut volume, &spifs.root, name)
+    }
+
+    fn list_files(&mut self) -> Result<alloc::vec::Vec<String>, Self::FileError> {
+        let spifs = &self.0;
+        let mut volume = spifs.volume.borrow_mut();
+        let mut names = alloc::vec::Vec::new();
+        spifs.controller
+            .borrow_mut()
+            .iterate_dir(&mut volume, &spifs.root, |entry| {
+                names.push(format!("{}", entry.name));
+            })?;
+        Ok(names)
+    }
+}
+
+impl From<fs::WriteMode> for Mode {
+
+    fn from(mode: fs::WriteMode) -> Mode {
+        match mode {
+            fs::WriteMode::ReadOnly => Mode::ReadOnly,
+            fs::WriteMode::Append => Mode::ReadWriteCreateOrAppend,
+            fs::WriteMode::Truncate => Mode::ReadWriteCreateOrTruncate,
+        }
     }
 }
 
@@ -180,11 +208,7 @@ impl fs::FS for SPIFS<'_> {
                 &mut volume,
                 &self.root,
                 name,
-                match mode {
-                    fs::WriteMode::Append => Mode::ReadWriteCreateOrAppend,
-                    fs::WriteMode::Truncate => Mode::ReadWriteCreateOrTruncate,
-                },
-            )
+                mode.into())
             .expect("Failed to open file");
         let ret = self
             .controller

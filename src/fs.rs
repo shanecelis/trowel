@@ -2,8 +2,20 @@ use alloc::{boxed::Box, string::String, vec::Vec};
 
 #[allow(dead_code)]
 pub enum WriteMode {
+    ReadOnly,
     Append,
     Truncate,
+}
+
+
+pub trait FileSys {
+    type FileError;
+    type File;
+
+    fn file_exists(&mut self, name: &str) -> Result<bool, Self::FileError>;
+    fn open_file(&mut self, name: &str, mode: WriteMode) -> Result<Self::File, Self::FileError>;
+    fn delete_file(&mut self, name: &str) -> Result<(), Self::FileError>;
+    fn list_files(&mut self) -> Result<alloc::vec::Vec<String>, Self::FileError>;
 }
 
 pub trait FS {

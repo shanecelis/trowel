@@ -65,7 +65,7 @@ where
     let mut window = Window::new("Sprig Simulator", &output_settings);
     let mut app = app_maker();
     #[cfg(feature = "sdcard")]
-    let mut fs = fs::PCFS::new();
+    let mut fs = fs::PCFS::new(None);
 
     // if Some("1") == option_env!("SHOW_FPS") {
     //     app = app.join(FpsApp::default());
