@@ -48,6 +48,11 @@ where
     }
 }
 
+// #[cfg(feature = "sdcard")]
+pub fn file_sys() -> Result<fs::PCFS, super::Error> {
+    Ok(fs::PCFS::new(None))
+}
+
 fn _run_with<F, A>(app_maker: F) -> !
 where
     F: FnOnce() -> A,
@@ -64,8 +69,6 @@ where
         .build();
     let mut window = Window::new("Sprig Simulator", &output_settings);
     let mut app = app_maker();
-    #[cfg(feature = "sdcard")]
-    let mut fs = fs::PCFS::new(None);
 
     // if Some("1") == option_env!("SHOW_FPS") {
     //     app = app.join(FpsApp::default());
@@ -114,9 +117,6 @@ where
         if let Some(leftover) = frame_budget.checked_sub(instant.elapsed()) {
             std::thread::sleep(leftover)
         }
-
-        #[cfg(feature = "sdcard")]
-        app.read_write(&mut fs).expect("error reading/writing");
 
         window.update(&display);
     }

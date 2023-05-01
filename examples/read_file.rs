@@ -11,7 +11,8 @@ use embedded_graphics::{
     prelude::*,
     text::Text,
 };
-use trowel::{App, AppResult, Buttons, Error, FS};
+use trowel::{App, AppResult, Buttons, Error, FileSys, file_sys, WriteMode};
+use genio::{Read, Write};
 
 struct ReadFile {
     frame: i32, // Frame count
@@ -20,28 +21,33 @@ struct ReadFile {
 }
 
 impl App for ReadFile {
-    fn read_write<F>(&mut self, fs: &mut F) -> AppResult
-    where
-        F: FS,
-    {
-        if self.frame != 1 {
-            return Ok(());
-        }
-
-        let file = fs.read_file("hello.txt");
-        if let Some((size, file)) = file {
-            self.file_contents = Box::from(core::str::from_utf8(&file[..size]).unwrap());
-        }
-
-        Ok(())
-    }
-
     fn init(&mut self) -> AppResult {
         Ok(())
     }
 
     fn update(&mut self, _buttons: Buttons) -> AppResult {
         self.frame += 1;
+
+        if self.frame == 1 {
+
+            let mut fs = file_sys().expect("Could not get file system");
+
+            let mut file = fs.open_file("hello.txt", WriteMode::Truncate).expect("Unable to open file");
+            file.write(b"What do we have here?")
+                .expect("Unable to write file");
+        } else if self.frame == 2 {
+
+            let mut fs = file_sys().expect("Could not get file system");
+
+            let mut file = fs.open_file("hello.txt", WriteMode::ReadOnly).expect("Unable to open file");
+            let mut buffer = vec![0u8; 100];
+            file.read(&mut buffer).expect("Unable to read file");
+            // self.file_contents = Box::new(String::from_utf8(buffer)?);
+            self.file_contents = Box::from(core::str::from_utf8(&buffer).unwrap());
+        }
+        // if let Some((size, file)) = file {
+        //     self.file_contents = Box::from(core::str::from_utf8(&file[..size]).unwrap());
+        // }
 
         Ok(())
     }

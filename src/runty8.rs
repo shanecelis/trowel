@@ -4,8 +4,6 @@ use runty::{Input, Pico8, Resources};
 use runty8_core as runty; //, KeyboardEvent, InputEvent, Key, KeyState};
 
 use crate::{App, AppResult, Buttons, Error};
-#[cfg(feature = "sdcard")]
-use crate::{FS};
 use embedded_graphics::{
     draw_target::DrawTarget,
     image::{Image, ImageRaw, ImageRawBE},

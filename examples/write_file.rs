@@ -8,7 +8,8 @@ use embedded_graphics::{
     prelude::*,
     text::Text,
 };
-use trowel::{App, AppResult, Buttons, Error, WriteMode, FS};
+use trowel::{App, AppResult, Buttons, Error, WriteMode, FileSys, file_sys};
+use genio::Write;
 
 struct WriteFile {
     frame: i32, // Frame count
@@ -17,19 +18,6 @@ struct WriteFile {
 }
 
 impl App for WriteFile {
-    fn read_write<F>(&mut self, fs: &mut F) -> AppResult
-    where
-        F: FS,
-    {
-        if self.frame != 1 {
-            return Ok(());
-        }
-
-        let file = fs.write_file("hello.txt", b"Hello, FS!\n", WriteMode::Append);
-        self.was_successful = file;
-
-        Ok(())
-    }
 
     fn init(&mut self) -> AppResult {
         Ok(())
@@ -37,6 +25,21 @@ impl App for WriteFile {
 
     fn update(&mut self, _buttons: Buttons) -> AppResult {
         self.frame += 1;
+
+        if self.frame != 1 {
+            return Ok(());
+        }
+        let mut fs = file_sys().expect("Could not get file system");
+
+        // if fs.file_exists("hello.txt").expect("Could not see if file exists") {
+        //     println!("I see the file");
+        // }
+        // let file = fs.write_file("hello.txt", b"Hello, FS!\n", WriteMode::Append);
+        let mut file = fs.open_file("hello.txt", WriteMode::Truncate)
+                         .expect("Could not open file");
+        file.write(b"Hello, FS!\n")
+            .expect("Could not write file");
+        self.was_successful = true;
 
         Ok(())
     }

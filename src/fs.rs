@@ -1,5 +1,6 @@
 use alloc::{boxed::Box, string::String, vec::Vec};
 
+#[derive(PartialEq, Clone, Copy)]
 #[allow(dead_code)]
 pub enum WriteMode {
     ReadOnly,
@@ -31,6 +32,6 @@ pub trait FS {
     /// Returns a list of all files in the filesystem.
     fn list_files(&mut self) -> Vec<String>;
 
-    /// Returns true if the file exists.
-    fn file_exists(&mut self, name: &str) -> bool;
+    // Returns true if the file exists.
+    // fn file_exists(&mut self, name: &str) -> bool;
 }

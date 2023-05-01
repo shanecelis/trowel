@@ -12,9 +12,11 @@ use embedded_graphics::{pixelcolor::Rgb565, prelude::DrawTarget};
 
 #[cfg(all(target_arch = "arm", target_os = "none"))]
 pub use trowel_macro::add_entry as entry;
-// pub use rp_pico::entry as entry;
 
 #[cfg(any(target_family = "unix", target_family = "windows"))]
+pub use trowel_macro::id as entry;
+
+#[cfg(target_family = "wasm")]
 pub use trowel_macro::id as entry;
 
 bitflags! {
@@ -35,11 +37,13 @@ pub enum Error {
     DisplayErr,
     AppErr,
     #[cfg(feature = "bmp")]
-    BmpErr(tinybmp::ParseError)
+    BmpErr(tinybmp::ParseError),
+    #[cfg(target_family = "wasm")]
+    WasmErr(wasm_bindgen::JsValue)
 }
 pub type AppResult = Result<(), Error>;
 #[cfg(feature = "sdcard")]
-pub use fs::{WriteMode, FS};
+pub use fs::{WriteMode, FS, FileSys};
 
 pub trait App {
     fn init(&mut self) -> AppResult;
@@ -121,7 +125,7 @@ pub mod flipped;
 #[cfg(any(target_family = "unix", target_family = "windows"))]
 mod pc;
 #[cfg(any(target_family = "unix", target_family = "windows"))]
-pub use pc::{run_with, stdout};
+pub use pc::{run_with, stdout, file_sys};
 
 pub fn run(app: impl App + 'static) -> () {
     run_with(move || app);
@@ -134,3 +138,5 @@ pub mod runty8;
 mod wasm;
 #[cfg(target_family = "wasm")]
 pub use wasm::run_with;
+#[cfg(target_family = "wasm")]
+pub use wasm::file_sys;
