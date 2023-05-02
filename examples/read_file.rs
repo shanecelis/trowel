@@ -29,15 +29,19 @@ impl App for ReadFile {
         self.frame += 1;
 
         if self.frame == 1 {
-            let mut fs = file_sys().expect("Could not get file system");
-            let mut file = fs.open_file("hello.txt", WriteMode::Truncate).expect("Unable to open file");
+            let fs = file_sys()
+                .expect("Could not get file system");
+            let mut file = fs.open_file("hello.txt", WriteMode::Truncate)
+                             .expect("Unable to open file");
             file.write(b"What do we have here?")
                 .expect("Unable to write file");
         } else if self.frame == 2 {
-            let mut fs = file_sys().expect("Could not get file system");
-            let mut file = fs.open_file("hello.txt", WriteMode::ReadOnly).expect("Unable to open file");
+            let fs = file_sys().expect("Could not get file system");
+            let mut file = fs.open_file("hello.txt", WriteMode::ReadOnly)
+                             .expect("Unable to open file");
             let mut buffer = vec![0u8; 100];
-            file.read(&mut buffer).expect("Unable to read file");
+            file.read(&mut buffer)
+                .expect("Unable to read file");
             // self.file_contents = Box::new(String::from_utf8(buffer)?);
             self.file_contents = Box::from(core::str::from_utf8(&buffer).unwrap());
         }
@@ -66,7 +70,7 @@ impl App for ReadFile {
 
 #[trowel::entry]
 fn main() {
-    trowel::run(ReadFile {
+    trowel::run_with(|| ReadFile {
         frame: 0,
         file_contents: Box::from("No filesystem"),
     });

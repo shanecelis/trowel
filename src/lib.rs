@@ -39,7 +39,10 @@ pub enum Error {
     #[cfg(feature = "bmp")]
     BmpErr(tinybmp::ParseError),
     #[cfg(target_family = "wasm")]
-    WasmErr(wasm_bindgen::JsValue)
+    WasmErr(wasm_bindgen::JsValue),
+    #[cfg(all(feature = "sdcard", target_arch = "arm"))]
+    SdErr(embedded_sdmmc::Error<embedded_sdmmc::SdMmcError>)
+
 }
 pub type AppResult = Result<(), Error>;
 #[cfg(feature = "sdcard")]

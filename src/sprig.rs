@@ -76,7 +76,7 @@ static mut USB_BUS: Option<UsbBusAllocator<hal::usb::UsbBus>> = None;
 static mut USB_SERIAL: Option<SerialPort<hal::usb::UsbBus>> = None;
 
 static mut SHARED_BUS: Option<shared_bus::BusManager<shared_bus::NullMutex<hal::Spi<hal::spi::Enabled, pac::SPI0, 8>>>> = None;
-static mut FILE_SYS: Option<RefSPIFS<'static>> = None;
+static mut FILE_SYS: Option<Result<RefSPIFS<'static>, embedded_sdmmc::Error<embedded_sdmmc::SdMmcError>>> = None;
 static mut SD_SPI: Option<SdMmcSpi0<'static>> = None;
 
 type Monotonic0 = Monotonic<Alarm0>;
@@ -209,12 +209,13 @@ pub fn stdout() -> &'static mut Stdout {
     unsafe { STDOUT.as_mut().expect("Could not get stdout") }
 }
 
-pub fn file_sys() -> Result<fs::PCFS, super::Error> {
-    Ok(fs::PCFS::new(None))
+pub fn file_sys() -> Result<&'static mut RefSPIFS<'static>, crate::Error> {
+    // Ok(fs::PCFS::new(None))
+    unsafe { FILE_SYS.as_mut().unwrap().as_mut().map_err(|e| crate::Error::SdErr(e.clone())) }
 }
-pub fn file_sys() -> &'static mut RefSPIFS<'static> {
-    unsafe { FILE_SYS.as_mut().unwrap() }
-}
+// pub fn file_sys() -> &'static mut RefSPIFS<'static> {
+//     unsafe { FILE_SYS.as_mut().unwrap() }
+// }
 const FPS_TARGET : u8 = 30; // frames per second
 const FRAME_BUDGET : u64 = 1_000_000 /* micro seconds */ / FPS_TARGET as u64;
 
@@ -367,24 +368,29 @@ where
     }
     let sd_spi: &'static mut _ = unsafe { SD_SPI.as_mut().unwrap() };
 
-    match SPIFS::new(sd_spi) {
-        Ok(spifs) => {
-            // Successfully connected to SD Card.
-            let _ = l_led.set_high();
+    let spifs_maybe = SPIFS::new(sd_spi);
+    if spifs_maybe.is_ok() {
+        let _ = l_led.set_high();
+    } else {
+        let _ = r_led.set_high();
+    }
+    unsafe { FILE_SYS = Some(spifs_maybe.map(|spifs| RefSPIFS(Rc::new(spifs)))) };
+    // match spifs_maybe {
+    //     Ok(spifs) => {
+    //         // Successfully connected to SD Card.
 
-            // let mut cont = Controller::new(block, time_source);
-            // let volume = cont.get_volume(VolumeIdx(0)).expect("Unable to get volume");
-            // let root = cont.open_root_dir(&volume).expect("Unable to get root dir");
+    //         // let mut cont = Controller::new(block, time_source);
+    //         // let volume = cont.get_volume(VolumeIdx(0)).expect("Unable to get volume");
+    //         // let root = cont.open_root_dir(&volume).expect("Unable to get root dir");
 
-            unsafe { FILE_SYS = Some(RefSPIFS(Rc::new(spifs))) };
-        }
-        Err(_) => {
-            // Failed to connect to SD Card.
-            let _ = r_led.set_high();
+    //     }
+    //     Err(_) => {
+    //         // Failed to connect to SD Card.
+    //         let _ = r_led.set_high();
 
-            // None
-        }
-    };
+    //         // None
+    //     }
+    // };
 
     // Init the App
     // We could turn on the MCU's led.
