@@ -111,7 +111,7 @@ extern crate alloc;
 #[cfg(all(target_arch = "arm", target_os = "none"))]
 mod sprig;
 #[cfg(all(target_arch = "arm", target_os = "none"))]
-pub use sprig::{run_with, stdout};
+pub use sprig::{run_with, stdout, file_sys};
 
 mod fps;
 mod fs;

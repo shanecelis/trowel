@@ -24,7 +24,7 @@ use panic_probe as _;
 
 use embedded_graphics::{pixelcolor::Rgb565, prelude::*};
 use embedded_hal::digital::v2::{InputPin, OutputPin};
-use embedded_sdmmc::{Controller, SdMmcSpi, VolumeIdx};
+use embedded_sdmmc::SdMmcSpi;
 use fugit::RateExtU32;
 use rp_pico::hal::{self, pac::interrupt};
 use hal::{clocks::Clock, timer::{Alarm0, monotonic::Monotonic}};
@@ -46,11 +46,17 @@ use embedded_alloc::Heap;
 use hal::pac;
 use try_default::TryDefault;
 use circular_buffer::CircularBuffer;
+use shared_bus::{NullMutex, SpiProxy};
 
 use core::cell::RefCell;
 use embedded_time::{fraction::Fraction, Clock as EClock, clock::Error, Instant as EInstant, duration::Microseconds};
 // use core::fmt::Write;
 use genio::Write;
+use alloc::rc::Rc;
+
+pub(crate) type SdMmcSpi0<'a> = SdMmcSpi<SpiProxy<'a, NullMutex<hal::Spi<hal::spi::Enabled, pac::SPI0, 8>>>,
+                            hal::gpio::Pin<hal::gpio::bank0::Gpio21,
+                                                hal::gpio::Output<hal::gpio::PushPull>>>;
 
 #[global_allocator]
 static HEAP: Heap = Heap::empty();
@@ -69,11 +75,15 @@ static mut USB_BUS: Option<UsbBusAllocator<hal::usb::UsbBus>> = None;
 /// The USB Serial Device Driver (shared with the interrupt).
 static mut USB_SERIAL: Option<SerialPort<hal::usb::UsbBus>> = None;
 
+static mut SHARED_BUS: Option<shared_bus::BusManager<shared_bus::NullMutex<hal::Spi<hal::spi::Enabled, pac::SPI0, 8>>>> = None;
+static mut FILE_SYS: Option<RefSPIFS<'static>> = None;
+static mut SD_SPI: Option<SdMmcSpi0<'static>> = None;
+
 type Monotonic0 = Monotonic<Alarm0>;
 
 mod fs;
 
-use self::fs::SPIFS;
+use self::fs::{SPIFS, RefSPIFS};
 
 pub struct MonotonicClock(RefCell<Monotonic0>);
 impl MonotonicClock {
@@ -176,11 +186,9 @@ impl Write for Stdout {
             Some(err) => { return Err(err); },
             None => { }
         }
-
         for c in buf {
             self.buffer.push_back(*c);
         }
-
         Ok(buf.len())
     }
     fn flush(&mut self) -> Result<(), Self::FlushError> {
@@ -191,13 +199,23 @@ impl Write for Stdout {
     }
 
     fn size_hint(&mut self, _bytes: usize) { }
+
+    fn uses_size_hint(&self) -> bool {
+        false
+    }
 }
 
 pub fn stdout() -> &'static mut Stdout {
-    unsafe { STDOUT.as_mut().unwrap() }
+    unsafe { STDOUT.as_mut().expect("Could not get stdout") }
 }
 
-const FPS_TARGET : u8 = 30;
+pub fn file_sys() -> Result<fs::PCFS, super::Error> {
+    Ok(fs::PCFS::new(None))
+}
+pub fn file_sys() -> &'static mut RefSPIFS<'static> {
+    unsafe { FILE_SYS.as_mut().unwrap() }
+}
+const FPS_TARGET : u8 = 30; // frames per second
 const FRAME_BUDGET : u64 = 1_000_000 /* micro seconds */ / FPS_TARGET as u64;
 
 fn _run_with<F, A>(app_maker: F) -> ()
@@ -206,8 +224,8 @@ where
     A: App,
 {
     // Grab our singleton objects.
-    let mut pac = pac::Peripherals::take().unwrap();
-    let core = pac::CorePeripherals::take().unwrap();
+    let mut pac = pac::Peripherals::take().expect("Could not get pac");
+    let core = pac::CorePeripherals::take().expect("Could not get core");
 
     // Set up the watchdog driver--needed by the clock setup code.
     let mut watchdog = hal::Watchdog::new(pac.WATCHDOG);
@@ -264,14 +282,22 @@ where
     let l = pins.gpio15.into_pull_up_input();
 
     // Exchange the uninitialised SPI driver for an initialised one.
-    let spi = spi.init(
+    let spi: hal::Spi<hal::spi::Enabled, pac::SPI0, 8> = spi.init(
         &mut pac.RESETS,
         clocks.peripheral_clock.freq(),
         16.MHz(),
         &embedded_hal::spi::MODE_0,
     );
 
-    let bus = shared_bus::BusManagerSimple::new(spi);
+    let bus: shared_bus::BusManager<shared_bus::NullMutex<hal::Spi<hal::spi::Enabled, pac::SPI0, 8>>>
+        = shared_bus::BusManagerSimple::new(spi);
+    unsafe {
+        SHARED_BUS = Some(bus);
+    }
+    let bus = unsafe { SHARED_BUS.as_ref().unwrap() };
+    // spi is single task/thread only.
+    // let bus: &'static _ = shared_bus::new_cortexm!(hal::Spi<hal::spi::Enabled, pac::SPI0, 8> = spi).unwrap();
+    // let bus: &'static _ = shared_bus::new_cortexm!(spi = spi).unwrap();
     let mut disp = ST7735::new(bus.acquire_spi(), dc, rst, true, false, 160, 128);
     let mut disp_cs = pins
         .gpio20
@@ -333,28 +359,30 @@ where
     unsafe {
         pac::NVIC::unmask(hal::pac::Interrupt::USBCTRL_IRQ);
     }
-    let time_source = fs::FSClock {};
 
     let sdmmc_cs = pins.gpio21.into_push_pull_output();
-    let mut sd_spi = SdMmcSpi::new(bus.acquire_spi(), sdmmc_cs);
+    let sd_spi: SdMmcSpi0 = SdMmcSpi::new(bus.acquire_spi(), sdmmc_cs);
+    unsafe {
+        SD_SPI = Some(sd_spi);
+    }
+    let sd_spi: &'static mut _ = unsafe { SD_SPI.as_mut().unwrap() };
 
-    let block = sd_spi.acquire();
-    let mut fs = match block {
-        Ok(block) => {
-            // Successfully connected to SD Card
-            l_led.set_high().unwrap();
+    match SPIFS::new(sd_spi) {
+        Ok(spifs) => {
+            // Successfully connected to SD Card.
+            let _ = l_led.set_high();
 
-            let mut cont = Controller::new(block, time_source);
-            let volume = cont.get_volume(VolumeIdx(0)).unwrap();
-            let root = cont.open_root_dir(&volume).unwrap();
+            // let mut cont = Controller::new(block, time_source);
+            // let volume = cont.get_volume(VolumeIdx(0)).expect("Unable to get volume");
+            // let root = cont.open_root_dir(&volume).expect("Unable to get root dir");
 
-            Some(SPIFS::new(cont, volume, root))
+            unsafe { FILE_SYS = Some(RefSPIFS(Rc::new(spifs))) };
         }
         Err(_) => {
-            // Failed to connect to SD Card
-            r_led.set_high().unwrap();
+            // Failed to connect to SD Card.
+            let _ = r_led.set_high();
 
-            None
+            // None
         }
     };
 
@@ -363,12 +391,6 @@ where
     // led.set_high().unwrap();
     let mut app = app_maker();
     app.init().expect("error initializing");
-
-    // let mut fps_app = FpsApp::new().expect("error init fps app");
-
-    // let mut fps_counter =
-    // let character_style = MonoTextStyle::new(&FONT_7X13, Rgb565::WHITE);
-    // let fps_position = Point::new(5, 15);
 
     let mut buttons;
     let mut start : Result<u64, &'static str> = try_now();
@@ -404,21 +426,22 @@ where
 
         app.update(buttons).expect("error updating");
 
-        disp_cs.set_low().unwrap();
-        app.draw(&mut disp).expect("error drawing");
-        // fps_app.draw(&mut disp).expect("error fps");
-        // let fps = fps_counter.tick();
-        // Text::new(&format!("FPS: {fps}"), fps_position, character_style).draw(&mut disp).expect("error on fps");
-        disp_cs.set_high().unwrap();
-
-        if let Some(fs) = &mut fs {
-            app.read_write(fs).expect("error reading/writing");
+        if disp_cs.set_low().is_ok() {
+            app.draw(&mut disp).expect("error drawing");
         }
-        let stdout = unsafe { STDOUT.as_ref() }.unwrap();
+        if disp_cs.set_high().is_ok() {
+            // Might want to take note that this is required to make reading and
+            // writing safe for sdcard.
+
+            // if let Some(fs) = &mut fs {
+            //     app.read_write(fs).expect("error reading/writing");
+            // }
+        }
+        let stdout = unsafe { STDOUT.as_ref() }.expect("Could not get stdout");
         if stdout.can_drain() {
             unsafe {
-                let stdout = STDOUT.as_mut().unwrap();
-                let serial = USB_SERIAL.as_mut().unwrap();
+                let stdout = STDOUT.as_mut().expect("Could not get stdout as mut");
+                let serial = USB_SERIAL.as_mut().expect("Could not get usb serial");
                 stdout.drain(serial);
             }
         }

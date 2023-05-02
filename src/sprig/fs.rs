@@ -2,7 +2,7 @@ use crate::fs;
 use core::cell::RefCell;
 use alloc::{boxed::Box, string::String, rc::Rc};
 use core::mem;
-use embedded_sdmmc::{BlockSpi, Controller, Mode, File, BlockDevice, Error};
+use embedded_sdmmc::{BlockSpi, Controller, Mode, File, BlockDevice, Error, VolumeIdx, SdMmcError};
 use rp_pico::hal::{
     gpio::{bank0::Gpio21, Output, Pin, PushPull},
     pac::SPI0,
@@ -11,6 +11,8 @@ use rp_pico::hal::{
 };
 use shared_bus::{NullMutex, SpiProxy};
 use genio::{Read, Write};
+use crate::sprig::SdMmcSpi0;
+
 type BlockSpiType<'a> = BlockSpi<'a, SpiProxy<'a, NullMutex<Spi<Enabled, SPI0, 8>>>, Pin<Gpio21, Output<PushPull>>>;
 pub struct FSClock {}
 impl embedded_sdmmc::TimeSource for FSClock {
@@ -29,32 +31,33 @@ pub struct SPIFS<'a> {
 }
 
 #[derive(Clone)]
-struct RefSPIFS<'a>(Rc<SPIFS<'a>>);
+pub struct RefSPIFS<'a>(pub Rc<SPIFS<'a>>);
 
 impl<'a> SPIFS<'a> {
     pub fn new(
-        controller: Controller<
-            BlockSpi<
-                'a,
-                SpiProxy<'a, NullMutex<Spi<Enabled, SPI0, 8>>>,
-                Pin<Gpio21, Output<PushPull>>,
-            >,
-            FSClock,
-            4,
-            4,
-        >,
-        volume: embedded_sdmmc::Volume,
-        root: embedded_sdmmc::Directory,
-    ) -> Self {
-        Self {
-            controller: RefCell::new(controller),
+        // controller: Controller<BlockSpiType<'a>,
+        //                        FSClock,
+        //                        4,
+        //                        4>,
+        // volume: embedded_sdmmc::Volume,
+        // root: embedded_sdmmc::Directory,
+        sd_spi: &'a mut SdMmcSpi0<'a>,
+    ) -> Result<Self, Error<SdMmcError>> {
+
+        let time_source = crate::sprig::fs::FSClock {};
+        let block = sd_spi.acquire().map_err(|e| Error::DeviceError(e))?;
+        let mut cont = Controller::new(block, time_source);
+        let volume = cont.get_volume(VolumeIdx(0))?;
+        let root = cont.open_root_dir(&volume)?;
+        Ok(Self {
+            controller: RefCell::new(cont),
             volume: RefCell::new(volume),
             root,
-        }
+        })
     }
 }
 
-struct SdFile<'a> {
+pub struct SdFile<'a> {
     file: File,
     spifs: RefSPIFS<'a>,
 }
@@ -165,15 +168,15 @@ impl From<fs::WriteMode> for Mode {
 }
 
 impl fs::FS for SPIFS<'_> {
-    fn file_exists(&mut self, name: &str) -> bool {
+    // fn file_exists(&mut self, name: &str) -> bool {
 
-        // let mut spifs = self.0;
-        // let mut controller = self.controller.borrow_mut();
-        self.controller
-            .borrow_mut()
-            .find_directory_entry(&self.volume.borrow_mut(), &self.root, name)
-            .is_ok()
-    }
+    //     // let mut spifs = self.0;
+    //     // let mut controller = self.controller.borrow_mut();
+    //     self.controller
+    //         .borrow_mut()
+    //         .find_directory_entry(&self.volume.borrow_mut(), &self.root, name)
+    //         .is_ok()
+    // }
 
 
     fn read_file(&mut self, name: &str) -> Option<(usize, Box<[u8]>)> {
