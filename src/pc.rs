@@ -48,9 +48,11 @@ where
     }
 }
 
+static mut FILE_SYS: Option<fs::PCFS> = None;
+
 // #[cfg(feature = "sdcard")]
-pub fn file_sys() -> Result<fs::PCFS, super::Error> {
-    Ok(fs::PCFS::new(None))
+pub fn file_sys() -> Result<&'static mut fs::PCFS, super::Error> {
+    Ok(unsafe { FILE_SYS.as_mut().unwrap()})
 }
 
 fn _run_with<F, A>(app_maker: F) -> !
@@ -69,6 +71,9 @@ where
         .build();
     let mut window = Window::new("Sprig Simulator", &output_settings);
     let mut app = app_maker();
+    unsafe {
+        FILE_SYS = Some(fs::PCFS::new(None));
+    }
 
     // if Some("1") == option_env!("SHOW_FPS") {
     //     app = app.join(FpsApp::default());

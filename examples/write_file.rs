@@ -29,7 +29,7 @@ impl App for WriteFile {
         if self.frame != 1 {
             return Ok(());
         }
-        let mut fs = file_sys().expect("Could not get file system");
+        let fs = file_sys().expect("Could not get file system");
 
         // if fs.file_exists("hello.txt").expect("Could not see if file exists") {
         //     println!("I see the file");
