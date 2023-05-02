@@ -11,7 +11,7 @@ use embedded_graphics::{
     prelude::*,
     text::Text,
 };
-use trowel::{App, AppResult, Buttons, Error, FileSys, file_sys, WriteMode};
+use trowel::{App, AppResult, Buttons, Error, FileSys, file_sys, Mode};
 use genio::{Read, Write};
 use alloc::vec;
 
@@ -31,13 +31,13 @@ impl App for ReadFile {
         if self.frame == 1 {
             let fs = file_sys()
                 .expect("Could not get file system");
-            let mut file = fs.open_file("hello.txt", WriteMode::Truncate)
+            let mut file = fs.open_file("hello.txt", Mode::Truncate)
                              .expect("Unable to open file");
             file.write(b"What do we have here?")
                 .expect("Unable to write file");
         } else if self.frame == 2 {
             let fs = file_sys().expect("Could not get file system");
-            let mut file = fs.open_file("hello.txt", WriteMode::ReadOnly)
+            let mut file = fs.open_file("hello.txt", Mode::ReadOnly)
                              .expect("Unable to open file");
             let mut buffer = vec![0u8; 100];
             file.read(&mut buffer)

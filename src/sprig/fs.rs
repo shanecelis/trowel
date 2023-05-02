@@ -1,6 +1,6 @@
 use crate::fs;
 use core::cell::RefCell;
-use alloc::{boxed::Box, string::String, rc::Rc};
+use alloc::{string::String, rc::Rc};
 use core::mem;
 use embedded_sdmmc::{BlockSpi, Controller, Mode, File, BlockDevice, Error, VolumeIdx, SdMmcError};
 use rp_pico::hal::{
@@ -124,7 +124,7 @@ impl<'a> fs::FileSys for RefSPIFS<'a> {
             .map(|_| true)
     }
 
-    fn open_file(&mut self, name: &str, mode: fs::WriteMode) -> Result<SdFile<'a>, Self::FileError> {
+    fn open_file(&mut self, name: &str, mode: fs::Mode) -> Result<SdFile<'a>, Self::FileError> {
 
         let spifs = &self.0;
         let mut volume = spifs.volume.borrow_mut();
@@ -156,91 +156,14 @@ impl<'a> fs::FileSys for RefSPIFS<'a> {
     }
 }
 
-impl From<fs::WriteMode> for Mode {
+impl From<fs::Mode> for Mode {
 
-    fn from(mode: fs::WriteMode) -> Mode {
+    fn from(mode: fs::Mode) -> Mode {
         match mode {
-            fs::WriteMode::ReadOnly => Mode::ReadOnly,
-            fs::WriteMode::Append => Mode::ReadWriteCreateOrAppend,
-            fs::WriteMode::Truncate => Mode::ReadWriteCreateOrTruncate,
+            fs::Mode::ReadOnly => Mode::ReadOnly,
+            fs::Mode::Append => Mode::ReadWriteCreateOrAppend,
+            fs::Mode::Truncate => Mode::ReadWriteCreateOrTruncate,
         }
     }
 }
 
-impl fs::FS for SPIFS<'_> {
-    // fn file_exists(&mut self, name: &str) -> bool {
-
-    //     // let mut spifs = self.0;
-    //     // let mut controller = self.controller.borrow_mut();
-    //     self.controller
-    //         .borrow_mut()
-    //         .find_directory_entry(&self.volume.borrow_mut(), &self.root, name)
-    //         .is_ok()
-    // }
-
-
-    fn read_file(&mut self, name: &str) -> Option<(usize, Box<[u8]>)> {
-        let mut volume = self.volume.borrow_mut();
-        let file =
-            self.controller
-            .borrow_mut()
-                .open_file_in_dir(&mut volume, &self.root, name, Mode::ReadOnly);
-
-        let mut file = file.ok()?;
-        let mut buf = vec![0u8; file.length() as usize];
-
-        file.seek_from_start(0).unwrap();
-        let bytes_read = self
-            .controller
-            .borrow_mut()
-            .read(&mut volume, &mut file, &mut buf)
-            .ok();
-        self.controller
-            .borrow_mut()
-            .close_file(&volume, file).unwrap();
-        let bytes_read = bytes_read?;
-        Some((bytes_read, buf.into_boxed_slice()))
-    }
-
-    fn write_file(&mut self, name: &str, data: &[u8], mode: fs::WriteMode) -> bool {
-        let mut volume = self.volume.borrow_mut();
-        let mut file = self
-            .controller
-            .borrow_mut()
-            .open_file_in_dir(
-                &mut volume,
-                &self.root,
-                name,
-                mode.into())
-            .expect("Failed to open file");
-        let ret = self
-            .controller
-            .borrow_mut()
-            .write(&mut volume, &mut file, data)
-            .is_ok();
-        self.controller
-            .borrow_mut()
-            .close_file(&volume, file).unwrap();
-        ret
-    }
-
-    fn delete_file(&mut self, name: &str) -> bool {
-        let mut volume = self.volume.borrow_mut();
-        self.controller
-            .borrow_mut()
-            .delete_file_in_dir(&mut volume, &self.root, name)
-            .is_ok()
-    }
-
-    fn list_files(&mut self) -> alloc::vec::Vec<String> {
-        let mut volume = self.volume.borrow_mut();
-        let mut names = alloc::vec::Vec::new();
-        self.controller
-            .borrow_mut()
-            .iterate_dir(&mut volume, &self.root, |entry| {
-                names.push(format!("{}", entry.name));
-            })
-            .unwrap();
-        names
-    }
-}

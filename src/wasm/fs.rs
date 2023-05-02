@@ -1,4 +1,4 @@
-use crate::{WriteMode, fs::FileSys};
+use crate::{Mode, fs::FileSys};
 use web_sys::window;
 use wasm_bindgen::JsValue;
 use genio::{Read, Write};
@@ -21,14 +21,14 @@ impl WebFS {
 
 pub struct WebFile {
     name: String,
-    mode: WriteMode,
+    mode: Mode,
     data: Option<Vec<u8>>,
     start: Option<usize>,
     local_storage: Rc<web_sys::Storage>
 }
 
 impl WebFile {
-    fn new(name: String, mode: WriteMode, local_storage: Rc<web_sys::Storage>) -> Self {
+    fn new(name: String, mode: Mode, local_storage: Rc<web_sys::Storage>) -> Self {
         Self {
             name,
             mode,
@@ -62,16 +62,16 @@ impl Write for WebFile {
     type WriteError = JsValue;
     type FlushError = JsValue;
     fn write(&mut self, buf: &[u8]) -> Result<usize, Self::WriteError> {
-        if self.mode == WriteMode::ReadOnly {
+        if self.mode == Mode::ReadOnly {
             return Err(JsValue::from_str("Cannot write to read only file"));
         }
         if self.data.is_none() {
             let string = match self.mode {
-                WriteMode::Truncate => String::new(),
-                WriteMode::Append => self.local_storage
+                Mode::Truncate => String::new(),
+                Mode::Append => self.local_storage
                                          .get_item(&self.name)?
                                          .unwrap_or_else(|| String::new()),
-                WriteMode::ReadOnly => String::new()
+                Mode::ReadOnly => String::new()
             };
             let bytes = string.into_bytes();
             self.data = Some(bytes);
@@ -115,8 +115,8 @@ impl FileSys for WebFS {
     fn file_exists(&mut self, name: &str) -> Result<bool, Self::FileError> {
         Ok(self.local_storage.get_item(name)?.is_some())
     }
-    fn open_file(&mut self, name: &str, mode: WriteMode) -> Result<Self::File, Self::FileError> {
-        if mode == WriteMode::ReadOnly && ! self.file_exists(name)? {
+    fn open_file(&mut self, name: &str, mode: Mode) -> Result<Self::File, Self::FileError> {
+        if mode == Mode::ReadOnly && ! self.file_exists(name)? {
             Err(JsValue::from_str("No such file"))
         } else {
             Ok(WebFile::new(name.to_owned(), mode, self.local_storage.clone()))

@@ -46,7 +46,7 @@ pub enum Error {
 }
 pub type AppResult = Result<(), Error>;
 #[cfg(feature = "sdcard")]
-pub use fs::{WriteMode, FS, FileSys};
+pub use fs::{Mode, FileSys};
 
 pub trait App {
     fn init(&mut self) -> AppResult;
@@ -54,15 +54,6 @@ pub trait App {
     fn draw<T, E>(&mut self, display: &mut T) -> AppResult
     where
         T: DrawTarget<Color = Rgb565, Error = E>;
-
-    #[cfg(feature = "sdcard")]
-    fn read_write<F>(&mut self, _fs: &mut F) -> AppResult
-    where
-        F: fs::FS,
-    {
-        // Default implementation does nothing.
-        Ok(())
-    }
 }
 
 pub struct JoinApps<A, B>

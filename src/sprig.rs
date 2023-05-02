@@ -438,10 +438,6 @@ where
         if disp_cs.set_high().is_ok() {
             // Might want to take note that this is required to make reading and
             // writing safe for sdcard.
-
-            // if let Some(fs) = &mut fs {
-            //     app.read_write(fs).expect("error reading/writing");
-            // }
         }
         let stdout = unsafe { STDOUT.as_ref() }.expect("Could not get stdout");
         if stdout.can_drain() {

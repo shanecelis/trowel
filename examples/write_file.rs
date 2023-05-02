@@ -8,7 +8,7 @@ use embedded_graphics::{
     prelude::*,
     text::Text,
 };
-use trowel::{App, AppResult, Buttons, Error, WriteMode, FileSys, file_sys};
+use trowel::{App, AppResult, Buttons, Error, Mode, FileSys, file_sys};
 use genio::Write;
 
 struct WriteFile {
@@ -34,8 +34,8 @@ impl App for WriteFile {
         // if fs.file_exists("hello.txt").expect("Could not see if file exists") {
         //     println!("I see the file");
         // }
-        // let file = fs.write_file("hello.txt", b"Hello, FS!\n", WriteMode::Append);
-        let mut file = fs.open_file("hello.txt", WriteMode::Truncate)
+        // let file = fs.write_file("hello.txt", b"Hello, FS!\n", Mode::Append);
+        let mut file = fs.open_file("hello.txt", Mode::Truncate)
                          .expect("Could not open file");
         file.write(b"Hello, FS!\n")
             .expect("Could not write file");

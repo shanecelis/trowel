@@ -219,7 +219,6 @@ where
         app.update(buttons.borrow().clone())
             .expect("error updating");
         app.draw(&mut display).expect("error drawing");
-        // app.read_write(&mut fs).expect("error reading/writing");
         let image =
             ImageData::new_with_u8_clamped_array_and_sh(Clamped(&mut display.data.0), 160, 128)
                 .expect("Unable to make image data");
