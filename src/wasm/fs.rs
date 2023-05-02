@@ -1,8 +1,8 @@
-use crate::{Mode, fs::FileSys};
-use web_sys::window;
-use wasm_bindgen::JsValue;
-use genio::{Read, Write};
+use crate::{fs::FileSys, Mode};
 use alloc::rc::Rc;
+use genio::{Read, Write};
+use wasm_bindgen::JsValue;
+use web_sys::window;
 
 pub struct WebFS {
     local_storage: Rc<web_sys::Storage>,
@@ -12,9 +12,11 @@ impl WebFS {
     pub fn new() -> Result<Self, JsValue> {
         Ok(Self {
             local_storage: Rc::new(
-                window().ok_or_else(|| JsValue::from_str("Cannot get window"))?
-                        .local_storage()?
-                        .ok_or_else(|| JsValue::from_str("Cannot get storage"))?),
+                window()
+                    .ok_or_else(|| JsValue::from_str("Cannot get window"))?
+                    .local_storage()?
+                    .ok_or_else(|| JsValue::from_str("Cannot get storage"))?,
+            ),
         })
     }
 }
@@ -24,7 +26,7 @@ pub struct WebFile {
     mode: Mode,
     data: Option<Vec<u8>>,
     start: Option<usize>,
-    local_storage: Rc<web_sys::Storage>
+    local_storage: Rc<web_sys::Storage>,
 }
 
 impl WebFile {
@@ -34,19 +36,20 @@ impl WebFile {
             mode,
             data: None,
             start: None,
-            local_storage
+            local_storage,
         }
     }
 }
-
 
 impl Read for WebFile {
     type ReadError = JsValue;
     fn read(&mut self, buf: &mut [u8]) -> Result<usize, Self::ReadError> {
         if self.data.is_none() {
-            let bytes = self.local_storage.get_item(&self.name)?
-                                          .unwrap_or_else(|| String::new())
-                                          .into_bytes();
+            let bytes = self
+                .local_storage
+                .get_item(&self.name)?
+                .unwrap_or_else(|| String::new())
+                .into_bytes();
             self.data = Some(bytes);
         }
         let slice: &[u8] = self.data.as_ref().expect("Could not get data");
@@ -68,10 +71,11 @@ impl Write for WebFile {
         if self.data.is_none() {
             let string = match self.mode {
                 Mode::Truncate => String::new(),
-                Mode::Append => self.local_storage
-                                         .get_item(&self.name)?
-                                         .unwrap_or_else(|| String::new()),
-                Mode::ReadOnly => String::new()
+                Mode::Append => self
+                    .local_storage
+                    .get_item(&self.name)?
+                    .unwrap_or_else(|| String::new()),
+                Mode::ReadOnly => String::new(),
             };
             let bytes = string.into_bytes();
             self.data = Some(bytes);
@@ -88,14 +92,12 @@ impl Write for WebFile {
         if let Some(v) = self.data.as_ref() {
             let str = String::from_utf8(v.clone())
                 .map_err(|_| JsValue::from_str("File contents not valid utf-8 string"))?;
-            self.local_storage
-                .set_item(&self.name, &str)?
+            self.local_storage.set_item(&self.name, &str)?
         }
         Ok(())
     }
 
-    fn size_hint(&mut self, _bytes: usize) {
-    }
+    fn size_hint(&mut self, _bytes: usize) {}
 
     fn uses_size_hint(&self) -> bool {
         false
@@ -116,10 +118,14 @@ impl FileSys for WebFS {
         Ok(self.local_storage.get_item(name)?.is_some())
     }
     fn open_file(&mut self, name: &str, mode: Mode) -> Result<Self::File, Self::FileError> {
-        if mode == Mode::ReadOnly && ! self.file_exists(name)? {
+        if mode == Mode::ReadOnly && !self.file_exists(name)? {
             Err(JsValue::from_str("No such file"))
         } else {
-            Ok(WebFile::new(name.to_owned(), mode, self.local_storage.clone()))
+            Ok(WebFile::new(
+                name.to_owned(),
+                mode,
+                self.local_storage.clone(),
+            ))
         }
     }
     fn delete_file(&mut self, name: &str) -> Result<(), Self::FileError> {
@@ -127,14 +133,16 @@ impl FileSys for WebFS {
         Ok(())
     }
     fn list_files(&mut self) -> Result<alloc::vec::Vec<String>, Self::FileError> {
-
         let mut files = vec![];
 
         for i in 0..self.local_storage.length()? {
-            files.push(self.local_storage.key(i)?.ok_or_else(|| JsValue::from_str("Cannot get file/key name"))?);
+            files.push(
+                self.local_storage
+                    .key(i)?
+                    .ok_or_else(|| JsValue::from_str("Cannot get file/key name"))?,
+            );
         }
 
         Ok(files)
     }
 }
-

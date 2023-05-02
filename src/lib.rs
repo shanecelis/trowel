@@ -41,12 +41,11 @@ pub enum Error {
     #[cfg(target_family = "wasm")]
     WasmErr(wasm_bindgen::JsValue),
     #[cfg(all(feature = "sdcard", target_arch = "arm"))]
-    SdErr(embedded_sdmmc::Error<embedded_sdmmc::SdMmcError>)
-
+    SdErr(embedded_sdmmc::Error<embedded_sdmmc::SdMmcError>),
 }
 pub type AppResult = Result<(), Error>;
 #[cfg(feature = "sdcard")]
-pub use fs::{Mode, FileSys};
+pub use fs::{FileSys, Mode};
 
 pub trait App {
     fn init(&mut self) -> AppResult;
@@ -105,7 +104,7 @@ extern crate alloc;
 #[cfg(all(target_arch = "arm", target_os = "none"))]
 mod sprig;
 #[cfg(all(target_arch = "arm", target_os = "none"))]
-pub use sprig::{run_with, stdout, file_sys};
+pub use sprig::{file_sys, run_with, stdout};
 
 mod fps;
 mod fs;
@@ -115,11 +114,10 @@ pub mod buffered;
 
 pub mod flipped;
 
-
 #[cfg(any(target_family = "unix", target_family = "windows"))]
 mod pc;
 #[cfg(any(target_family = "unix", target_family = "windows"))]
-pub use pc::{run_with, stdout, file_sys};
+pub use pc::{file_sys, run_with, stdout};
 
 pub fn run(app: impl App + 'static) -> () {
     run_with(move || app);
@@ -131,6 +129,6 @@ pub mod runty8;
 #[cfg(target_family = "wasm")]
 mod wasm;
 #[cfg(target_family = "wasm")]
-pub use wasm::run_with;
-#[cfg(target_family = "wasm")]
 pub use wasm::file_sys;
+#[cfg(target_family = "wasm")]
+pub use wasm::run_with;

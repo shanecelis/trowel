@@ -9,10 +9,9 @@ pub enum Mode {
     Truncate,
 }
 
-
 pub trait FileSys {
     type FileError;
-    type File : Read + Write;
+    type File: Read + Write;
 
     fn file_exists(&mut self, name: &str) -> Result<bool, Self::FileError>;
     fn open_file(&mut self, name: &str, mode: Mode) -> Result<Self::File, Self::FileError>;

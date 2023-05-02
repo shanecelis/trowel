@@ -25,7 +25,7 @@ mod fs;
 const SCREEN_WIDTH: usize = 160;
 const SCREEN_HEIGHT: usize = 128;
 
-static mut FILE_SYS: Option<Result<WebFS,JsValue>> = None;
+static mut FILE_SYS: Option<Result<WebFS, JsValue>> = None;
 
 /*
  * 1. What is going on here?
@@ -123,9 +123,7 @@ where
     let data = WasmBuffer([0; OUTPUT_BUFFER_SIZE]);
     let mut display = FrameBuf::new(data, 160, 128);
 
-    unsafe {
-        FILE_SYS = Some(WebFS::new())
-    }
+    unsafe { FILE_SYS = Some(WebFS::new()) }
     display
         .clear(Rgb565::BLACK)
         .expect("error clearing display");
@@ -237,7 +235,13 @@ where
 }
 
 pub fn file_sys() -> Result<&'static mut WebFS, super::Error> {
-    unsafe { FILE_SYS.as_mut().unwrap().as_mut().map_err(|e| crate::Error::WasmErr(e.clone())) }
+    unsafe {
+        FILE_SYS
+            .as_mut()
+            .unwrap()
+            .as_mut()
+            .map_err(|e| crate::Error::WasmErr(e.clone()))
+    }
 }
 
 fn window() -> web_sys::Window {

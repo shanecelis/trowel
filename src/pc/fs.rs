@@ -1,6 +1,6 @@
-use crate::{Mode};
-use std::{fs, io, env};
+use crate::Mode;
 use genio::std_impls::GenioIo;
+use std::{env, fs, io};
 
 pub struct PCFS {
     prefix: String,
@@ -9,9 +9,10 @@ pub struct PCFS {
 impl PCFS {
     pub fn new(prefix: Option<String>) -> Self {
         Self {
-            prefix: prefix.or(env::var_os("TROWEL_FS")
-                .map(|s| s.into_string().expect("Invalid utf-8 string in TROWEL_FS")))
-                .unwrap_or_else(|| "fs".to_owned())
+            prefix: prefix
+                .or(env::var_os("TROWEL_FS")
+                    .map(|s| s.into_string().expect("Invalid utf-8 string in TROWEL_FS")))
+                .unwrap_or_else(|| "fs".to_owned()),
         }
     }
 }
@@ -22,8 +23,7 @@ impl crate::fs::FileSys for PCFS {
 
     fn file_exists(&mut self, name: &str) -> Result<bool, Self::FileError> {
         let name = format!("{}/{}", self.prefix, name);
-        fs::metadata(name)
-            .map(|_| true)
+        fs::metadata(name).map(|_| true)
     }
     fn open_file(&mut self, name: &str, mode: Mode) -> Result<Self::File, Self::FileError> {
         let name = format!("{}/{}", self.prefix, name);
@@ -45,7 +45,7 @@ impl crate::fs::FileSys for PCFS {
                 .read(true)
                 .append(false)
                 .write(false)
-                .open(name)?
+                .open(name)?,
         };
         Ok(GenioIo::new(file))
     }
@@ -58,14 +58,14 @@ impl crate::fs::FileSys for PCFS {
         for entry in fs::read_dir(&self.prefix)? {
             let entry = entry?;
             let path = entry.path();
-            let name = path.file_name()
+            let name = path
+                .file_name()
                 .expect("Could not get file name")
-                           .to_str()
+                .to_str()
                 .expect("Could not convert filename to utf-8")
-                           .to_owned();
+                .to_owned();
             names.push(name);
         }
         Ok(names)
     }
 }
-

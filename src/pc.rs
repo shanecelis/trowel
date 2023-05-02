@@ -16,7 +16,7 @@ use embedded_graphics_simulator::{
 use super::{AppExt, FpsApp};
 use embedded_fps::StdClock;
 use genio::std_impls::GenioWrite;
-use std::time::{Instant, Duration};
+use std::time::{Duration, Instant};
 
 use crate::{App, Buttons};
 
@@ -33,8 +33,8 @@ pub fn stdout() -> GenioWrite<std::io::Stdout> {
     GenioWrite::new(std::io::stdout())
 }
 
-const FPS_TARGET : u8 = 30;
-const FRAME_BUDGET : u64 = 1_000_000 /* micro seconds */ / FPS_TARGET as u64; 
+const FPS_TARGET: u8 = 30;
+const FRAME_BUDGET: u64 = 1_000_000 /* micro seconds */ / FPS_TARGET as u64;
 
 pub fn run_with<F, A>(app_maker: F) -> !
 where
@@ -52,7 +52,7 @@ static mut FILE_SYS: Option<fs::PCFS> = None;
 
 // #[cfg(feature = "sdcard")]
 pub fn file_sys() -> Result<&'static mut fs::PCFS, super::Error> {
-    Ok(unsafe { FILE_SYS.as_mut().unwrap()})
+    Ok(unsafe { FILE_SYS.as_mut().unwrap() })
 }
 
 fn _run_with<F, A>(app_maker: F) -> !

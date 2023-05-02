@@ -8,8 +8,8 @@ use embedded_graphics::{
     prelude::*,
     text::Text,
 };
-use trowel::{App, AppResult, Buttons, Error, Mode, FileSys, file_sys};
 use genio::Write;
+use trowel::{file_sys, App, AppResult, Buttons, Error, FileSys, Mode};
 
 struct WriteFile {
     frame: i32, // Frame count
@@ -18,7 +18,6 @@ struct WriteFile {
 }
 
 impl App for WriteFile {
-
     fn init(&mut self) -> AppResult {
         Ok(())
     }
@@ -35,10 +34,10 @@ impl App for WriteFile {
         //     println!("I see the file");
         // }
         // let file = fs.write_file("hello.txt", b"Hello, FS!\n", Mode::Append);
-        let mut file = fs.open_file("hello.txt", Mode::Truncate)
-                         .expect("Could not open file");
-        file.write(b"Hello, FS!\n")
-            .expect("Could not write file");
+        let mut file = fs
+            .open_file("hello.txt", Mode::Truncate)
+            .expect("Could not open file");
+        file.write(b"Hello, FS!\n").expect("Could not write file");
         self.was_successful = true;
 
         Ok(())

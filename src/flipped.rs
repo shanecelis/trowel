@@ -1,12 +1,11 @@
+use bitflags::bitflags;
 use embedded_graphics::{
     draw_target::DrawTarget,
     geometry::Dimensions,
-    primitives::{Rectangle, PointsIter },
+    prelude::{Point, Size},
+    primitives::{PointsIter, Rectangle},
     Pixel,
-    prelude::{Size, Point}
 };
-use bitflags::bitflags;
-
 
 bitflags! {
     pub struct Axes: u8 {
@@ -74,7 +73,6 @@ where
     }
 }
 
-
 /// Flipped draw target.
 ///
 /// Created by calling [`translated`] on any [`DrawTarget`].
@@ -113,18 +111,21 @@ where
         I: IntoIterator<Item = Pixel<Self::Color>>,
     {
         let rect = self.bounding_box();
-        self.parent
-            .draw_iter(pixels.into_iter().map(|Pixel(q, c)| {
-                let p = self.axes.flip(q, rect.size);
-                Pixel(p,c)
-             }))
+        self.parent.draw_iter(pixels.into_iter().map(|Pixel(q, c)| {
+            let p = self.axes.flip(q, rect.size);
+            Pixel(p, c)
+        }))
     }
 
     fn fill_contiguous<I>(&mut self, area: &Rectangle, colors: I) -> Result<(), Self::Error>
     where
         I: IntoIterator<Item = Self::Color>,
     {
-        self.draw_iter(area.points().zip(colors.into_iter()).map(|(p, c)| Pixel(p,c)))
+        self.draw_iter(
+            area.points()
+                .zip(colors.into_iter())
+                .map(|(p, c)| Pixel(p, c)),
+        )
         // area.size.width * area.size.height
         // let area = area.translate(self.offset);
         // self.parent.fill_contiguous(&area, colors)

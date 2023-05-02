@@ -26,37 +26,43 @@ use embedded_graphics::{pixelcolor::Rgb565, prelude::*};
 use embedded_hal::digital::v2::{InputPin, OutputPin};
 use embedded_sdmmc::SdMmcSpi;
 use fugit::RateExtU32;
+use hal::{
+    clocks::Clock,
+    timer::{monotonic::Monotonic, Alarm0},
+};
 use rp_pico::hal::{self, pac::interrupt};
-use hal::{clocks::Clock, timer::{Alarm0, monotonic::Monotonic}};
 // use rp2040_hal::timer::monotonic::Monotonic;
-use st7735_lcd::{Orientation, ST7735};
 use rtic_monotonic::Monotonic as RticMonotonic;
+use st7735_lcd::{Orientation, ST7735};
 
 // Serial port module
 use hal::usb::UsbBus;
 use usb_device::bus::UsbBusAllocator;
 use usb_device::prelude::*;
-use usbd_serial::{SerialPort, USB_CLASS_CDC, UsbError};
+use usbd_serial::{SerialPort, UsbError, USB_CLASS_CDC};
 
 // A shorter alias for the Peripheral Access Crate, which provides low-level
 // register access.
 use crate::{App, AppExt, Buttons, FpsApp};
+use circular_buffer::CircularBuffer;
 use core::option::Option;
 use embedded_alloc::Heap;
 use hal::pac;
-use try_default::TryDefault;
-use circular_buffer::CircularBuffer;
 use shared_bus::{NullMutex, SpiProxy};
+use try_default::TryDefault;
 
 use core::cell::RefCell;
-use embedded_time::{fraction::Fraction, Clock as EClock, clock::Error, Instant as EInstant, duration::Microseconds};
+use embedded_time::{
+    clock::Error, duration::Microseconds, fraction::Fraction, Clock as EClock, Instant as EInstant,
+};
 // use core::fmt::Write;
-use genio::Write;
 use alloc::rc::Rc;
+use genio::Write;
 
-pub(crate) type SdMmcSpi0<'a> = SdMmcSpi<SpiProxy<'a, NullMutex<hal::Spi<hal::spi::Enabled, pac::SPI0, 8>>>,
-                            hal::gpio::Pin<hal::gpio::bank0::Gpio21,
-                                                hal::gpio::Output<hal::gpio::PushPull>>>;
+pub(crate) type SdMmcSpi0<'a> = SdMmcSpi<
+    SpiProxy<'a, NullMutex<hal::Spi<hal::spi::Enabled, pac::SPI0, 8>>>,
+    hal::gpio::Pin<hal::gpio::bank0::Gpio21, hal::gpio::Output<hal::gpio::PushPull>>,
+>;
 
 #[global_allocator]
 static HEAP: Heap = Heap::empty();
@@ -75,15 +81,19 @@ static mut USB_BUS: Option<UsbBusAllocator<hal::usb::UsbBus>> = None;
 /// The USB Serial Device Driver (shared with the interrupt).
 static mut USB_SERIAL: Option<SerialPort<hal::usb::UsbBus>> = None;
 
-static mut SHARED_BUS: Option<shared_bus::BusManager<shared_bus::NullMutex<hal::Spi<hal::spi::Enabled, pac::SPI0, 8>>>> = None;
-static mut FILE_SYS: Option<Result<RefSPIFS<'static>, embedded_sdmmc::Error<embedded_sdmmc::SdMmcError>>> = None;
+static mut SHARED_BUS: Option<
+    shared_bus::BusManager<shared_bus::NullMutex<hal::Spi<hal::spi::Enabled, pac::SPI0, 8>>>,
+> = None;
+static mut FILE_SYS: Option<
+    Result<RefSPIFS<'static>, embedded_sdmmc::Error<embedded_sdmmc::SdMmcError>>,
+> = None;
 static mut SD_SPI: Option<SdMmcSpi0<'static>> = None;
 
 type Monotonic0 = Monotonic<Alarm0>;
 
 mod fs;
 
-use self::fs::{SPIFS, RefSPIFS};
+use self::fs::{RefSPIFS, SPIFS};
 
 pub struct MonotonicClock(RefCell<Monotonic0>);
 impl MonotonicClock {
@@ -118,11 +128,9 @@ impl TryDefault<FpsApp<MonotonicClock>> for FpsApp<MonotonicClock> {
 pub fn try_now() -> Result<u64, &'static str> {
     let ref clock = unsafe { MONOTONIC_CLOCK.as_ref() };
     let clock = clock.ok_or("No clock setup")?;
-    let now = clock.try_now()
-        .map_err(|_| "Failed now")?;
+    let now = clock.try_now().map_err(|_| "Failed now")?;
     let duration = now.duration_since_epoch();
-    let microseconds : Microseconds<u64> = duration.try_into()
-        .map_err(|_| "Problem since epoch")?;
+    let microseconds: Microseconds<u64> = duration.try_into().map_err(|_| "Problem since epoch")?;
     Ok(microseconds.0)
 }
 
@@ -150,7 +158,7 @@ where
 
 pub struct Stdout {
     buffer: CircularBuffer<64, u8>,
-    error: Option<UsbError>
+    error: Option<UsbError>,
 }
 
 impl Stdout {
@@ -162,15 +170,16 @@ impl Stdout {
         if self.buffer.len() != 0 {
             let (s1, s2) = self.buffer.as_slices();
             match serial.write(s1) {
-                Ok(_written) => { },
-                Err(err) => { self.error = Some(err);
+                Ok(_written) => {}
+                Err(err) => {
+                    self.error = Some(err);
                     return;
                 }
             }
             if s2.len() != 0 {
                 match serial.write(s2) {
-                    Ok(_written) => { },
-                    Err(err) => self.error = Some(err)
+                    Ok(_written) => {}
+                    Err(err) => self.error = Some(err),
                 }
             }
             self.buffer.clear();
@@ -183,8 +192,10 @@ impl Write for Stdout {
     type FlushError = UsbError;
     fn write(&mut self, buf: &[u8]) -> Result<usize, Self::WriteError> {
         match self.error.take() {
-            Some(err) => { return Err(err); },
-            None => { }
+            Some(err) => {
+                return Err(err);
+            }
+            None => {}
         }
         for c in buf {
             self.buffer.push_back(*c);
@@ -194,11 +205,11 @@ impl Write for Stdout {
     fn flush(&mut self) -> Result<(), Self::FlushError> {
         match self.error.take() {
             Some(err) => Err(err),
-            None => Ok(())
+            None => Ok(()),
         }
     }
 
-    fn size_hint(&mut self, _bytes: usize) { }
+    fn size_hint(&mut self, _bytes: usize) {}
 
     fn uses_size_hint(&self) -> bool {
         false
@@ -211,13 +222,19 @@ pub fn stdout() -> &'static mut Stdout {
 
 pub fn file_sys() -> Result<&'static mut RefSPIFS<'static>, crate::Error> {
     // Ok(fs::PCFS::new(None))
-    unsafe { FILE_SYS.as_mut().unwrap().as_mut().map_err(|e| crate::Error::SdErr(e.clone())) }
+    unsafe {
+        FILE_SYS
+            .as_mut()
+            .unwrap()
+            .as_mut()
+            .map_err(|e| crate::Error::SdErr(e.clone()))
+    }
 }
 // pub fn file_sys() -> &'static mut RefSPIFS<'static> {
 //     unsafe { FILE_SYS.as_mut().unwrap() }
 // }
-const FPS_TARGET : u8 = 30; // frames per second
-const FRAME_BUDGET : u64 = 1_000_000 /* micro seconds */ / FPS_TARGET as u64;
+const FPS_TARGET: u8 = 30; // frames per second
+const FRAME_BUDGET: u64 = 1_000_000 /* micro seconds */ / FPS_TARGET as u64;
 
 fn _run_with<F, A>(app_maker: F) -> ()
 where
@@ -290,8 +307,9 @@ where
         &embedded_hal::spi::MODE_0,
     );
 
-    let bus: shared_bus::BusManager<shared_bus::NullMutex<hal::Spi<hal::spi::Enabled, pac::SPI0, 8>>>
-        = shared_bus::BusManagerSimple::new(spi);
+    let bus: shared_bus::BusManager<
+        shared_bus::NullMutex<hal::Spi<hal::spi::Enabled, pac::SPI0, 8>>,
+    > = shared_bus::BusManagerSimple::new(spi);
     unsafe {
         SHARED_BUS = Some(bus);
     }
@@ -323,7 +341,13 @@ where
     lcd_led.set_high().unwrap();
 
     // Initialize USB serial communication
-    let usb_bus = UsbBusAllocator::new(UsbBus::new(pac.USBCTRL_REGS,pac.USBCTRL_DPRAM,clocks.usb_clock,true,&mut pac.RESETS));
+    let usb_bus = UsbBusAllocator::new(UsbBus::new(
+        pac.USBCTRL_REGS,
+        pac.USBCTRL_DPRAM,
+        clocks.usb_clock,
+        true,
+        &mut pac.RESETS,
+    ));
     unsafe {
         // Note (safety): This is safe as interrupts haven't been started yet
         USB_BUS = Some(usb_bus);
@@ -341,11 +365,11 @@ where
     }
 
     let usb_dev = UsbDeviceBuilder::new(bus_ref, UsbVidPid(0x16c0, 0x27dd))
-    .manufacturer("Hack Club")
-    .product("Sprig")
-    .serial_number("0001")
-    .device_class(USB_CLASS_CDC)
-    .build();
+        .manufacturer("Hack Club")
+        .product("Sprig")
+        .serial_number("0001")
+        .device_class(USB_CLASS_CDC)
+        .build();
 
     unsafe {
         // Note (safety): This is safe as interrupts haven't been started yet
@@ -353,7 +377,10 @@ where
     }
 
     unsafe {
-        STDOUT = Some(Stdout { buffer: CircularBuffer::new(), error: None });
+        STDOUT = Some(Stdout {
+            buffer: CircularBuffer::new(),
+            error: None,
+        });
     }
 
     // Enable the USB interrupt
@@ -399,7 +426,7 @@ where
     app.init().expect("error initializing");
 
     let mut buttons;
-    let mut start : Result<u64, &'static str> = try_now();
+    let mut start: Result<u64, &'static str> = try_now();
     loop {
         // defmt::println!("Hello, world!");
 
@@ -458,7 +485,6 @@ where
 
                         // defmt::println!("X {}", x);
                         if let Ok(leftover) = i32::try_from(x) {
-
                             // defmt::println!("C {}", leftover);
                             if leftover > 0 {
                                 delay.delay_us(leftover as u32);
@@ -466,17 +492,17 @@ where
                         } else {
                             // defmt::println!("G");
                         }
-                    },
-                    Err(_e) => { },// defmt::println!("E {:?}", e); }
+                    }
+                    Err(_e) => {} // defmt::println!("E {:?}", e); }
                 }
                 start = end;
-            },
+            }
             Err(_e) => {
                 // defmt::println!("F {:?}", e);
                 start = try_now();
             }
         }
-    };
+    }
 }
 
 /// This function is called whenever the USB Hardware generates an Interrupt

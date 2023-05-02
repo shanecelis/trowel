@@ -6,7 +6,7 @@ use embedded_graphics_framebuf::{backends::FrameBufferBackend, FrameBuf};
 
 pub struct Buffer {
     pub data: [Rgb565; 20480],
-    pub transparent: Option<Rgb565>
+    pub transparent: Option<Rgb565>,
 }
 
 impl FrameBufferBackend for Buffer {
@@ -51,7 +51,10 @@ where
     A: App,
 {
     pub fn new(app: A) -> Self {
-        let data = Buffer { data: [Rgb565::BLACK; 20480], transparent: None };
+        let data = Buffer {
+            data: [Rgb565::BLACK; 20480],
+            transparent: None,
+        };
         BufferedApp {
             frame_buf: FrameBuf::new(data, 160, 128),
             app,
