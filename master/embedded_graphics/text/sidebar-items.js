@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":[["Alignment","Horizontal text alignment."],["Baseline","Text baseline."],["DecorationColor","Text decoration color."],["LineHeight","Text line height."]],"mod":[["renderer","Text renderer."]],"struct":[["Text","Text drawable."],["TextStyle","Text style."],["TextStyleBuilder","Builder for text styles."]]};

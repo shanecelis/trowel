@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":[["backends","Backends for a framebuffer."]],"struct":[["FrameBuf","Constructs a frame buffer in memory. Lets you define the width(`X`), height (`Y`) and pixel type your using in your display (RGB, Monochrome etc.)"],["PixelIterator","An iterator for all Pixels in the framebuffer."]]};

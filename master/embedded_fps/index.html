@@ -1,0 +1,84 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="sponsor-us github crates-io"><meta name="keywords" content="rust, rustlang, rust-lang, embedded_fps"><title>embedded_fps - Rust</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceSerif4-Regular-1f7d512b176f0f72.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceSerif4-Bold-124a1ca42af929b6.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-93196c7a1c3542a8.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../static.files/light-4743e13df3dfe8c4.css"><link rel="stylesheet" disabled href="../static.files/dark-0e1b889528bd466b.css"><link rel="stylesheet" disabled href="../static.files/ayu-65289d5d067c7c66.css"><script id="default-settings" ></script><script src="../static.files/storage-d43fa987303ecbbb.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-3367e395607fafc1.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="logo-container" href="../embedded_fps/index.html"><img class="rust-logo" src="../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><h2></h2></nav><nav class="sidebar"><a class="logo-container" href="../embedded_fps/index.html"><img class="rust-logo" src="../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><h2 class="location"><a href="#">Crate embedded_fps</a></h2><div class="sidebar-elems"><ul class="block"><li class="version">Version 0.1.0</li><li><a id="all-types" href="all.html">All Items</a></li></ul><section><ul class="block"><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li></ul></section></div></nav><main><div class="width-limiter"><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="main-heading"><h1>Crate <a class="mod" href="#">embedded_fps</a><button id="copy-path" onclick="copy_path(this)" title="Copy item path to clipboard"><img src="../static.files/clipboard-7571035ce49a181d.svg" width="19" height="18" alt="Copy item path"></button></h1><span class="out-of-band"><a class="srclink" href="../src/embedded_fps/lib.rs.html#1-133">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p><a href="https://github.com/sponsors/LechevSpace"><img src="https://img.shields.io/github/sponsors/LechevSpace?color=bf3989&amp;label=Sponsor%20us&amp;style=for-the-badge&amp;logoColor=bf3989&amp;logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyBoZWlnaHQ9IjE2IiB2aWV3Qm94PSIwIDAgMTYgMTYiIHZlcnNpb249IjEuMSIgd2lkdGg9IjE2IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogICAgPHBhdGggZmlsbD0iI2JmMzk4OSIgZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNNC4yNSAyLjVjLTEuMzM2IDAtMi43NSAxLjE2NC0yLjc1IDMgMCAyLjE1IDEuNTggNC4xNDQgMy4zNjUgNS42ODJBMjAuNTY1IDIwLjU2NSAwIDAwOCAxMy4zOTNhMjAuNTYxIDIwLjU2MSAwIDAwMy4xMzUtMi4yMTFDMTIuOTIgOS42NDQgMTQuNSA3LjY1IDE0LjUgNS41YzAtMS44MzYtMS40MTQtMy0yLjc1LTMtMS4zNzMgMC0yLjYwOS45ODYtMy4wMjkgMi40NTZhLjc1Ljc1IDAgMDEtMS40NDIgMEM2Ljg1OSAzLjQ4NiA1LjYyMyAyLjUgNC4yNSAyLjV6TTggMTQuMjVsLS4zNDUuNjY2LS4wMDItLjAwMS0uMDA2LS4wMDMtLjAxOC0uMDFhNy42NDMgNy42NDMgMCAwMS0uMzEtLjE3IDIyLjA3NSAyMi4wNzUgMCAwMS0zLjQzNC0yLjQxNEMyLjA0NSAxMC43MzEgMCA4LjM1IDAgNS41IDAgMi44MzYgMi4wODYgMSA0LjI1IDEgNS43OTcgMSA3LjE1MyAxLjgwMiA4IDMuMDIgOC44NDcgMS44MDIgMTAuMjAzIDEgMTEuNzUgMSAxMy45MTQgMSAxNiAyLjgzNiAxNiA1LjVjMCAyLjg1LTIuMDQ1IDUuMjMxLTMuODg1IDYuODE4YTIyLjA4IDIyLjA4IDAgMDEtMy43NDQgMi41ODRsLS4wMTguMDEtLjAwNi4wMDNoLS4wMDJMOCAxNC4yNXptMCAwbC4zNDUuNjY2YS43NTIuNzUyIDAgMDEtLjY5IDBMOCAxNC4yNXoiPjwvcGF0aD4KPC9zdmc%2BCg%3D%3D" alt="sponsor-us" /></a> <a href="https://github.com/LechevSpace/embedded-fps"><img src="https://img.shields.io/badge/github-3873AD?style=for-the-badge&amp;labelColor=555555&amp;logo=github" alt="github" /></a> <a href="https://crates.io/crates/embedded-fps"><img src="https://img.shields.io/crates/v/embedded-fps?logo=rust&amp;style=for-the-badge" alt="crates-io" /></a></p>
+<p>Frames Per Second counter for embedded devices.</p>
+<p>Create an <a href="struct.FPS.html" title="FPS"><code>FPS</code></a> struct by passing the <code>MAX_FPS</code> (maximum frames per seconds)
+that you expect to hit and a <a href="../embedded_time/clock/trait.Clock.html" title="embedded_time::Clock"><code>embedded_time::Clock</code></a> implementation.</p>
+<h2 id="examples"><a href="#examples">Examples</a></h2><h3 id="frames-per-second-with-a-simple-for-loop"><a href="#frames-per-second-with-a-simple-for-loop">Frames Per Second with a simple for-loop</a></h3>
+<p>You can also run this example from the <code>examples</code> directory using:</p>
+<p><code>cargo run --features=std --example fps_counter</code></p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>embedded_fps::{FPS, StdClock};
+<span class="kw">use </span>std::{thread::sleep, time::Duration};
+
+<span class="kw">let </span>std_clock = StdClock::default();
+<span class="kw">let </span><span class="kw-2">mut </span>fps_counter = FPS::&lt;<span class="number">10</span>, <span class="kw">_</span>&gt;::new(std_clock);
+
+<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="number">20 </span>{
+    <span class="comment">// sleep for 125 milliseconds
+    // this will give us 8 FPS
+    </span>sleep(Duration::from_millis(<span class="number">125</span>));
+
+    <span class="kw">let </span>fps = fps_counter.tick();
+    <span class="macro">println!</span>(<span class="string">&quot;Frames per second: {fps}&quot;</span>)
+}</code></pre></div>
+<h3 id="frames-per-second-with-embedded-graphics"><a href="#frames-per-second-with-embedded-graphics">Frames Per Second with <code>embedded-graphics</code></a></h3>
+<p>This crate is suitable for usage with the <a href="https://crates.io/crates/embedded-graphics"><code>embedded-graphics</code></a> crate
+when you want to know, log or even show the frames per second of a
+display with an embedded device.</p>
+<p>Note: This example requires <a href="https://crates.io/crates/embedded-graphics-simulator"><code>embedded-graphics-simulator</code></a> and <code>SDL2</code> installed
+on your machine.</p>
+<p>Refer to the <a href="https://docs.rs/embedded-graphics-simulator/latest/embedded_graphics_simulator/#setup"><code>embedded-graphics-simulator</code> documentation</a>
+for detailed instructions.</p>
+<p>You can also run this example from the <code>examples</code> directory using:</p>
+<p><code>cargo run --features=std --example fps_counter</code></p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>embedded_fps::{StdClock, FPS};
+<span class="kw">use </span>embedded_graphics::{
+    draw_target::DrawTarget,
+    mono_font::{ascii::FONT_10X20, MonoTextStyle},
+    pixelcolor::BinaryColor,
+    prelude::{Point, Size},
+    text::Text,
+    Drawable,
+};
+<span class="kw">use </span>embedded_graphics_simulator::{
+    OutputSettingsBuilder, SimulatorDisplay, SimulatorEvent, Window,
+};
+
+<span class="kw">pub const </span>DISPLAY_360P: Size = Size::new(<span class="number">480</span>, <span class="number">360</span>);
+
+<span class="kw">fn </span>main() -&gt; <span class="prelude-ty">Result</span>&lt;(), core::convert::Infallible&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>display = SimulatorDisplay::&lt;BinaryColor&gt;::new(DISPLAY_360P);
+
+    <span class="kw">let </span>output_settings = OutputSettingsBuilder::new().scale(<span class="number">1</span>).build();
+    <span class="kw">let </span><span class="kw-2">mut </span>window = Window::new(<span class="string">&quot;FPS using embedded-graphics &amp; simulator&quot;</span>, <span class="kw-2">&amp;</span>output_settings);
+
+    <span class="comment">// starts the StdClock
+    // `200` MAX_FPS is more than enough since `SimulatorDisplay`
+    // doesn&#39;t reach more than `15` FPS when using `BinaryColor`.
+    </span><span class="kw">let </span><span class="kw-2">mut </span>fps_counter = FPS::&lt;<span class="number">200</span>, StdClock&gt;::default();
+    <span class="comment">// create an initial value for FPS
+    </span><span class="kw">let </span><span class="kw-2">mut </span>fps = <span class="number">0</span>;
+
+    <span class="lifetime">&#39;running</span>: <span class="kw">loop </span>{
+        display.clear(BinaryColor::Off)<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>character_style = MonoTextStyle::new(<span class="kw-2">&amp;</span>FONT_10X20, BinaryColor::On);
+        <span class="kw">let </span>fps_position = Point::new(<span class="number">20</span>, <span class="number">30</span>);
+
+        Text::new(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;FPS: {fps}&quot;</span>), fps_position, character_style).draw(<span class="kw-2">&amp;mut </span>display)<span class="question-mark">?</span>;
+
+        window.update(<span class="kw-2">&amp;</span>display);
+
+        <span class="kw">if </span>window.events().any(|e| e == SimulatorEvent::Quit) {
+            <span class="kw">break </span><span class="lifetime">&#39;running </span><span class="prelude-val">Ok</span>(());
+        }
+
+        <span class="comment">// tick and update the FPS at the end of the loop
+        </span>fps = fps_counter.tick();
+    }
+}</code></pre></div>
+<h2 id="crate-features"><a href="#crate-features">Crate features</a></h2>
+<ul>
+<li><code>std</code> - enables <a href="struct.StdClock.html"><code>StdClock</code></a> - a [<code>Clock</code>] implementation using <a href="https://doc.rust-lang.org/1.68.0/std/index.html" title="std"><code>std</code></a> for usage on a host machine.</li>
+</ul>
+</div></details><h2 id="structs" class="small-section-header"><a href="#structs">Structs</a></h2><div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.FPS.html" title="embedded_fps::FPS struct">FPS</a></div><div class="item-right docblock-short">Measures Frames Per Second (FPS).</div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.StdClock.html" title="embedded_fps::StdClock struct">StdClock</a></div><div class="item-right docblock-short">A Standard clock based on <a href="https://doc.rust-lang.org/1.68.0/std/index.html" title="std"><code>std</code></a>.</div></div></div><h2 id="enums" class="small-section-header"><a href="#enums">Enums</a></h2><div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="enum" href="enum.Error.html" title="embedded_fps::Error enum">Error</a></div><div class="item-right docblock-short">The errors that <a href="struct.FPS.html" title="FPS"><code>FPS</code></a> can return.</div></div></div></section></div></main><div id="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="embedded_fps" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0 (2c8cc3432 2023-03-06)" data-search-js="search-98d53477a794af0b.js" data-settings-js="settings-c3c521c753752a1a.js" data-settings-css="settings-08ddfdda51b8ee2e.css" ></div></body></html>

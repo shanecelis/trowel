@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"trait":[["GetPixel","Pixel getter."],["ImageDrawable","Image drawable."]]};

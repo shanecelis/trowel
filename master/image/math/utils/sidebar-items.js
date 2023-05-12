@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":[["clamp","Cut value to be inside given range"]]};

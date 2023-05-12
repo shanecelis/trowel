@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":[["buffer_size","Calculates the required buffer size."],["buffer_size_bpp","Calculates the required buffer size."]],"struct":[["Framebuffer","A framebuffer."]]};

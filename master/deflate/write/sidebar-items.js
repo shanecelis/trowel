@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["DeflateEncoder","A DEFLATE encoder/compressor."],["ZlibEncoder","A Zlib encoder/compressor."]]};

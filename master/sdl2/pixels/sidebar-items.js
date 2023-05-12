@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":[["PixelFormatEnum",""]],"struct":[["Color",""],["Palette",""],["PixelFormat",""],["PixelMasks",""]]};

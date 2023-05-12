@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["Arc","Arc primitive"],["Points","Iterator over all points on the arc line."],["StyledPixelsIterator","Pixel iterator for each pixel in the arc border"]]};

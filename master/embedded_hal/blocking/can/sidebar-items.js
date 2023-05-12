@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"trait":[["Can","A blocking CAN interface that is able to transmit and receive frames."]]};

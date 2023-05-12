@@ -1,0 +1,86 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Raw color types."><meta name="keywords" content="rust, rustlang, rust-lang, raw"><title>embedded_graphics::pixelcolor::raw - Rust</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-1f7d512b176f0f72.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-124a1ca42af929b6.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-93196c7a1c3542a8.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../../static.files/light-4743e13df3dfe8c4.css"><link rel="stylesheet" disabled href="../../../static.files/dark-0e1b889528bd466b.css"><link rel="stylesheet" disabled href="../../../static.files/ayu-65289d5d067c7c66.css"><script id="default-settings" ></script><script src="../../../static.files/storage-d43fa987303ecbbb.js"></script><script defer src="../../../static.files/main-3367e395607fafc1.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="logo-container" href="../../../embedded_graphics/index.html"><img src="https://raw.githubusercontent.com/embedded-graphics/embedded-graphics/191fe7f8a0fedc713f9722b9dc59208dacadee7e/assets/logo.svg?sanitize=true" alt="logo"></a><h2></h2></nav><nav class="sidebar"><a class="logo-container" href="../../../embedded_graphics/index.html">
+                <img src="https://raw.githubusercontent.com/embedded-graphics/embedded-graphics/191fe7f8a0fedc713f9722b9dc59208dacadee7e/assets/logo.svg?sanitize=true" alt="logo"></a><h2 class="location"><a href="#">Module raw</a></h2><div class="sidebar-elems"><section><ul class="block"><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li><li><a href="#traits">Traits</a></li></ul></section></div></nav><main><div class="width-limiter"><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="main-heading"><h1>Module <a href="../../index.html">embedded_graphics</a>::<wbr><a href="../index.html">pixelcolor</a>::<wbr><a class="mod" href="#">raw</a><button id="copy-path" onclick="copy_path(this)" title="Copy item path to clipboard"><img src="../../../static.files/clipboard-7571035ce49a181d.svg" width="19" height="18" alt="Copy item path"></button></h1><span class="out-of-band"><a class="srclink" href="../../../src/embedded_graphics_core/pixelcolor/mod.rs.html#88">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Raw color types.</p>
+<p>This module contains structs to represent the raw data used to store color
+information. Colors that implement the <a href="../trait.PixelColor.html"><code>PixelColor</code></a> trait can use the
+associated <a href="../trait.PixelColor.html#associatedtype.Raw"><code>Raw</code></a> type to define their raw data representation.</p>
+<p>Specifying a <a href="../trait.PixelColor.html#associatedtype.Raw"><code>Raw</code></a> type for a <a href="../trait.PixelColor.html"><code>PixelColor</code></a> is required to use that color
+with the <a href="https://docs.rs/embedded-graphics/latest/embedded_graphics/image/struct.Image.html"><code>Image</code></a> struct.</p>
+<h2 id="converting-colors-to-raw-data"><a href="#converting-colors-to-raw-data">Converting colors to raw data</a></h2>
+<p>Colors can be converted into raw data by using two different methods. The <a href="../trait.IntoStorage.html#tymethod.into_storage"><code>into_storage</code></a>
+method is used to convert a color into a single integer value. To convert a color into a byte
+array the methods provided by the <a href="trait.ToBytes.html" title="ToBytes"><code>ToBytes</code></a> trait can be used. By using <a href="trait.ToBytes.html#tymethod.to_be_bytes"><code>to_be_bytes</code></a> the
+color components will have the same order in memory as in the name of the type.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>embedded_graphics::{pixelcolor::Rgb888, prelude::<span class="kw-2">*</span>};
+
+<span class="kw">let </span>color = Rgb888::new(<span class="number">0x11</span>, <span class="number">0x22</span>, <span class="number">0x33</span>);
+
+<span class="macro">assert_eq!</span>(color.into_storage(), <span class="number">0x00112233</span>);
+
+<span class="macro">assert_eq!</span>(color.to_be_bytes(), [<span class="number">0x11</span>, <span class="number">0x22</span>, <span class="number">0x33</span>]);</code></pre></div>
+<h2 id="implementing-pixelcolor-with-raw-support"><a href="#implementing-pixelcolor-with-raw-support">Implementing PixelColor with Raw support</a></h2>
+<p>This example shows how to implement a new <a href="../trait.PixelColor.html"><code>PixelColor</code></a> that can be used
+with images.</p>
+<p>The RGBI color type uses 4 bits per pixel, one for each color channel and
+an additional intensity bit.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>embedded_graphics::{image::ImageRaw, pixelcolor::raw::RawU4, prelude::<span class="kw-2">*</span>};
+
+<span class="doccomment">/// RGBI color
+</span><span class="attr">#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
+</span><span class="kw">pub struct </span>RGBI(RawU4);
+
+<span class="kw">impl </span>RGBI {
+    <span class="doccomment">/// Creates a RGBI color.
+    </span><span class="kw">pub fn </span>new(red: bool, green: bool, blue: bool, intensity: bool) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>value = <span class="number">0</span>;
+
+        <span class="kw">if </span>red {
+            value |= <span class="number">0b0100</span>;
+        }
+        <span class="kw">if </span>green {
+            value |= <span class="number">0b0010</span>;
+        }
+        <span class="kw">if </span>blue {
+            value |= <span class="number">0b0001</span>;
+        }
+        <span class="kw">if </span>intensity {
+            value |= <span class="number">0b1000</span>;
+        }
+
+        <span class="self">Self</span>(RawU4::new(value))
+    }
+}
+
+<span class="doccomment">/// Implement `PixelColor` to associate a raw data type with the `RGBI` struct.
+</span><span class="kw">impl </span>PixelColor <span class="kw">for </span>RGBI {
+    <span class="kw">type </span>Raw = RawU4;
+}
+
+<span class="doccomment">/// `From&lt;RawU4&gt;` is used by `Image` to construct RGBI colors.
+</span><span class="kw">impl </span>From&lt;RawU4&gt; <span class="kw">for </span>RGBI {
+    <span class="kw">fn </span>from(data: RawU4) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>(data)
+    }
+}
+
+<span class="doccomment">/// Raw image data with 2 pixels per byte.
+</span><span class="attr">#[rustfmt::skip]
+</span><span class="kw">const </span>IMAGE_DATA: <span class="kw-2">&amp;</span>[u8] = <span class="kw-2">&amp;</span>[
+    <span class="number">0b0001_0010</span>,
+    <span class="number">0b0100_1111</span>,
+];
+
+<span class="comment">// Create new image with RGBI colors.
+</span><span class="kw">let </span>image_raw: ImageRaw&lt;RGBI&gt; = ImageRaw::new(IMAGE_DATA, <span class="number">2</span>);
+
+<span class="comment">// In a real application the image could now be drawn to a display:
+// display.draw(&amp;image);</span></code></pre></div>
+</div></details><h2 id="structs" class="small-section-header"><a href="#structs">Structs</a></h2><div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.RawU1.html" title="embedded_graphics::pixelcolor::raw::RawU1 struct">RawU1</a></div><div class="item-right docblock-short">1 bit
+per pixel raw data.</div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.RawU2.html" title="embedded_graphics::pixelcolor::raw::RawU2 struct">RawU2</a></div><div class="item-right docblock-short">2 bits
+per pixel raw data.</div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.RawU4.html" title="embedded_graphics::pixelcolor::raw::RawU4 struct">RawU4</a></div><div class="item-right docblock-short">4 bits
+per pixel raw data.</div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.RawU8.html" title="embedded_graphics::pixelcolor::raw::RawU8 struct">RawU8</a></div><div class="item-right docblock-short">8 bits
+per pixel raw data.</div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.RawU16.html" title="embedded_graphics::pixelcolor::raw::RawU16 struct">RawU16</a></div><div class="item-right docblock-short">16 bits
+per pixel raw data.</div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.RawU24.html" title="embedded_graphics::pixelcolor::raw::RawU24 struct">RawU24</a></div><div class="item-right docblock-short">24 bits
+per pixel raw data.</div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.RawU32.html" title="embedded_graphics::pixelcolor::raw::RawU32 struct">RawU32</a></div><div class="item-right docblock-short">32 bits
+per pixel raw data.</div></div></div><h2 id="enums" class="small-section-header"><a href="#enums">Enums</a></h2><div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="enum" href="enum.BigEndian.html" title="embedded_graphics::pixelcolor::raw::BigEndian enum">BigEndian</a></div><div class="item-right docblock-short">Big endian byte order marker.</div></div><div class="item-row"><div class="item-left module-item"><a class="enum" href="enum.LittleEndian.html" title="embedded_graphics::pixelcolor::raw::LittleEndian enum">LittleEndian</a></div><div class="item-right docblock-short">Little endian byte order marker.</div></div></div><h2 id="traits" class="small-section-header"><a href="#traits">Traits</a></h2><div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="trait" href="trait.ByteOrder.html" title="embedded_graphics::pixelcolor::raw::ByteOrder trait">ByteOrder</a></div><div class="item-right docblock-short">Raw data byte order.</div></div><div class="item-row"><div class="item-left module-item"><a class="trait" href="trait.RawData.html" title="embedded_graphics::pixelcolor::raw::RawData trait">RawData</a></div><div class="item-right docblock-short">Trait implemented by all <code>RawUx</code> types.</div></div><div class="item-row"><div class="item-left module-item"><a class="trait" href="trait.ToBytes.html" title="embedded_graphics::pixelcolor::raw::ToBytes trait">ToBytes</a></div><div class="item-right docblock-short">Trait to convert colors into a byte array.</div></div></div></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="embedded_graphics" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0 (2c8cc3432 2023-03-06)" data-search-js="search-98d53477a794af0b.js" data-settings-js="settings-c3c521c753752a1a.js" data-settings-css="settings-08ddfdda51b8ee2e.css" ></div></body></html>

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["ClipboardUtil","Clipboard utility functions. Access with `VideoSubsystem::clipboard()`."]]};

@@ -1,0 +1,196 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="`embedded-time` provides a comprehensive library of `Duration` and `Rate` types as well as a `Clock` abstraction for hardware timers/clocks and the associated `Instant` type for in embedded systems."><meta name="keywords" content="rust, rustlang, rust-lang, embedded_time"><title>embedded_time - Rust</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceSerif4-Regular-1f7d512b176f0f72.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceSerif4-Bold-124a1ca42af929b6.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-93196c7a1c3542a8.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../static.files/light-4743e13df3dfe8c4.css"><link rel="stylesheet" disabled href="../static.files/dark-0e1b889528bd466b.css"><link rel="stylesheet" disabled href="../static.files/ayu-65289d5d067c7c66.css"><script id="default-settings" ></script><script src="../static.files/storage-d43fa987303ecbbb.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-3367e395607fafc1.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="logo-container" href="../embedded_time/index.html"><img class="rust-logo" src="../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><h2></h2></nav><nav class="sidebar"><a class="logo-container" href="../embedded_time/index.html"><img class="rust-logo" src="../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><h2 class="location"><a href="#">Crate embedded_time</a></h2><div class="sidebar-elems"><ul class="block"><li class="version">Version 0.12.1</li><li><a id="all-types" href="all.html">All Items</a></li></ul><section><ul class="block"><li><a href="#reexports">Re-exports</a></li><li><a href="#modules">Modules</a></li><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li><li><a href="#traits">Traits</a></li></ul></section></div></nav><main><div class="width-limiter"><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="main-heading"><h1>Crate <a class="mod" href="#">embedded_time</a><button id="copy-path" onclick="copy_path(this)" title="Copy item path to clipboard"><img src="../static.files/clipboard-7571035ce49a181d.svg" width="19" height="18" alt="Copy item path"></button></h1><span class="out-of-band"><a class="srclink" href="../src/embedded_time/lib.rs.html#1-360">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p><code>embedded-time</code> provides a comprehensive library of <a href="duration/trait.Duration.html"><code>Duration</code></a> and <a href="rate/trait.Rate.html"><code>Rate</code></a> types as well as
+a <a href="clock/trait.Clock.html"><code>Clock</code></a> abstraction for hardware timers/clocks and the associated <a href="struct.Instant.html"><code>Instant</code></a> type for
+in embedded systems.</p>
+<p>Additionally, an implementation of software timers is provided that work seemlessly with all
+the types in this crate.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>embedded_time::{duration::<span class="kw-2">*</span>, rate::<span class="kw-2">*</span>};
+
+<span class="kw">let </span>micros = <span class="number">200_000_u32</span>.microseconds();                <span class="comment">// 200_000 μs
+</span><span class="kw">let </span>millis: Milliseconds = micros.into();               <span class="comment">// 200 ms
+</span><span class="kw">let </span>frequency: <span class="prelude-ty">Result</span>&lt;Hertz,<span class="kw">_</span>&gt; = millis.to_rate();      <span class="comment">// 5 Hz
+
+</span><span class="macro">assert_eq!</span>(frequency, <span class="prelude-val">Ok</span>(<span class="number">5_u32</span>.Hz()));</code></pre></div>
+<h2 id="motivation"><a href="#motivation">Motivation</a></h2>
+<p>The handling of time on embedded systems is generally much different than that of OSs. For
+instance, on an OS, the time is measured against an arbitrary epoch. Embedded systems generally
+don’t know (nor do they care) what the <em>real</em> time is, but rather how much time has passed since
+the system has started.</p>
+<h3 id="drawbacks-of-the-standard-library-types"><a href="#drawbacks-of-the-standard-library-types">Drawbacks of the standard library types</a></h3><h4 id="duration"><a href="#duration">Duration</a></h4>
+<ul>
+<li>The storage is <code>u64</code> seconds and <code>u32</code> nanoseconds.</li>
+<li>This is huge overkill and adds needless complexity beyond what is required (or desired) for
+embedded systems.</li>
+<li>Any read (with the exception of seconds and nanoseconds) requires arithmetic to convert to the
+requested units</li>
+<li>This is much slower than this project’s implementation of what is analogous to a tagged union
+of time units.</li>
+</ul>
+<h4 id="instant"><a href="#instant">Instant</a></h4>
+<ul>
+<li>The <code>Instant</code> type requires <code>std</code>.</li>
+</ul>
+<h3 id="drawbacks-of-the-time-crate"><a href="#drawbacks-of-the-time-crate">Drawbacks of the <code>time</code> crate</a></h3>
+<p>The <code>time</code> crate is a remarkable library but isn’t geared for embedded systems (although it does
+support a subset of features in <code>no_std</code> contexts). It suffers from some of the same drawbacks
+as the core::Duration type (namely the storage format) and the <code>Instant</code> struct dependency on
+<code>std</code>. It also adds a lot of functionally that would seldom be useful in an embedded context.
+For instance it has a comprehensive date/time formatting, timezone, and calendar support.</p>
+<h3 id="background"><a href="#background">Background</a></h3><h4 id="what-is-an-instant"><a href="#what-is-an-instant">What is an Instant?</a></h4>
+<p>In the Rust ecosystem, it appears to be idiomatic to call a <code>now()</code> associated function from an
+Instant type. There is generally no concept of a “Clock”. I believe that using the <code>Instant</code> in
+this way is a violation of the <em>separation of concerns</em> principle. What is an <code>Instant</code>? Is it a
+time-keeping entity from which you read the current instant in time, or is it that instant in
+time itself. In this case, it’s both.</p>
+<p>As an alternative, the current instant in time is read from a <strong>Clock</strong>. The <code>Instant</code> read from
+the <code>Clock</code> has the same precision and width (inner type) as the <code>Clock</code>. Requesting the
+difference between two <code>Instant</code>s gives a <code>Duration</code> which can have different precision and/or
+width.</p>
+<h2 id="overview"><a href="#overview">Overview</a></h2>
+<p>The approach taken is similar to the C++ <code>chrono</code> library. <a href="duration/trait.Duration.html"><code>Duration</code></a>s and <a href="rate/trait.Rate.html"><code>Rate</code></a>s are
+fixed-point values as in they are comprised of <em>integer</em> and <em>scaling factor</em> values.
+The <em>scaling factor</em> is a <code>const</code> <a href="fraction/struct.Fraction.html"><code>Fraction</code></a>. One benefit of this
+structure is that it avoids unnecessary arithmetic. For example, if the <a href="duration/trait.Duration.html"><code>Duration</code></a> type is
+<a href="duration/struct.Milliseconds.html"><code>Milliseconds</code></a>, a call to the <a href="duration/trait.Duration.html#tymethod.integer"><code>Duration::integer()</code></a> method simply returns the <em>integer</em>
+part directly which in this case is the number of milliseconds represented by the <a href="duration/trait.Duration.html"><code>Duration</code></a>.
+Conversion arithmetic is only performed when explicitly converting between time units (eg.
+<a href="duration/struct.Milliseconds.html"><code>Milliseconds</code></a> –&gt; <a href="duration/struct.Seconds.html"><code>Seconds</code></a>).</p>
+<p>In addition, a wide range of rate-type types are available including <a href="rate/struct.Hertz.html"><code>Hertz</code></a>,
+<a href="rate/struct.BitsPerSecond.html"><code>BitsPerSecond</code></a>, <a href="rate/struct.KibibytesPerSecond.html"><code>KibibytesPerSecond</code></a>, <a href="rate/struct.Baud.html"><code>Baud</code></a>, etc.</p>
+<p>A <a href="duration/trait.Duration.html"><code>Duration</code></a> type can be converted to a <a href="rate/trait.Rate.html"><code>Rate</code></a> type and vica-versa.</p>
+<h3 id="definitions"><a href="#definitions">Definitions</a></h3>
+<p><strong>Clock</strong>: Any entity that periodically counts (ie an external or peripheral hardware
+timer/counter). Generally, this needs to be monotonic. A wrapping clock is considered monotonic
+in this context as long as it fulfills the other requirements.</p>
+<p><strong>Wrapping Clock</strong>: A clock that when at its maximum value, the next count is the minimum
+value.</p>
+<p><strong>Timer</strong>: An entity that counts toward an expiration.</p>
+<p><strong>Instant</strong>: A specific instant in time (“time-point”) read from a clock.</p>
+<p><strong>Duration</strong>: The difference of two instants. The time that has elapsed since an instant. A
+span of time.</p>
+<p><strong>Rate</strong>: A measure of events per time such as frequency, data-rate, etc.</p>
+<h2 id="imports"><a href="#imports">Imports</a></h2>
+<p>The suggested use statements are as follows depending on what is needed:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>embedded_time::duration::<span class="kw-2">*</span>;    <span class="comment">// imports all duration-related types and traits
+</span><span class="kw">use </span>embedded_time::rate::<span class="kw-2">*</span>;        <span class="comment">// imports all rate-related types and traits
+</span><span class="kw">use </span>embedded_time::clock;
+<span class="kw">use </span>embedded_time::Instant;
+<span class="kw">use </span>embedded_time::Timer;</code></pre></div>
+<h2 id="duration-types"><a href="#duration-types">Duration Types</a></h2><div><table><thead><tr><th style="text-align: left">Units</th><th style="text-align: left">Extension</th></tr></thead><tbody>
+<tr><td style="text-align: left">Hours</td><td style="text-align: left">hours</td></tr>
+<tr><td style="text-align: left">Minutes</td><td style="text-align: left">minutes</td></tr>
+<tr><td style="text-align: left">Seconds</td><td style="text-align: left">seconds</td></tr>
+<tr><td style="text-align: left">Milliseconds</td><td style="text-align: left">milliseconds</td></tr>
+<tr><td style="text-align: left">Microseconds</td><td style="text-align: left">microseconds</td></tr>
+<tr><td style="text-align: left">Nanoseconds</td><td style="text-align: left">nanoseconds</td></tr>
+</tbody></table>
+</div>
+<ul>
+<li>Conversion from <code>Rate</code> types</li>
+</ul>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>embedded_time::{duration::<span class="kw-2">*</span>, rate::<span class="kw-2">*</span>};
+
+Microseconds(<span class="number">500_u32</span>).to_rate() == <span class="prelude-val">Ok</span>(Kilohertz(<span class="number">2_u32</span>))</code></pre></div>
+<ul>
+<li>Conversion to/from <code>Generic</code> <code>Duration</code> type</li>
+</ul>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>embedded_time::{duration::<span class="kw-2">*</span>};
+
+Seconds(<span class="number">2_u64</span>).to_generic(Fraction::new(<span class="number">1</span>, <span class="number">2_000</span>)) == <span class="prelude-val">Ok</span>(Generic::new(<span class="number">4_000_u32</span>, Fraction::new(<span class="number">1</span>, <span class="number">2_000</span>)))
+Seconds::&lt;u64&gt;::try_from(Generic::new(<span class="number">2_000_u32</span>, Fraction::new(<span class="number">1</span>, <span class="number">1_000</span>))) == <span class="prelude-val">Ok</span>(Seconds(<span class="number">2_u64</span>))</code></pre></div>
+<h3 id="core-compatibility"><a href="#core-compatibility"><code>core</code> Compatibility</a></h3>
+<ul>
+<li>Conversion to/from <code>core::time::Duration</code></li>
+</ul>
+<h4 id="benchmark-comparisons-to-core-duration-type"><a href="#benchmark-comparisons-to-core-duration-type">Benchmark Comparisons to <code>core</code> duration type</a></h4><h5 id="construct-and-read-milliseconds"><a href="#construct-and-read-milliseconds">Construct and Read Milliseconds</a></h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>embedded_time::duration::<span class="kw-2">*</span>;
+
+<span class="kw">let </span>duration = Milliseconds::&lt;u64&gt;(ms); <span class="comment">// 8 bytes
+</span><span class="kw">let </span>count = duration.integer();</code></pre></div>
+<p><em>(the size of <code>embedded-time</code> duration types is only the size of the inner type)</em></p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>std::time::Duration;
+
+<span class="kw">let </span>core_duration = Duration::from_millis(ms); <span class="comment">// 12 bytes
+</span><span class="kw">let </span>count = core_duration.as_millis();</code></pre></div>
+<p><em>(the size of <code>core</code> duration type is 12 B)</em></p>
+<p><img src="resources/duration_violin_v0.7.0.svg" alt="" /></p>
+<h2 id="rate-types"><a href="#rate-types">Rate Types</a></h2><h3 id="frequency"><a href="#frequency">Frequency</a></h3><div><table><thead><tr><th style="text-align: left">Units</th><th style="text-align: left">Extension</th></tr></thead><tbody>
+<tr><td style="text-align: left">Mebihertz</td><td style="text-align: left">MiHz</td></tr>
+<tr><td style="text-align: left">Megahertz</td><td style="text-align: left">MHz</td></tr>
+<tr><td style="text-align: left">Kibihertz</td><td style="text-align: left">KiHz</td></tr>
+<tr><td style="text-align: left">Kilohertz</td><td style="text-align: left">kHz</td></tr>
+<tr><td style="text-align: left">Hertz</td><td style="text-align: left">Hz</td></tr>
+</tbody></table>
+</div><h3 id="data-rate"><a href="#data-rate">Data Rate</a></h3><div><table><thead><tr><th style="text-align: left">Units</th><th style="text-align: left">Extension</th></tr></thead><tbody>
+<tr><td style="text-align: left">MebibytePerSecond</td><td style="text-align: left">MiBps</td></tr>
+<tr><td style="text-align: left">MegabytePerSecond</td><td style="text-align: left">MBps</td></tr>
+<tr><td style="text-align: left">KibibytePerSecond</td><td style="text-align: left">KiBps</td></tr>
+<tr><td style="text-align: left">KiloBytePerSecond</td><td style="text-align: left">KBps</td></tr>
+<tr><td style="text-align: left">BytePerSecond</td><td style="text-align: left">Bps</td></tr>
+<tr><td style="text-align: left"></td><td style="text-align: left"></td></tr>
+<tr><td style="text-align: left">MebibitPerSecond</td><td style="text-align: left">Mibps</td></tr>
+<tr><td style="text-align: left">MegabitPerSecond</td><td style="text-align: left">Mbps</td></tr>
+<tr><td style="text-align: left">KibibitPerSecond</td><td style="text-align: left">Kibps</td></tr>
+<tr><td style="text-align: left">KilobitPerSecond</td><td style="text-align: left">kbps</td></tr>
+<tr><td style="text-align: left">BitPerSecond</td><td style="text-align: left">bps</td></tr>
+</tbody></table>
+</div><h3 id="symbol-rate"><a href="#symbol-rate">Symbol Rate</a></h3><div><table><thead><tr><th style="text-align: left">Units</th><th style="text-align: left">Extension</th></tr></thead><tbody>
+<tr><td style="text-align: left">Mebibaud</td><td style="text-align: left">MiBd</td></tr>
+<tr><td style="text-align: left">Megabaud</td><td style="text-align: left">MBd</td></tr>
+<tr><td style="text-align: left">Kibibaud</td><td style="text-align: left">KiBd</td></tr>
+<tr><td style="text-align: left">Kilobaud</td><td style="text-align: left">kBd</td></tr>
+<tr><td style="text-align: left">Baud</td><td style="text-align: left">Bd</td></tr>
+</tbody></table>
+</div>
+<ul>
+<li>
+<p>Conversion from/to all other rate types within the same class (frequency, data rate, etc.) and
+<em>base</em> (mega, mebi, kilo, kibi). For example, MiBps (mebibytes per second) –&gt; Kibps (kibibits
+per second) and MBps (megabytes per second) –&gt; kbps (kilobits per second).</p>
+</li>
+<li>
+<p>Conversion from <code>Duration</code> types</p>
+</li>
+</ul>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>embedded_time::{duration::<span class="kw-2">*</span>, rate::<span class="kw-2">*</span>};
+
+Kilohertz(<span class="number">500_u32</span>).to_duration() == <span class="prelude-val">Ok</span>(Microseconds(<span class="number">2_u32</span>))</code></pre></div>
+<ul>
+<li>Conversion to/from <code>Generic</code> <code>Rate</code> type</li>
+</ul>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>embedded_time::rate::<span class="kw-2">*</span>;
+
+Hertz(<span class="number">2_u64</span>).to_generic(Fraction::new(<span class="number">1</span>,<span class="number">2_000</span>)) == <span class="prelude-val">Ok</span>(Generic::new(<span class="number">4_000_u32</span>, Fraction::new(<span class="number">1</span>,<span class="number">2_000</span>)))
+Hertz::&lt;u64&gt;::try_from(Generic::new(<span class="number">2_000_u32</span>, Fraction::new(<span class="number">1</span>,<span class="number">1_000</span>))) == <span class="prelude-val">Ok</span>(Hertz(<span class="number">2_u64</span>))</code></pre></div>
+<h2 id="hardware-abstraction"><a href="#hardware-abstraction">Hardware Abstraction</a></h2>
+<ul>
+<li><code>Clock</code> trait allowing abstraction of hardware timers/clocks for timekeeping.</li>
+</ul>
+<h2 id="timers"><a href="#timers">Timers</a></h2>
+<ul>
+<li>Software timers spawned from a <code>Clock</code> impl object.</li>
+<li>One-shot or periodic/continuous</li>
+<li>Blocking delay</li>
+<li>Poll for expiration</li>
+<li>Read elapsed/remaining duration</li>
+</ul>
+<h2 id="reliability-and-usability"><a href="#reliability-and-usability">Reliability and Usability</a></h2>
+<ul>
+<li>Extensive tests</li>
+<li>Thorough documentation with examples</li>
+<li>Example for the nRF52_DK board</li>
+</ul>
+<h2 id="notes"><a href="#notes">Notes</a></h2>
+<p>Some parts of this crate were derived from various sources:</p>
+<ul>
+<li><a href="https://github.com/rtic-rs/cortex-m-rtic"><code>RTIC</code></a></li>
+<li><a href="https://docs.rs/time/latest/time"><code>time</code></a> (Specifically the <a href="https://docs.rs/time/latest/time/trait.NumericalDuration.html"><code>time::NumbericalDuration</code></a>
+implementations for primitive integers)</li>
+</ul>
+</div></details><h2 id="reexports" class="small-section-header"><a href="#reexports">Re-exports</a></h2><div class="item-table"><div class="item-row"><div class="item-left import-item" id="reexport.Clock"><code>pub use clock::<a class="trait" href="clock/trait.Clock.html" title="trait embedded_time::clock::Clock">Clock</a>;</code></div></div><div class="item-row"><div class="item-left import-item" id="reexport.Timer"><code>pub use timer::<a class="struct" href="timer/struct.Timer.html" title="struct embedded_time::timer::Timer">Timer</a>;</code></div></div></div><h2 id="modules" class="small-section-header"><a href="#modules">Modules</a></h2><div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="mod" href="clock/index.html" title="embedded_time::clock mod">clock</a></div><div class="item-right docblock-short">Abstraction for hardware timers/clocks</div></div><div class="item-row"><div class="item-left module-item"><a class="mod" href="duration/index.html" title="embedded_time::duration mod">duration</a></div><div class="item-right docblock-short">Duration types/units</div></div><div class="item-row"><div class="item-left module-item"><a class="mod" href="fixed_point/index.html" title="embedded_time::fixed_point mod">fixed_point</a></div><div class="item-right docblock-short">Fixed-point values</div></div><div class="item-row"><div class="item-left module-item"><a class="mod" href="fraction/index.html" title="embedded_time::fraction mod">fraction</a></div><div class="item-right docblock-short">Fractional/Rational values</div></div><div class="item-row"><div class="item-left module-item"><a class="mod" href="rate/index.html" title="embedded_time::rate mod">rate</a></div><div class="item-right docblock-short">Rate-based types/units</div></div><div class="item-row"><div class="item-left module-item"><a class="mod" href="timer/index.html" title="embedded_time::timer mod">timer</a></div><div class="item-right docblock-short">Software timers coupled to a <a href="clock/trait.Clock.html" title="crate::Clock">crate::Clock</a> implementation</div></div></div><h2 id="structs" class="small-section-header"><a href="#structs">Structs</a></h2><div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.Instant.html" title="embedded_time::Instant struct">Instant</a></div><div class="item-right docblock-short">Represents an instant of time relative to a specific <a href="clock/trait.Clock.html"><code>Clock</code></a></div></div></div><h2 id="enums" class="small-section-header"><a href="#enums">Enums</a></h2><div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="enum" href="enum.ConversionError.html" title="embedded_time::ConversionError enum">ConversionError</a></div><div class="item-right docblock-short">Conversion errors</div></div><div class="item-row"><div class="item-left module-item"><a class="enum" href="enum.TimeError.html" title="embedded_time::TimeError enum">TimeError</a></div><div class="item-right docblock-short">Crate errors</div></div></div><h2 id="traits" class="small-section-header"><a href="#traits">Traits</a></h2><div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="trait" href="trait.TimeInt.html" title="embedded_time::TimeInt trait">TimeInt</a></div><div class="item-right docblock-short">The core inner-type trait for time-related types</div></div></div></section></div></main><div id="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="embedded_time" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0 (2c8cc3432 2023-03-06)" data-search-js="search-98d53477a794af0b.js" data-settings-js="settings-c3c521c753752a1a.js" data-settings-css="settings-08ddfdda51b8ee2e.css" ></div></body></html>

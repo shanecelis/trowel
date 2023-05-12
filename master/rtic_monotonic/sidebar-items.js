@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"trait":[["Monotonic","A monotonic clock / counter definition."]]};

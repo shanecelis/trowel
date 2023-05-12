@@ -1,0 +1,3 @@
+(function() {var implementors = {
+"embedded_fps":[["impl <a class=\"trait\" href=\"embedded_time/clock/trait.Clock.html\" title=\"trait embedded_time::clock::Clock\">Clock</a> for <a class=\"struct\" href=\"embedded_fps/struct.StdClock.html\" title=\"struct embedded_fps::StdClock\">StdClock</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

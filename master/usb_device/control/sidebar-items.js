@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":[["Recipient","Control request recipient."],["RequestType","Control request type."]],"struct":[["Request","A control request read from a SETUP packet."]]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["RWops","A structure that provides an abstract interface to stream I/O."]]};

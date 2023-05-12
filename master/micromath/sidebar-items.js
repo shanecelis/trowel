@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["F32","32-bit floating point wrapper which implements fast approximation-based operations."]],"trait":[["F32Ext","`f32` extension providing various arithmetic approximations and polyfills for `std` functionality."]]};

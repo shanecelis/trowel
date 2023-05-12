@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["CornerRadii","The definition of each corner radius for a rounded rectangle."],["CornerRadiiBuilder","[`CornerRadii`] builder."],["Points","Iterator over all points inside the rounded rectangle."],["RoundedRectangle","Rounded rectangle primitive."],["StyledPixelsIterator","Pixel iterator for each pixel in the rect border"]]};

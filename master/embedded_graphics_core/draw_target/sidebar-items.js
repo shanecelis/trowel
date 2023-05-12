@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"trait":[["DrawTarget","A target for embedded-graphics drawing operations."]]};

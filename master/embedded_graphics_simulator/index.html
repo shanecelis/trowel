@@ -1,0 +1,102 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="It can display all sorts of embedded-graphics test code."><meta name="keywords" content="rust, rustlang, rust-lang, embedded_graphics_simulator"><title>embedded_graphics_simulator - Rust</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceSerif4-Regular-1f7d512b176f0f72.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceSerif4-Bold-124a1ca42af929b6.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-93196c7a1c3542a8.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../static.files/light-4743e13df3dfe8c4.css"><link rel="stylesheet" disabled href="../static.files/dark-0e1b889528bd466b.css"><link rel="stylesheet" disabled href="../static.files/ayu-65289d5d067c7c66.css"><script id="default-settings" ></script><script src="../static.files/storage-d43fa987303ecbbb.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-3367e395607fafc1.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="logo-container" href="../embedded_graphics_simulator/index.html"><img class="rust-logo" src="../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><h2></h2></nav><nav class="sidebar"><a class="logo-container" href="../embedded_graphics_simulator/index.html"><img class="rust-logo" src="../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><h2 class="location"><a href="#">Crate embedded_graphics_simulator</a></h2><div class="sidebar-elems"><ul class="block"><li class="version">Version 0.4.1</li><li><a id="all-types" href="all.html">All Items</a></li></ul><section><ul class="block"><li><a href="#modules">Modules</a></li><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li></ul></section></div></nav><main><div class="width-limiter"><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="main-heading"><h1>Crate <a class="mod" href="#">embedded_graphics_simulator</a><button id="copy-path" onclick="copy_path(this)" title="Copy item path to clipboard"><img src="../static.files/clipboard-7571035ce49a181d.svg" width="19" height="18" alt="Copy item path"></button></h1><span class="out-of-band"><a class="srclink" href="../src/embedded_graphics_simulator/lib.rs.html#1-182">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p><img src="https://raw.githubusercontent.com/embedded-graphics/embedded-graphics/master/assets/simulator-demo.png" alt="It can display all sorts of embedded-graphics test code." /></p>
+<p>The simulator can be used to test and debug
+<a href="https://crates.io/crates/embedded-graphics">embedded-graphics</a> code, or produce examples and
+interactive demos to show off embedded graphics features.</p>
+<h2 id="examples"><a href="#examples">Examples</a></h2>
+<p>More simulator examples can be found in the <a href="https://github.com/embedded-graphics/examples">examples repository</a>.</p>
+<h3 id="simulate-a-128x64-ssd1306-oled"><a href="#simulate-a-128x64-ssd1306-oled">Simulate a 128x64 SSD1306 OLED</a></h3>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>embedded_graphics::{
+    pixelcolor::BinaryColor,
+    prelude::<span class="kw-2">*</span>,
+    primitives::{Circle, Line, Rectangle, PrimitiveStyle},
+    mono_font::{ascii::FONT_6X9, MonoTextStyle},
+    text::Text,
+};
+<span class="kw">use </span>embedded_graphics_simulator::{BinaryColorTheme, SimulatorDisplay, Window, OutputSettingsBuilder};
+
+<span class="kw">fn </span>main() -&gt; <span class="prelude-ty">Result</span>&lt;(), core::convert::Infallible&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>display = SimulatorDisplay::&lt;BinaryColor&gt;::new(Size::new(<span class="number">128</span>, <span class="number">64</span>));
+
+    <span class="kw">let </span>line_style = PrimitiveStyle::with_stroke(BinaryColor::On, <span class="number">1</span>);
+    <span class="kw">let </span>text_style = MonoTextStyle::new(<span class="kw-2">&amp;</span>FONT_6X9, BinaryColor::On);
+
+    Circle::new(Point::new(<span class="number">72</span>, <span class="number">8</span>), <span class="number">48</span>)
+        .into_styled(line_style)
+        .draw(<span class="kw-2">&amp;mut </span>display)<span class="question-mark">?</span>;
+
+    Line::new(Point::new(<span class="number">48</span>, <span class="number">16</span>), Point::new(<span class="number">8</span>, <span class="number">16</span>))
+        .into_styled(line_style)
+        .draw(<span class="kw-2">&amp;mut </span>display)<span class="question-mark">?</span>;
+
+    Line::new(Point::new(<span class="number">48</span>, <span class="number">16</span>), Point::new(<span class="number">64</span>, <span class="number">32</span>))
+        .into_styled(line_style)
+        .draw(<span class="kw-2">&amp;mut </span>display)<span class="question-mark">?</span>;
+
+    Rectangle::new(Point::new(<span class="number">79</span>, <span class="number">15</span>), Size::new(<span class="number">34</span>, <span class="number">34</span>))
+        .into_styled(line_style)
+        .draw(<span class="kw-2">&amp;mut </span>display)<span class="question-mark">?</span>;
+
+    Text::new(<span class="string">&quot;Hello World!&quot;</span>, Point::new(<span class="number">5</span>, <span class="number">5</span>), text_style).draw(<span class="kw-2">&amp;mut </span>display)<span class="question-mark">?</span>;
+
+    <span class="kw">let </span>output_settings = OutputSettingsBuilder::new()
+        .theme(BinaryColorTheme::OledBlue)
+        .build();
+    Window::new(<span class="string">&quot;Hello World&quot;</span>, <span class="kw-2">&amp;</span>output_settings).show_static(<span class="kw-2">&amp;</span>display);
+
+    <span class="prelude-val">Ok</span>(())
+}</code></pre></div>
+<h2 id="setup"><a href="#setup">Setup</a></h2>
+<p>The simulator uses SDL2 and its development libraries which must be installed to build and run
+it.</p>
+<h3 id="linux-apt"><a href="#linux-apt">Linux (<code>apt</code>)</a></h3><div class="example-wrap"><pre class="language-bash"><code>sudo apt install libsdl2-dev
+</code></pre></div><h3 id="macos-brew"><a href="#macos-brew">macOS (<code>brew</code>)</a></h3><div class="example-wrap"><pre class="language-bash"><code>brew install sdl2
+</code></pre></div>
+<p>Users on Apple silicon or with custom installation directories will need to
+set <code>LIBRARY_PATH</code> for the linker to find the installed SDL2 package:</p>
+<div class="example-wrap"><pre class="language-bash"><code>export LIBRARY_PATH=&quot;$LIBRARY_PATH:$(brew --prefix)/lib&quot;
+</code></pre></div>
+<p>More information can be found in the
+<a href="https://github.com/Rust-SDL2/rust-sdl2#homebrew">SDL2 documentation</a>.</p>
+<h3 id="windows"><a href="#windows">Windows</a></h3>
+<p>The Windows install process is a bit more involved, but it <em>does</em> work. See <a href="https://github.com/Rust-SDL2/rust-sdl2">the Rust-SDL2
+crate’s README</a> for instructions. There are multiple
+ways to get it working, but probably the simplest method is copying the binaries as shown
+<a href="https://github.com/Rust-SDL2/rust-sdl2#windows-msvc">here</a>.</p>
+<h2 id="creating-screenshots"><a href="#creating-screenshots">Creating screenshots</a></h2>
+<p>Screenshots of programs, that use <a href="struct.Window.html" title="Window"><code>Window</code></a> to display a simulated display, can be created by
+setting the <code>EG_SIMULATOR_DUMP</code> or <code>EG_SIMULATOR_DUMP_RAW</code> environment variable:</p>
+<div class="example-wrap"><pre class="language-bash"><code>EG_SIMULATOR_DUMP=screenshot.png cargo run
+</code></pre></div>
+<p>By setting the variable the display passed to the first <a href="struct.Window.html#method.update" title="Window::update"><code>Window::update</code></a> call gets exported as
+a PNG file to the specified path. After the file is exported the process is terminated.</p>
+<p>The difference between <code>EG_SIMULATOR_DUMP</code> and <code>EG_SIMULATOR_DUMP_RAW</code> is that the first method
+applies the output settings before exporting the PNG file and the later dumps the unaltered
+display content.</p>
+<h2 id="exporting-images"><a href="#exporting-images">Exporting images</a></h2>
+<p>If a program doesn’t require to display a window and only needs to export one or more images, a
+<a href="struct.SimulatorDisplay.html" title="SimulatorDisplay"><code>SimulatorDisplay</code></a> can also be converted to an <a href="../image/index.html" title="image"><code>image</code></a> crate
+<a href="../image/buffer_/struct.ImageBuffer.html"><code>ImageBuffer</code></a> by using the <a href="struct.SimulatorDisplay.html#method.to_rgb_output_image"><code>to_rgb_output_image</code></a> or <a href="struct.SimulatorDisplay.html#method.to_grayscale_output_image"><code>to_grayscale_output_image</code></a> methods.
+The resulting buffer can then be used to save the display content to any format supported by
+<a href="../image/index.html" title="image"><code>image</code></a>.</p>
+<h2 id="using-the-simulator-in-ci"><a href="#using-the-simulator-in-ci">Using the simulator in CI</a></h2>
+<p>The simulator supports two environment variables to check if the display content matches a
+reference PNG file: <code>EG_SIMULATOR_CHECK</code> and <code>EG_SIMULATOR_CHECK_RAW</code>. If the display content
+of the first <a href="struct.Window.html#method.update" title="Window::update"><code>Window::update</code></a> call doesn’t match the reference image the process exits with a
+non zero exit exit code. Otherwise the process will exit with a zero exit code.</p>
+<div class="example-wrap"><pre class="language-bash"><code>EG_SIMULATOR_CHECK=screenshot.png cargo run || echo &quot;Display doesn&#39;t match PNG file&quot;
+</code></pre></div>
+<p><code>EG_SIMULATOR_CHECK</code> assumes that the reference image was created using the same
+<code>OutputSetting</code>s, while <code>EG_SIMULATOR_CHECK_RAW</code> assumes an unstyled reference image.</p>
+<h2 id="usage-without-sdl2"><a href="#usage-without-sdl2">Usage without SDL2</a></h2>
+<p>When the simulator is used in headless/CI environments that don’t require showing a window, SDL2
+support can be disabled. This removes the requirement of SDL2 being installed on the target machine,
+but still allows the simulator to be used to generate images.</p>
+<p>The <code>with-sdl</code> feature is enabled by default and can be disabled by adding <code>default-features = false</code> to the dependency:</p>
+<div class="example-wrap"><pre class="language-toml"><code>[dependencies.embedded-graphics-simulator]
+version = &quot;0.2.0&quot;
+default-features = false
+</code></pre></div>
+<p>See the <a href="https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#choosing-features">Choosing
+Features</a>
+Cargo manifest documentation for more details.</p>
+</div></details><h2 id="modules" class="small-section-header"><a href="#modules">Modules</a></h2><div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="mod" href="sdl2/index.html" title="embedded_graphics_simulator::sdl2 mod">sdl2</a></div><div class="item-right docblock-short">Re-exported types from sdl2 crate.</div></div></div><h2 id="structs" class="small-section-header"><a href="#structs">Structs</a></h2><div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.OutputImage.html" title="embedded_graphics_simulator::OutputImage struct">OutputImage</a></div><div class="item-right docblock-short">Output image.</div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.OutputSettings.html" title="embedded_graphics_simulator::OutputSettings struct">OutputSettings</a></div><div class="item-right docblock-short">Output settings.</div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.OutputSettingsBuilder.html" title="embedded_graphics_simulator::OutputSettingsBuilder struct">OutputSettingsBuilder</a></div><div class="item-right docblock-short">Output settings builder.</div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.SimulatorDisplay.html" title="embedded_graphics_simulator::SimulatorDisplay struct">SimulatorDisplay</a></div><div class="item-right docblock-short">Simulator display.</div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.Window.html" title="embedded_graphics_simulator::Window struct">Window</a></div><div class="item-right docblock-short">Simulator window</div></div></div><h2 id="enums" class="small-section-header"><a href="#enums">Enums</a></h2><div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="enum" href="enum.BinaryColorTheme.html" title="embedded_graphics_simulator::BinaryColorTheme enum">BinaryColorTheme</a></div><div class="item-right docblock-short">Color theme for binary displays</div></div><div class="item-row"><div class="item-left module-item"><a class="enum" href="enum.SimulatorEvent.html" title="embedded_graphics_simulator::SimulatorEvent enum">SimulatorEvent</a></div><div class="item-right docblock-short">A derivation of <a href="../sdl2/event/enum.Event.html" title="sdl2::event::Event"><code>sdl2::event::Event</code></a> mapped to embedded-graphics coordinates</div></div></div></section></div></main><div id="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="embedded_graphics_simulator" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0 (2c8cc3432 2023-03-06)" data-search-js="search-98d53477a794af0b.js" data-settings-js="settings-c3c521c753752a1a.js" data-settings-css="settings-08ddfdda51b8ee2e.css" ></div></body></html>

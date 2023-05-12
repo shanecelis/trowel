@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":[["ReadResult","Result of successful read operation."]],"trait":[["ReadExt","After reading to buffer, it’s often useful to adjust the slice. Also, reading may be done in loop, which ends when reader has no more data."]]};

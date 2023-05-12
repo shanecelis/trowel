@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["IntoPixels","Converts a contiguous iterator into a pixel iterator."]]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":[["param","Timer type/state parameters"]],"struct":[["Timer","A `Timer` counts toward an expiration, can be polled for elapsed and remaining time, and can be one-shot or continuous/periodic."]]};

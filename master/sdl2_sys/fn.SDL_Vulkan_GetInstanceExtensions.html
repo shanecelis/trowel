@@ -1,0 +1,58 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="\brief Get the names of the Vulkan instance extensions needed to create a surface with \c SDL_Vulkan_CreateSurface()."><meta name="keywords" content="rust, rustlang, rust-lang, SDL_Vulkan_GetInstanceExtensions"><title>SDL_Vulkan_GetInstanceExtensions in sdl2_sys - Rust</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceSerif4-Regular-1f7d512b176f0f72.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceSerif4-Bold-124a1ca42af929b6.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-93196c7a1c3542a8.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../static.files/light-4743e13df3dfe8c4.css"><link rel="stylesheet" disabled href="../static.files/dark-0e1b889528bd466b.css"><link rel="stylesheet" disabled href="../static.files/ayu-65289d5d067c7c66.css"><script id="default-settings" ></script><script src="../static.files/storage-d43fa987303ecbbb.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-3367e395607fafc1.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc fn"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="logo-container" href="../sdl2_sys/index.html"><img class="rust-logo" src="../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><h2></h2></nav><nav class="sidebar"><a class="logo-container" href="../sdl2_sys/index.html"><img class="rust-logo" src="../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><div class="sidebar-elems"><h2><a href="index.html">In sdl2_sys</a></h2></div></nav><main><div class="width-limiter"><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="main-heading"><h1>Function <a href="index.html">sdl2_sys</a>::<wbr><a class="fn" href="#">SDL_Vulkan_GetInstanceExtensions</a><button id="copy-path" onclick="copy_path(this)" title="Copy item path to clipboard"><img src="../static.files/clipboard-7571035ce49a181d.svg" width="19" height="18" alt="Copy item path"></button></h1><span class="out-of-band"><a class="srclink" href="../src/sdl2_sys/Users/shane/Projects/trowel/target/debug/build/sdl2-sys-276bb5e411aeb379/out/sdl_bindings.rs.html#30761-30765">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><div class="item-decl"><pre class="rust"><code>pub unsafe extern &quot;C&quot; fn SDL_Vulkan_GetInstanceExtensions(<br>&nbsp;&nbsp;&nbsp;&nbsp;window: <a class="primitive" href="https://doc.rust-lang.org/1.68.0/core/primitive.pointer.html">*mut </a><a class="struct" href="struct.SDL_Window.html" title="struct sdl2_sys::SDL_Window">SDL_Window</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;pCount: <a class="primitive" href="https://doc.rust-lang.org/1.68.0/core/primitive.pointer.html">*mut </a><a class="type" href="../libc/unix/type.c_uint.html" title="type libc::unix::c_uint">c_uint</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;pNames: <a class="primitive" href="https://doc.rust-lang.org/1.68.0/core/primitive.pointer.html">*mut </a><a class="primitive" href="https://doc.rust-lang.org/1.68.0/core/primitive.pointer.html">*const </a><a class="type" href="../libc/unix/bsd/apple/type.c_char.html" title="type libc::unix::bsd::apple::c_char">c_char</a><br>) -&gt; <a class="enum" href="enum.SDL_bool.html" title="enum sdl2_sys::SDL_bool">SDL_bool</a></code></pre></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>\brief Get the names of the Vulkan instance extensions needed to create
+a surface with \c SDL_Vulkan_CreateSurface().</p>
+<p>\param [in]     \c NULL or window Window for which the required Vulkan instance
+extensions should be retrieved
+\param [in,out] pCount pointer to an \c unsigned related to the number of
+required Vulkan instance extensions
+\param [out]    pNames \c NULL or a pointer to an array to be filled with the
+required Vulkan instance extensions</p>
+<p>\return \c SDL_TRUE on success, \c SDL_FALSE on error.</p>
+<p>If \a pNames is \c NULL, then the number of required Vulkan instance
+extensions is returned in pCount. Otherwise, \a pCount must point to a
+variable set to the number of elements in the \a pNames array, and on
+return the variable is overwritten with the number of names actually
+written to \a pNames. If \a pCount is less than the number of required
+extensions, at most \a pCount structures will be written. If \a pCount
+is smaller than the number of required extensions, \c SDL_FALSE will be
+returned instead of \c SDL_TRUE, to indicate that not all the required
+extensions were returned.</p>
+<p>\note If \c window is not NULL, it will be checked against its creation
+flags to ensure that the Vulkan flag is present. This parameter
+will be removed in a future major release.</p>
+<p>\note The returned list of extensions will contain \c VK_KHR_surface
+and zero or more platform specific extensions</p>
+<p>\note The extension names queried here must be enabled when calling
+VkCreateInstance, otherwise surface creation will fail.</p>
+<p>\note \c window should have been created with the \c SDL_WINDOW_VULKAN flag
+or be \c NULL</p>
+<p>\code
+unsigned int count;
+// get count of required extensions
+if(!SDL_Vulkan_GetInstanceExtensions(NULL, &amp;count, NULL))
+handle_error();</p>
+<p>static const char *const additionalExtensions[] =
+{
+VK_EXT_DEBUG_REPORT_EXTENSION_NAME, // example additional extension
+};
+size_t additionalExtensionsCount = sizeof(additionalExtensions) / sizeof(additionalExtensions[0]);
+size_t extensionCount = count + additionalExtensionsCount;
+const char **names = malloc(sizeof(const char *) * extensionCount);
+if(!names)
+handle_error();</p>
+<p>// get names of required extensions
+if(!SDL_Vulkan_GetInstanceExtensions(NULL, &amp;count, names))
+handle_error();</p>
+<p>// copy additional extensions after required extensions
+for(size_t i = 0; i &lt; additionalExtensionsCount; i++)
+names[i + count] = additionalExtensions[i];</p>
+<p>VkInstanceCreateInfo instanceCreateInfo = {};
+instanceCreateInfo.enabledExtensionCount = extensionCount;
+instanceCreateInfo.ppEnabledExtensionNames = names;
+// fill in rest of instanceCreateInfo</p>
+<p>VkInstance instance;
+// create the Vulkan instance
+VkResult result = vkCreateInstance(&amp;instanceCreateInfo, NULL, &amp;instance);
+free(names);
+\endcode</p>
+<p>\sa SDL_Vulkan_CreateSurface()</p>
+</div></details></section></div></main><div id="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="sdl2_sys" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0 (2c8cc3432 2023-03-06)" data-search-js="search-98d53477a794af0b.js" data-settings-js="settings-c3c521c753752a1a.js" data-settings-css="settings-08ddfdda51b8ee2e.css" ></div></body></html>

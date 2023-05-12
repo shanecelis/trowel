@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"attr":[["entry","This attribute-like macro does nothing. It’s a no-op."]],"enum":[["Error",""],["Mode",""]],"fn":[["file_sys",""],["run",""],["run_with",""],["stdout",""]],"mod":[["buffered",""],["flipped",""]],"struct":[["Buttons",""],["FpsApp",""],["JoinApps",""]],"trait":[["App",""],["AppExt",""],["FileSys",""]],"type":[["AppResult",""]]};

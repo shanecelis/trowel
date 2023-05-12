@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"attr":[["add_entry",""],["id","This attribute-like macro does nothing. It’s a no-op."],["omit",""]]};

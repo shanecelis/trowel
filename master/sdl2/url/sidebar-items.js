@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":[["OpenUrlError",""]],"fn":[["open_url","Opens a URL/URI in the default system-provided application."]]};

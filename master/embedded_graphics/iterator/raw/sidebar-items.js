@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["BitsIterator","Iterator for raw data slices with less than 8 BPP."],["ByteIterator","Iterator for raw data slices with 8 BPP."],["BytesIterator","Iterator for raw data slices more than 8 BPP."],["RawDataSlice","Raw data slice."]]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["Axes",""],["Flipped","Flipped draw target."]],"trait":[["DrawTargetExt2",""]]};
