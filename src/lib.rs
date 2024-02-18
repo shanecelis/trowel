@@ -105,7 +105,7 @@ extern crate alloc;
 mod sprig;
 #[cfg(all(target_arch = "arm", target_os = "none"))]
 pub use sprig::{run_with, stdout};
-#[cfg(feature = "sdcard")]
+#[cfg(all(feature = "sdcard", target_arch = "arm", target_os = "none"))]
 pub use sprig::file_sys;
 
 mod fps;
@@ -120,7 +120,7 @@ pub mod flipped;
 mod pc;
 #[cfg(any(target_family = "unix", target_family = "windows"))]
 pub use pc::{run_with, stdout};
-#[cfg(feature = "sdcard")]
+#[cfg(all(feature = "sdcard", any(target_family = "unix", target_family = "windows")))]
 pub use pc::file_sys;
 
 pub fn run(app: impl App + 'static) -> () {
