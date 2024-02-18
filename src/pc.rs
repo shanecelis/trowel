@@ -48,9 +48,10 @@ where
     }
 }
 
+#[cfg(feature = "sdcard")]
 static mut FILE_SYS: Option<fs::PCFS> = None;
 
-// #[cfg(feature = "sdcard")]
+#[cfg(feature = "sdcard")]
 pub fn file_sys() -> Result<&'static mut fs::PCFS, super::Error> {
     Ok(unsafe { FILE_SYS.as_mut().unwrap() })
 }
@@ -71,6 +72,7 @@ where
         .build();
     let mut window = Window::new("Sprig Simulator", &output_settings);
     let mut app = app_maker();
+    #[cfg(feature = "sdcard")]
     unsafe {
         FILE_SYS = Some(fs::PCFS::new(None));
     }
